@@ -1,0 +1,1216 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "OpenAPI definition",
+    "version" : "v0"
+  },
+  "servers" : [ {
+    "url" : "https://rest.uniprot.org/",
+    "description" : "UniProt REST API Server"
+  } ],
+  "tags" : [ {
+    "name" : "ID Mapping results",
+    "description" : "API calls to retrieve the results of a submitted ID Mapping job."
+  }, {
+    "name" : "ID Mapping job",
+    "description" : "The ID Mapping service can map between the identifiers used in one database, to the identifiers of another, e.g., from UniProt to Ensembl, or to PomBase, etc. If you map to UniProtKB, UniParc or UniRef data, the full entries will be returned to you for convenience."
+  } ],
+  "paths" : {
+    "/idmapping/run" : {
+      "post" : {
+        "tags" : [ "ID Mapping job" ],
+        "summary" : "Submit ID Mapping job.",
+        "operationId" : "submitJob",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/IdMappingJobRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobSubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/uniref/results/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping results" ],
+        "summary" : "Search result of UniRef cluster (or clusters) by a submitted job id.",
+        "description" : "The search endpoint uses a request query to return all entries associated with the search term in a paginated list of entries. Use ‘size’ to specify the number of entries per page of results. Specify <tt>fields</tt> to return only data for specific sections of that entry that are of interest to you",
+        "operationId" : "getMappedEntries",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "query",
+          "in" : "query",
+          "description" : "Criteria to search UniRef. Advanced queries can be built with parentheses and conditionals such as AND, OR and NOT. <a href='https://rest.uniprot.org/configure/uniref/search-fields' target='_blank' rel='noopener noreferrer'>List of valid search fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "Transcription factors"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "List of entry sections (fields) to be returned, separated by commas.  <a href='https://rest.uniprot.org/configure/uniref/result-fields' target='_blank' rel='noopener noreferrer'>List of valid fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "id,name,types,organism,identity"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "Specify field by which to sort results. <a href='https://rest.uniprot.org/configure/uniref/result-fields' target='_blank' rel='noopener noreferrer'>List of valid sort fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "id asc"
+        }, {
+          "name" : "complete",
+          "in" : "query",
+          "description" : "Flag to include all member ids and organisms, or not. By default, it returns a maximum of 10 member ids and organisms",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^(?:true|false)$",
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "Specify the number of entries per page of results (Pagination size). Default is 25, max is 500",
+          "required" : false,
+          "schema" : {
+            "maximum" : 500,
+            "minimum" : 0,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "example" : 50
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "UniRefEntryPair",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IdMappingSearchResult"
+                }
+              },
+              "text/plain;format=tsv" : { },
+              "text/plain;format=list" : { },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : { },
+              "text/plain;format=fasta" : { }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/uniref/results/stream/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping results" ],
+        "summary" : "Stream an UniRef cluster (or clusters) retrieved by a submitted job id.",
+        "description" : "The stream endpoint uses a request query to return all entries associated with the search term in a single download. Specify <tt>fields</tt> to return only data for specific sections of that entry that are of interest to you",
+        "operationId" : "streamMappedEntries",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "query",
+          "in" : "query",
+          "description" : "Criteria to search UniRef. Advanced queries can be built with parentheses and conditionals such as AND, OR and NOT. <a href='https://rest.uniprot.org/configure/uniref/search-fields' target='_blank' rel='noopener noreferrer'>List of valid search fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "Transcription factors"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "List of entry sections (fields) to be returned, separated by commas.  <a href='https://rest.uniprot.org/configure/uniref/result-fields' target='_blank' rel='noopener noreferrer'>List of valid fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "id,name,types,organism,identity"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "Specify field by which to sort results. <a href='https://rest.uniprot.org/configure/uniref/result-fields' target='_blank' rel='noopener noreferrer'>List of valid sort fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "id asc"
+        }, {
+          "name" : "complete",
+          "in" : "query",
+          "description" : "Flag to include all member ids and organisms, or not. By default, it returns a maximum of 10 member ids and organisms",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^(?:true|false)$",
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "download",
+          "in" : "query",
+          "description" : "Specify <tt>true</tt> to download as file, default is <tt>false</tt>.",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^(?:true|false)$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "Specify the number of entries per page of results (Pagination size). Default is 25, max is 500",
+          "required" : false,
+          "schema" : {
+            "maximum" : 500,
+            "minimum" : 0,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "example" : 50
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StreamResult"
+                }
+              },
+              "text/plain;format=tsv" : { },
+              "text/plain;format=list" : { },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : { },
+              "text/plain;format=fasta" : { },
+              "application/rdf+xml" : { }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/uniprotkb/results/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping results" ],
+        "summary" : "Search result for a UniProtKB protein entry (or entries) mapped by a submitted job id.",
+        "description" : "The search endpoint uses a request query to return all entries associated with the search term in a paginated list of entries. Use ‘size’ to specify the number of entries per page of results. Specify <tt>fields</tt> to return only data for specific sections of that entry that are of interest to you",
+        "operationId" : "getMappedEntries_1",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "query",
+          "in" : "query",
+          "description" : "Criteria to search UniProtKB. Advanced queries can be built with parentheses and conditionals such as AND, OR and NOT. <a href='https://rest.uniprot.org/configure/uniprotkb/search-fields' target='_blank' rel='noopener noreferrer'>List of valid search fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "insulin AND reviewed:true"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "List of entry sections (fields) to be returned, separated by commas.  <a href='https://rest.uniprot.org/configure/uniprotkb/result-fields' target='_blank' rel='noopener noreferrer'>List of valid fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "accession,protein_name,cc_function,ft_binding"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "Specify field by which to sort results. <a href='https://rest.uniprot.org/configure/uniprotkb/result-fields' target='_blank' rel='noopener noreferrer'>List of valid sort fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "accession desc"
+        }, {
+          "name" : "includeIsoform",
+          "in" : "query",
+          "description" : "Specify <tt>true</tt> to include isoforms, default is <tt>false</tt>.",
+          "required" : false,
+          "schema" : {
+            "pattern" : "true|false",
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "subsequence",
+          "in" : "query",
+          "description" : "Flag to write subsequences. Only accepted in fasta format",
+          "required" : false,
+          "schema" : {
+            "pattern" : "true|false",
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "Specify the number of entries per page of results (Pagination size). Default is 25, max is 500",
+          "required" : false,
+          "schema" : {
+            "maximum" : 500,
+            "minimum" : 0,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "example" : 50
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "UniProtKBEntryPair",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IdMappingSearchResult"
+                }
+              },
+              "application/xml" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Entry"
+                  }
+                }
+              },
+              "text/plain;format=tsv" : { },
+              "text/plain;format=flatfile" : { },
+              "text/plain;format=list" : { },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : { },
+              "text/plain;format=fasta" : { },
+              "text/plain;format=gff" : { }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/uniprotkb/results/stream/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping results" ],
+        "summary" : "Download UniProtKB protein entry (or entries) mapped by a submitted job id.",
+        "description" : "The stream endpoint uses a request query to return all entries associated with the search term in a single download. Specify <tt>fields</tt> to return only data for specific sections of that entry that are of interest to you",
+        "operationId" : "streamMappedEntries_1",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "query",
+          "in" : "query",
+          "description" : "Criteria to search UniProtKB. Advanced queries can be built with parentheses and conditionals such as AND, OR and NOT. <a href='https://rest.uniprot.org/configure/uniprotkb/search-fields' target='_blank' rel='noopener noreferrer'>List of valid search fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "insulin AND reviewed:true"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "List of entry sections (fields) to be returned, separated by commas.  <a href='https://rest.uniprot.org/configure/uniprotkb/result-fields' target='_blank' rel='noopener noreferrer'>List of valid fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "accession,protein_name,cc_function,ft_binding"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "Specify field by which to sort results. <a href='https://rest.uniprot.org/configure/uniprotkb/result-fields' target='_blank' rel='noopener noreferrer'>List of valid sort fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "accession desc"
+        }, {
+          "name" : "includeIsoform",
+          "in" : "query",
+          "description" : "Specify <tt>true</tt> to include isoforms, default is <tt>false</tt>.",
+          "required" : false,
+          "schema" : {
+            "pattern" : "true|false",
+            "type" : "boolean"
+          }
+        }, {
+          "name" : "subsequence",
+          "in" : "query",
+          "description" : "Flag to write subsequences. Only accepted in fasta format",
+          "required" : false,
+          "schema" : {
+            "pattern" : "true|false",
+            "type" : "string"
+          }
+        }, {
+          "name" : "download",
+          "in" : "query",
+          "description" : "Specify <tt>true</tt> to download as file, default is <tt>false</tt>.",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^(?:true|false)$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "Specify the number of entries per page of results (Pagination size). Default is 25, max is 500",
+          "required" : false,
+          "schema" : {
+            "maximum" : 500,
+            "minimum" : 0,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "example" : 50
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StreamResult"
+                }
+              },
+              "application/xml" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Entry"
+                  }
+                }
+              },
+              "text/plain;format=tsv" : { },
+              "text/plain;format=flatfile" : { },
+              "text/plain;format=list" : { },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : { },
+              "text/plain;format=fasta" : { },
+              "text/plain;format=gff" : { },
+              "application/rdf+xml" : { }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/uniparc/results/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping results" ],
+        "summary" : "Search result of UniParc sequence entry (or entries) by a submitted job id.",
+        "description" : "The search endpoint uses a request query to return all entries associated with the search term in a paginated list of entries. Use ‘size’ to specify the number of entries per page of results. Specify <tt>fields</tt> to return only data for specific sections of that entry that are of interest to you",
+        "operationId" : "getMappedEntries_2",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "query",
+          "in" : "query",
+          "description" : "Criteria to search UniParc. Advanced queries can be built with parentheses and conditionals such as AND, OR and NOT. <a href='https://rest.uniprot.org/configure/uniparc/search-fields' target='_blank' rel='noopener noreferrer'>List of valid search fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "Homo Sapiens"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "List of entry sections (fields) to be returned, separated by commas.  <a href='https://rest.uniprot.org/configure/uniparc/result-fields' target='_blank' rel='noopener noreferrer'>List of valid fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "upi,organism,length"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "Specify field by which to sort results. <a href='https://rest.uniprot.org/configure/uniparc/result-fields' target='_blank' rel='noopener noreferrer'>List of valid sort fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "upi asc"
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "Specify the number of entries per page of results (Pagination size). Default is 25, max is 500",
+          "required" : false,
+          "schema" : {
+            "maximum" : 500,
+            "minimum" : 0,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "example" : 50
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "UniParcEntryPair",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IdMappingSearchResult"
+                }
+              },
+              "application/xml" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Entry"
+                  }
+                }
+              },
+              "text/plain;format=tsv" : { },
+              "text/plain;format=list" : { },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : { },
+              "text/plain;format=fasta" : { }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/uniparc/results/stream/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping results" ],
+        "summary" : "Stream a UniParc sequence entry (or entries) by a submitted job id.",
+        "description" : "The stream endpoint uses a request query to return all entries associated with the search term in a single download. Specify <tt>fields</tt> to return only data for specific sections of that entry that are of interest to you",
+        "operationId" : "streamMappedEntries_2",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "query",
+          "in" : "query",
+          "description" : "Criteria to search UniParc. Advanced queries can be built with parentheses and conditionals such as AND, OR and NOT. <a href='https://rest.uniprot.org/configure/uniparc/search-fields' target='_blank' rel='noopener noreferrer'>List of valid search fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "Homo Sapiens"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "List of entry sections (fields) to be returned, separated by commas.  <a href='https://rest.uniprot.org/configure/uniparc/result-fields' target='_blank' rel='noopener noreferrer'>List of valid fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "upi,organism,length"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "Specify field by which to sort results. <a href='https://rest.uniprot.org/configure/uniparc/result-fields' target='_blank' rel='noopener noreferrer'>List of valid sort fields</a>",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "upi asc"
+        }, {
+          "name" : "download",
+          "in" : "query",
+          "description" : "Specify <tt>true</tt> to download as file, default is <tt>false</tt>.",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^(?:true|false)$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "Specify the number of entries per page of results (Pagination size). Default is 25, max is 500",
+          "required" : false,
+          "schema" : {
+            "maximum" : 500,
+            "minimum" : 0,
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "example" : 50
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StreamResult"
+                }
+              },
+              "application/xml" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Entry"
+                  }
+                }
+              },
+              "text/plain;format=tsv" : { },
+              "text/plain;format=list" : { },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : { },
+              "text/plain;format=fasta" : { },
+              "application/rdf+xml" : { }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/stream/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping results" ],
+        "summary" : "Stream result by a submitted job id.",
+        "description" : "The stream endpoint uses a request query to return all entries associated with the search term in a single download. Specify <tt>fields</tt> to return only data for specific sections of that entry that are of interest to you",
+        "operationId" : "streamResults",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "download",
+          "in" : "query",
+          "description" : "Specify <tt>true</tt> to download as file, default is <tt>false</tt>.",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^(?:true|false)$",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StreamResult"
+                }
+              },
+              "text/plain;format=tsv" : { },
+              "text/plain;format=list" : { },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : { }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/status/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping job" ],
+        "summary" : "Get status of ID Mapping job.",
+        "operationId" : "getStatus",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/results/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping results" ],
+        "summary" : "Search result by a submitted job id.",
+        "description" : "The search endpoint uses a request query to return all entries associated with the search term in a paginated list of entries. Use ‘size’ to specify the number of entries per page of results. Specify <tt>fields</tt> to return only data for specific sections of that entry that are of interest to you",
+        "operationId" : "results",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "pageRequest",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/IdMappingPageRequest"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "IdMappingStringPair",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IdMappingSearchResult"
+                }
+              },
+              "text/plain;format=tsv" : { },
+              "text/plain;format=list" : { },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : { }
+            }
+          }
+        }
+      }
+    },
+    "/idmapping/details/{jobId}" : {
+      "get" : {
+        "tags" : [ "ID Mapping job" ],
+        "summary" : "Get details of ID Mapping job.",
+        "operationId" : "getDetails",
+        "parameters" : [ {
+          "name" : "jobId",
+          "in" : "path",
+          "description" : "Unique identifier for ID Mapping job",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "JobSubmitResponse" : {
+        "type" : "object",
+        "properties" : {
+          "jobId" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        }
+      },
+      "IdMappingJobRequest" : {
+        "required" : [ "from", "ids", "to" ],
+        "type" : "object",
+        "properties" : {
+          "from" : {
+            "type" : "string"
+          },
+          "to" : {
+            "type" : "string"
+          },
+          "ids" : {
+            "type" : "string"
+          },
+          "taxId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Facet" : {
+        "type" : "object",
+        "properties" : {
+          "label" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "allowMultipleSelection" : {
+            "type" : "boolean"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FacetItem"
+            }
+          }
+        }
+      },
+      "FacetItem" : {
+        "type" : "object",
+        "properties" : {
+          "label" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "IdMappingSearchResult" : {
+        "type" : "object",
+        "properties" : {
+          "results" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "anyOf" : [ {
+                "$ref" : "#/components/schemas/UniParcEntryPair"
+              }, {
+                "$ref" : "#/components/schemas/IdMappingStringPair"
+              }, {
+                "$ref" : "#/components/schemas/UniProtKBEntryPair"
+              }, {
+                "$ref" : "#/components/schemas/UniRefEntryPair"
+              } ]
+            }
+          },
+          "facets" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Facet"
+            }
+          },
+          "matchedFields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TermInfo"
+            }
+          },
+          "suggestions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Suggestion"
+            }
+          },
+          "warnings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProblemPair"
+            }
+          },
+          "obsoleteCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "suggestedIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "failedIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "ProblemPair" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Suggestion" : {
+        "type" : "object",
+        "properties" : {
+          "query" : {
+            "type" : "string"
+          },
+          "hits" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "TermInfo" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "hits" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "StreamResult" : {
+        "type" : "object",
+        "properties" : {
+          "results" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "anyOf" : [ {
+                "$ref" : "#/components/schemas/UniParcEntryPair"
+              }, {
+                "$ref" : "#/components/schemas/IdMappingStringPair"
+              }, {
+                "$ref" : "#/components/schemas/UniProtKBEntryPair"
+              }, {
+                "$ref" : "#/components/schemas/UniRefEntryPair"
+              } ]
+            }
+          },
+          "error" : {
+            "type" : "string"
+          }
+        }
+      },
+      "DbReferenceType" : {
+        "type" : "object",
+        "properties" : {
+          "property" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PropertyType"
+            }
+          },
+          "type" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "id" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "versionI" : {
+            "type" : "integer",
+            "format" : "int32",
+            "xml" : {
+              "name" : "version_i",
+              "attribute" : true
+            }
+          },
+          "active" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "created" : {
+            "type" : "string",
+            "format" : "date-time",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "last" : {
+            "type" : "string",
+            "format" : "date-time",
+            "xml" : {
+              "attribute" : true
+            }
+          }
+        }
+      },
+      "Entry" : {
+        "required" : [ "accession", "sequence" ],
+        "type" : "object",
+        "properties" : {
+          "accession" : {
+            "type" : "string"
+          },
+          "dbReference" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DbReferenceType"
+            }
+          },
+          "signatureSequenceMatch" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SeqFeatureType"
+            }
+          },
+          "sequence" : {
+            "$ref" : "#/components/schemas/Sequence"
+          },
+          "dataset" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "uniProtKBExclusion" : {
+            "type" : "string",
+            "xml" : {
+              "name" : "UniProtKB_exclusion",
+              "attribute" : true
+            }
+          }
+        },
+        "xml" : {
+          "name" : "entry",
+          "namespace" : "http://uniprot.org/uniparc"
+        }
+      },
+      "LocationType" : {
+        "type" : "object",
+        "properties" : {
+          "start" : {
+            "type" : "integer",
+            "format" : "int32",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "end" : {
+            "type" : "integer",
+            "format" : "int32",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "alignment" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          }
+        }
+      },
+      "PropertyType" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "value" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          }
+        }
+      },
+      "Sequence" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "length" : {
+            "type" : "integer",
+            "format" : "int32",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "checksum" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          }
+        },
+        "xml" : {
+          "name" : "sequence",
+          "namespace" : "http://uniprot.org/uniparc"
+        }
+      },
+      "SeqFeatureGroupType" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "id" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          }
+        }
+      },
+      "SeqFeatureType" : {
+        "required" : [ "lcn" ],
+        "type" : "object",
+        "properties" : {
+          "ipr" : {
+            "$ref" : "#/components/schemas/SeqFeatureGroupType"
+          },
+          "lcn" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LocationType"
+            }
+          },
+          "database" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          },
+          "id" : {
+            "type" : "string",
+            "xml" : {
+              "attribute" : true
+            }
+          }
+        }
+      },
+      "JobStatusResponse" : {
+        "type" : "object",
+        "properties" : {
+          "jobStatus" : {
+            "type" : "string",
+            "enum" : [ "NEW", "RUNNING", "PROCESSING", "UNFINISHED", "FINISHED", "ERROR", "ABORTED" ]
+          },
+          "warnings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProblemPair"
+            }
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProblemPair"
+            }
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "totalEntries" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "processedEntries" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastUpdated" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "IdMappingPageRequest" : {
+        "type" : "object",
+        "properties" : {
+          "cursor" : {
+            "type" : "string"
+          },
+          "size" : {
+            "maximum" : 500,
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "JobDetailResponse" : {
+        "required" : [ "from", "ids", "to" ],
+        "type" : "object",
+        "properties" : {
+          "from" : {
+            "type" : "string"
+          },
+          "to" : {
+            "type" : "string"
+          },
+          "ids" : {
+            "type" : "string"
+          },
+          "taxId" : {
+            "type" : "string"
+          },
+          "redirectURL" : {
+            "type" : "string"
+          },
+          "warnings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProblemPair"
+            }
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProblemPair"
+            }
+          }
+        }
+      }
+    }
+  }
+}

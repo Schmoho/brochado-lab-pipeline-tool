@@ -1,0 +1,1665 @@
+openapi: 3.1.0
+info:
+  title: GO API
+  description: |-
+    The Gene Ontology API.
+
+     __Source:__ 'https://github.com/geneontology/go-fastapi'
+  contact:
+    name: Gene Ontology Consortium
+    url: https://help.geneontology.org/
+    email: help@geneontology.org
+  license:
+    name: BSD3
+  version: 1.0.0
+paths:
+  /api/ontology/term/{id}:
+    get:
+      tags:
+        - ontology
+      summary: Get Term Metadata By Id
+      description: Returns metadata of an ontology term, e.g. GO:0003677.
+      operationId: get_term_metadata_by_id_api_ontology_term__id__get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: The ID of the term to extract the metadata from, e.g. GO:0003677
+            title: Id
+          description: The ID of the term to extract the metadata from, e.g. GO:0003677
+          example: GO:0003677
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ontology/term/{id}/graph:
+    get:
+      tags:
+        - ontology
+      summary: Get Term Graph By Id
+      description: Returns graph of an ontology term, e.g. GO:0003677.
+      operationId: get_term_graph_by_id_api_ontology_term__id__graph_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: The ID of the term to extract the graph from,  e.g. GO:0003677
+            title: Id
+          description: The ID of the term to extract the graph from,  e.g. GO:0003677
+          example: GO:0003677
+        - name: graph_type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/GraphType'
+            default: topology_graph
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ontology/term/{id}/subgraph:
+    get:
+      tags:
+        - ontology
+      summary: Get Subgraph By Term Id
+      description: >-
+        Extract a subgraph from an ontology term. e.g. GO:0003677 using the
+        relationships is_a and part_of.
+      operationId: get_subgraph_by_term_id_api_ontology_term__id__subgraph_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: The ID of the term to extract the subgraph from,  e.g. GO:0003677
+            title: Id
+          description: The ID of the term to extract the subgraph from,  e.g. GO:0003677
+          example: GO:0003677
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The start index of the results to return
+            default: 0
+            title: Start
+          description: The start index of the results to return
+        - name: rows
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The number of results to return
+            default: 100
+            title: Rows
+          description: The number of results to return
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ontology/shared/{subject}/{object}:
+    get:
+      tags:
+        - ontology
+      summary: Get Ancestors Shared By Two Terms
+      description: Returns the ancestor ontology terms shared by two ontology terms.
+      operationId: >-
+        get_ancestors_shared_by_two_terms_api_ontology_shared__subject___object__get
+      parameters:
+        - name: subject
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Identifier of a GO term, e.g. GO:0006259
+            title: Subject
+          description: Identifier of a GO term, e.g. GO:0006259
+          example: GO:0006259
+        - name: object
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Identifier of a GO term, e.g. GO:0016070
+            title: Object
+          description: Identifier of a GO term, e.g. GO:0016070
+          example: GO:0016070
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/association/between/{subject}/{object}:
+    get:
+      tags:
+        - ontology
+      summary: Get Ancestors Shared Between Two Terms
+      description: Returns the ancestor ontology terms shared by two ontology terms.
+      operationId: >-
+        get_ancestors_shared_between_two_terms_api_association_between__subject___object__get
+      parameters:
+        - name: subject
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Identifier of a GO term, e.g. GO:0006259
+            title: Subject
+          description: Identifier of a GO term, e.g. GO:0006259
+          example: GO:0006259
+        - name: object
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Identifier of a GO term, e.g. GO:0016070
+            title: Object
+          description: Identifier of a GO term, e.g. GO:0016070
+          example: GO:0016070
+        - name: relation
+          in: query
+          required: false
+          schema:
+            type: string
+            description: relation between two terms
+            title: Relation
+          description: relation between two terms
+          example: closest
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/go/{id}:
+    get:
+      tags:
+        - ontology
+      summary: Get Go Term Detail By Go Id
+      description: Returns GO-CAM model identifiers for a given GO term ID, e.g. GO:0008150
+      operationId: get_go_term_detail_by_go_id_api_go__id__get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: A GO-Term CURIE (e.g. GO:0005885, GO:0097136)
+            title: Id
+          description: A GO-Term CURIE (e.g. GO:0005885, GO:0097136)
+          example: GO:0008150
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/go/{id}/hierarchy:
+    get:
+      tags:
+        - ontology
+      summary: Get Go Hierarchy Go Id
+      description: >-
+        Returns parent and children relationships for a given GO ID, e.g.
+        GO:0005885
+      operationId: get_go_hierarchy_go_id_api_go__id__hierarchy_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: A GO-Term ID, e.g. GO:0097136
+            title: Id
+          description: A GO-Term ID, e.g. GO:0097136
+          example: GO:0008150
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GOHierarchyItem'
+                title: Response Get Go Hierarchy Go Id Api Go  Id  Hierarchy Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/go/{id}/models:
+    get:
+      tags:
+        - ontology
+      summary: Get Gocam Models By Go Id
+      description: Returns GO-CAM model identifiers for a given GO term ID, e.g. GO:0008150
+      operationId: get_gocam_models_by_go_id_api_go__id__models_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: A GO-Term ID(e.g. GO:0008150 ...)
+            title: Id
+          description: A GO-Term ID(e.g. GO:0008150 ...)
+          example: GO:0008150
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/bioentity/{id}:
+    get:
+      tags:
+        - bioentity
+      summary: Get Bioentity By Id
+      description: Get bio-entities (genes) by their identifiers.
+      operationId: get_bioentity_by_id_api_bioentity__id__get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: >-
+              The CURIE of the gene to be retrieved. (e.g.
+              ZFIN:ZDB-GENE-990415-44)
+            title: Id
+          description: >-
+            The CURIE of the gene to be retrieved. (e.g.
+            ZFIN:ZDB-GENE-990415-44)
+          example: ZFIN:ZDB-GENE-990415-44
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The starting index for pagination.
+            default: 0
+            title: Start
+          description: The starting index for pagination.
+        - name: rows
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The number of results per page.
+            default: 100
+            title: Rows
+          description: The number of results per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/bioentity/function/{id}:
+    get:
+      tags:
+        - bioentity
+      summary: Get Annotations By Goterm Id
+      description: Get gene or gene product information via a GO term id, e.g. GO:0044598.
+      operationId: get_annotations_by_goterm_id_api_bioentity_function__id__get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: >-
+              The CURIE of the GO term to be used for annotation retrieval.
+              (e.g. GO:0044598)
+            title: Id
+          description: >-
+            The CURIE of the GO term to be used for annotation retrieval. (e.g.
+            GO:0044598)
+          example: GO:0044598
+        - name: evidence
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            title: Evidence
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The starting index for pagination.
+            default: 0
+            title: Start
+          description: The starting index for pagination.
+        - name: rows
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The number of results per page.
+            default: 100
+            title: Rows
+          description: The number of results per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/bioentity/function/{id}/genes:
+    get:
+      tags:
+        - bioentity
+      summary: Get Genes By Goterm Id
+      description: Returns genes annotated to the provided GO Term. e.g. GO:0044598
+      operationId: get_genes_by_goterm_id_api_bioentity_function__id__genes_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: >-
+              The CURIE of the GO term to be used for gene retrieval. (e.g.
+              GO:0044598)
+            title: Id
+          description: >-
+            The CURIE of the GO term to be used for gene retrieval. (e.g.
+            GO:0044598)
+          example: GO:0044598
+        - name: taxon
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: One or more taxon CURIE to filter associations by subject taxon
+            title: Taxon
+          description: One or more taxon CURIE to filter associations by subject taxon
+          example:
+            - NCBITaxon:7955
+            - NCBITaxon:9606
+        - name: relationship_type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/app__routers__bioentity__RelationshipType'
+            description: >-
+              relationship type ('involved_in’,‘involved_in_regulation_of’ or
+              ‘acts_upstream_of_or_within’)
+            default: involved_in
+          description: >-
+            relationship type ('involved_in’,‘involved_in_regulation_of’ or
+            ‘acts_upstream_of_or_within’)
+        - name: relation
+          in: query
+          required: false
+          schema:
+            type: string
+            description: A relation CURIE to filter associations
+            title: Relation
+          description: A relation CURIE to filter associations
+        - name: slim
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: >-
+              Map objects up slim to a higher level category. Value can be
+              ontology class ID or subset ID
+            title: Slim
+          description: >-
+            Map objects up slim to a higher level category. Value can be
+            ontology class ID or subset ID
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The starting index for pagination.
+            default: 0
+            title: Start
+          description: The starting index for pagination.
+        - name: rows
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The number of results per page.
+            default: 100
+            title: Rows
+          description: The number of results per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/bioentity/function/{id}/taxons:
+    get:
+      tags:
+        - bioentity
+      summary: Get Taxon By Goterm Id
+      description: >-
+        Returns taxon information for genes annotated to the provided GO term,
+        e.g. GO:0044598
+      operationId: get_taxon_by_goterm_id_api_bioentity_function__id__taxons_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: >-
+              The CURIE of the GO term to be used for taxon retrieval. (e.g.
+              GO:0044598)
+            title: Id
+          description: >-
+            The CURIE of the GO term to be used for taxon retrieval. (e.g.
+            GO:0044598)
+          example: GO:0044598
+        - name: evidence
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: >-
+              Object id, e.g. ECO:0000501 (for IEA; Includes inferred by
+              default) or a specific publication or other supporting object,
+              e.g. ZFIN:ZDB-PUB-060503-2
+            title: Evidence
+          description: >-
+            Object id, e.g. ECO:0000501 (for IEA; Includes inferred by default)
+            or a specific publication or other supporting object, e.g.
+            ZFIN:ZDB-PUB-060503-2
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The starting index for pagination.
+            default: 0
+            title: Start
+          description: The starting index for pagination.
+        - name: rows
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The number of results per page.
+            default: 100
+            title: Rows
+          description: The number of results per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/bioentity/gene/{id}/function:
+    get:
+      tags:
+        - bioentity
+      summary: Get Annotations By Gene Id
+      description: Returns GO terms associated with a gene, e.g. ZFIN:ZDB-GENE-050417-357
+      operationId: get_annotations_by_gene_id_api_bioentity_gene__id__function_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: >-
+              The CURIE identifier of the gene for which GO term associations
+              are retrieved.(e.g., ZFIN:ZDB-GENE-050417-357)
+            title: Id
+          description: >-
+            The CURIE identifier of the gene for which GO term associations are
+            retrieved.(e.g., ZFIN:ZDB-GENE-050417-357)
+          example: ZFIN:ZDB-GENE-050417-357
+        - name: slim
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: >-
+              Map objects up slim to a higher level category. Value can be
+              ontology class ID or subset ID
+            title: Slim
+          description: >-
+            Map objects up slim to a higher level category. Value can be
+            ontology class ID or subset ID
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The starting index for pagination.
+            default: 0
+            title: Start
+          description: The starting index for pagination.
+        - name: rows
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The number of results per page.
+            default: 100
+            title: Rows
+          description: The number of results per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ontology/term/{id}/subsets:
+    get:
+      tags:
+        - ontology
+      summary: Get Subsets By Term
+      description: >-
+        Returns subsets (slims) associated to an ontology term. (e.g.
+        GO:0003677)
+      operationId: get_subsets_by_term_api_ontology_term__id__subsets_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: The ID of the term to extract the subsets from, e.g. GO:0003677
+            title: Id
+          description: The ID of the term to extract the subsets from, e.g. GO:0003677
+          example: GO:0003677
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ontology/subset/{id}:
+    get:
+      tags:
+        - ontology
+      summary: Get Subset By Id
+      description: >-
+        Returns a subset (slim) by its id which is usually a name. (e.g.
+        goslim_agr)
+      operationId: get_subset_by_id_api_ontology_subset__id__get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Name of the subset to map GO terms (e.g. goslim_agr)
+            title: Id
+          description: Name of the subset to map GO terms (e.g. goslim_agr)
+          example: goslim_agr
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ontology/ribbon/:
+    get:
+      tags:
+        - ontology
+      summary: Get Ribbon Results
+      description: Fetch the summary of annotations for a given gene or set of genes.
+      operationId: get_ribbon_results_api_ontology_ribbon__get
+      parameters:
+        - name: subset
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Name of the subset to map GO terms (e.g. goslim_agr)
+            title: Subset
+          description: Name of the subset to map GO terms (e.g. goslim_agr)
+          example: goslim_agr
+        - name: subject
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: List of Gene ids (e.g. MGI:98214, RGD:620474)
+            title: Subject
+          description: List of Gene ids (e.g. MGI:98214, RGD:620474)
+          example:
+            - ZFIN:ZDB-GENE-990415-44
+            - RGD:620474
+        - name: ecodes
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: >-
+              List of Evidence Codes to include (e.g. EXP, IDA). Has priority
+              over exclude_IBA
+            title: Ecodes
+          description: >-
+            List of Evidence Codes to include (e.g. EXP, IDA). Has priority over
+            exclude_IBA
+          example:
+            - EXP
+            - IDA
+        - name: exclude_IBA
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: If true, excludes IBA annotations
+            default: false
+            title: Exclude Iba
+          description: If true, excludes IBA annotations
+        - name: exclude_PB
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: If true, excludes direct annotations to protein binding
+            default: false
+            title: Exclude Pb
+          description: If true, excludes direct annotations to protein binding
+        - name: cross_aspect
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: >-
+              If true, can retrieve terms from other aspects if using a
+              cross-aspect relationship such as regulates_closure
+            default: false
+            title: Cross Aspect
+          description: >-
+            If true, can retrieve terms from other aspects if using a
+            cross-aspect relationship such as regulates_closure
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/gp/{id}/models:
+    get:
+      tags:
+        - pathways
+      summary: Get Gocams By Geneproduct Id
+      description: >-
+        Returns GO-CAM models associated with a given Gene Product identifier.
+        (e.g. MGI:3588192, ZFIN:ZDB-GENE-000403-1).
+      operationId: get_gocams_by_geneproduct_id_api_gp__id__models_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: The CURIE of the gene product, e.g. MGI:3588192
+            title: Id
+          description: The CURIE of the gene product, e.g. MGI:3588192
+          example: MGI:3588192
+        - name: causalmf
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: >-
+              Used by the pathway widget The model has a chain of at least three
+              functions connected by at least two consecutive causal relation
+              edges.  One of these functions is enabled_by this input gene
+            title: Causalmf
+          description: >-
+            Used by the pathway widget The model has a chain of at least three
+            functions connected by at least two consecutive causal relation
+            edges.  One of these functions is enabled_by this input gene
+          deprecated: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/bioentityset/slimmer/function:
+    get:
+      tags:
+        - bioentityset/slimmer
+      summary: Slimmer Function
+      description: >-
+        For a given gene(s), summarize its annotations over a defined set of
+        slim.
+      operationId: slimmer_function_api_bioentityset_slimmer_function_get
+      parameters:
+        - name: relationship_type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/app__routers__slimmer__RelationshipType'
+            default: acts_upstream_of_or_within
+        - name: subject
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+            description: 'example: ZFIN:ZDB-GENE-980526-388, MGI:3588192'
+            title: Subject
+          description: 'example: ZFIN:ZDB-GENE-980526-388, MGI:3588192'
+          example:
+            - ZFIN:ZDB-GENE-980526-388
+            - MGI:3588192
+        - name: slim
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+            description: >-
+              a set of GO term ids to use as the slim, example: GO:0008150,
+              GO:0003674, GO:0005575
+            title: Slim
+          description: >-
+            a set of GO term ids to use as the slim, example: GO:0008150,
+            GO:0003674, GO:0005575
+          example:
+            - GO:0008150
+            - GO:0003674
+            - GO:0005575
+        - name: exclude_automatic_assertions
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+            title: Exclude Automatic Assertions
+        - name: rows
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: Number of rows to return, -1 for all
+            default: -1
+            title: Rows
+          description: Number of rows to return, -1 for all
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: Row to start at
+            default: 0
+            title: Start
+          description: Row to start at
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/models/go:
+    get:
+      tags:
+        - models
+      summary: Get Goterms By Model Id
+      description: Returns go term details based on a GO-CAM model ID.
+      operationId: get_goterms_by_model_id_api_models_go_get
+      parameters:
+        - name: gocams
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: >-
+              A list of GO-CAM IDs separated by a comma, e.g.
+              59a6110e00000067,SYNGO_369
+            title: Gocams
+          description: >-
+            A list of GO-CAM IDs separated by a comma, e.g.
+            59a6110e00000067,SYNGO_369
+          example:
+            - 581e072c00000295
+            - SYNGO_369
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/models/gp:
+    get:
+      tags:
+        - models
+      summary: Get Geneproducts By Model Id
+      description: Returns gene product details based on a GO-CAM model ID.
+      operationId: get_geneproducts_by_model_id_api_models_gp_get
+      parameters:
+        - name: gocams
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: >-
+              A list of GO-CAM IDs separated by a comma, e.g.
+              59a6110e00000067,SYNGO_369
+            title: Gocams
+          description: >-
+            A list of GO-CAM IDs separated by a comma, e.g.
+            59a6110e00000067,SYNGO_369
+          example:
+            - 581e072c00000295
+            - SYNGO_369
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/models/pmid:
+    get:
+      tags:
+        - models
+      summary: Get Pmid By Model Id
+      description: Returns PMID details based on a GO CAM ID.
+      operationId: get_pmid_by_model_id_api_models_pmid_get
+      parameters:
+        - name: gocams
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            description: >-
+              A list of GO-CAM IDs separated by a comma, e.g.
+              59a6110e00000067,SYNGO_369
+            title: Gocams
+          description: >-
+            A list of GO-CAM IDs separated by a comma, e.g.
+            59a6110e00000067,SYNGO_369
+          example:
+            - 581e072c00000295
+            - SYNGO_369
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/go-cam/{id}:
+    get:
+      tags:
+        - models
+      summary: Get Model Details By Model Id Json
+      description: Returns model details based on a GO-CAM model ID in JSON format.
+      operationId: get_model_details_by_model_id_json_api_go_cam__id__get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: >-
+              A GO-CAM identifier (e.g. 581e072c00000820, 581e072c00000295,
+              5900dc7400000968)
+            title: Id
+          description: >-
+            A GO-CAM identifier (e.g. 581e072c00000820, 581e072c00000295,
+            5900dc7400000968)
+          example: gomodel:66187e4700001573
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/models/{id}:
+    get:
+      tags:
+        - models
+      summary: Get Term Details By Model Id
+      description: Returns model details based on a GO-CAM model ID.
+      operationId: get_term_details_by_model_id_api_models__id__get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: >-
+              A GO-CAM identifier (e.g. 581e072c00000820, 581e072c00000295,
+              5900dc7400000968)
+            title: Id
+          description: >-
+            A GO-CAM identifier (e.g. 581e072c00000820, 581e072c00000295,
+            5900dc7400000968)
+          example: 581e072c00000295
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/taxon/{taxon}/models:
+    get:
+      tags:
+        - models
+      summary: Get Term Details By Taxon Id
+      description: Returns model details based on a NCBI Taxon ID.
+      operationId: get_term_details_by_taxon_id_api_taxon__taxon__models_get
+      parameters:
+        - name: taxon
+          in: path
+          required: true
+          schema:
+            type: string
+            description: >-
+              A taxon identifier (e.g. NCBITaxon:9606, NCBITaxon:10090,
+              NCBITaxon:10116)
+            title: Taxon
+          description: >-
+            A taxon identifier (e.g. NCBITaxon:9606, NCBITaxon:10090,
+            NCBITaxon:10116)
+          example: NCBITaxon:9606
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/pmid/{id}/models:
+    get:
+      tags:
+        - models
+      summary: Get Model Details By Pmid
+      description: Returns models for a given publication identifier (PMID).
+      operationId: get_model_details_by_pmid_api_pmid__id__models_get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: A publication identifier (PMID) (e.g. 15314168 or 26954676)
+            title: Id
+          description: A publication identifier (PMID) (e.g. 15314168 or 26954676)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/users/{orcid}/models:
+    get:
+      tags:
+        - models
+      summary: Get Models By Orcid
+      description: Returns model details based on an orcid.
+      operationId: get_models_by_orcid_api_users__orcid__models_get
+      parameters:
+        - name: orcid
+          in: path
+          required: true
+          schema:
+            type: string
+            description: The ORCID of the user (e.g. 0000-0003-1813-6857)
+            title: Orcid
+          description: The ORCID of the user (e.g. 0000-0003-1813-6857)
+          example: 0000-0003-1813-6857
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/models:
+    get:
+      tags:
+        - models
+      summary: Get Gocam Models
+      description: Returns metadata of GO-CAM models, e.g. 59a6110e00000067.
+      operationId: get_gocam_models_api_models_get
+      deprecated: true
+      parameters:
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: start
+            title: Start
+          description: start
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: Number of models to look for
+            title: Size
+          description: Number of models to look for
+        - name: last
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: last
+            title: Last
+          description: last
+        - name: group
+          in: query
+          required: false
+          schema:
+            type: string
+            description: group
+            title: Group
+          description: group
+        - name: user
+          in: query
+          required: false
+          schema:
+            type: string
+            description: user
+            title: User
+          description: user
+        - name: pmid
+          in: query
+          required: false
+          schema:
+            type: string
+            description: pmid
+            title: Pmid
+          description: pmid
+        - name: causalmf
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: >-
+              The model has a chain of at least three functions connected by at
+              least two consecutive causal relation edges.  One of these
+              functions is enabled_by this input gene
+            default: false
+            title: Causalmf
+          description: >-
+            The model has a chain of at least three functions connected by at
+            least two consecutive causal relation edges.  One of these functions
+            is enabled_by this input gene
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/identifier/prefixes:
+    get:
+      tags:
+        - identifier/prefixes
+      summary: Get All Prefixes
+      description: Returns a list of all prefixes in the GO namespace.
+      operationId: get_all_prefixes_api_identifier_prefixes_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/identifier/prefixes/expand/{id}:
+    get:
+      tags:
+        - identifier/prefixes
+      summary: Get Expand Curie
+      description: >-
+        Enter a CURIE of the identified resource to expand to full URI format. 
+        e.g. MGI:3588192, MGI:MGI:3588192
+      operationId: get_expand_curie_api_identifier_prefixes_expand__id__get
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: identifier in CURIE format of the resource to expand
+            title: Id
+          description: identifier in CURIE format of the resource to expand
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/identifier/prefixes/contract/:
+    get:
+      tags:
+        - identifier/prefixes
+      summary: Get Contract Uri
+      description: >-
+        Enter a full URI of the identified resource to contract to CURIE format,
+        e.g. 'http://purl.obolibrary.org/obo/GO_0008150'.
+      operationId: get_contract_uri_api_identifier_prefixes_contract__get
+      parameters:
+        - name: uri
+          in: query
+          required: true
+          schema:
+            type: string
+            description: URI of the resource to contract
+            title: Uri
+          description: URI of the resource to contract
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ontol/labeler:
+    get:
+      tags:
+        - ontol/labeler
+      summary: Expand Curie
+      description: Fetches a map from IDs to labels e.g. GO:0003677.
+      operationId: expand_curie_api_ontol_labeler_get
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+            description: IDs to fetch labels for.
+            title: Id
+          description: IDs to fetch labels for.
+          example:
+            - GO:0003677
+            - GO:0008150
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/search/entity/autocomplete/{term}:
+    get:
+      tags:
+        - search
+      summary: Autocomplete Term
+      description: >-
+        Returns a list of matching concepts or entities over annotation classes
+        and bio-entities.
+      operationId: autocomplete_term_api_search_entity_autocomplete__term__get
+      parameters:
+        - name: term
+          in: path
+          required: true
+          schema:
+            type: string
+            description: e.g., biological
+            title: Term
+          description: e.g., biological
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The starting index of the search results.
+            default: 0
+            title: Start
+          description: The starting index of the search results.
+        - name: rows
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: The maximum number of rows to return in the search results.
+            default: 100
+            title: Rows
+          description: The maximum number of rows to return in the search results.
+        - name: category
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/AutocompleteCategory'
+            description: The category of items to retrieve, can be 'gene' or 'term'
+          description: The category of items to retrieve, can be 'gene' or 'term'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/users:
+    get:
+      tags:
+        - users and groups
+      summary: Get Users
+      description: Get GO users.
+      operationId: get_users_api_users_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      deprecated: true
+  /api/users/{orcid}/gp:
+    get:
+      tags:
+        - models
+      summary: Get Gp Models By Orcid
+      description: Get GPs by orcid
+      operationId: get_gp_models_by_orcid_api_users__orcid__gp_get
+      deprecated: true
+      parameters:
+        - name: orcid
+          in: path
+          required: true
+          schema:
+            type: string
+            description: The ORCID of the user (e.g. 0000-0002-7285-027X)
+            title: Orcid
+          description: The ORCID of the user (e.g. 0000-0002-7285-027X)
+          example: 0000-0002-7285-027X
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/groups:
+    get:
+      tags:
+        - users and groups
+      summary: Get Groups
+      description: Get GO groups
+      operationId: get_groups_api_groups_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      deprecated: true
+  /api/groups/{name}:
+    get:
+      tags:
+        - users and groups
+      summary: Get Group Metadata By Name
+      description: Get GO group metadata by name
+      operationId: get_group_metadata_by_name_api_groups__name__get
+      deprecated: true
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            description: The name of the Group (e.g. SynGO, GO Central, MGI, ...)
+            title: Name
+          description: The name of the Group (e.g. SynGO, GO Central, MGI, ...)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/users/{orcid}:
+    get:
+      tags:
+        - models
+      summary: Get Go Cam Models By Orcid
+      description: Get GO-CAM models by ORCID
+      operationId: get_go_cam_models_by_orcid_api_users__orcid__get
+      deprecated: true
+      parameters:
+        - name: orcid
+          in: path
+          required: true
+          schema:
+            type: string
+            description: The ORCID of the user (e.g. 0000-0002-7285-027X)
+            title: Orcid
+          description: The ORCID of the user (e.g. 0000-0002-7285-027X)
+          example: 0000-0002-7285-027X
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    AutocompleteCategory:
+      type: string
+      enum:
+        - gene
+        - term
+      title: AutocompleteCategory
+      description: The category of items to retrieve, can be 'gene' or 'term'.
+    GOHierarchyItem:
+      properties:
+        GO:
+          type: string
+          title: Go
+        label:
+          type: string
+          title: Label
+        hierarchy:
+          type: string
+          title: Hierarchy
+      type: object
+      required:
+        - GO
+        - label
+        - hierarchy
+      title: GOHierarchyItem
+      description: >-
+        A GO Hierarchy return model.
+
+
+        This helps the hierarchy endpoint render in the swagger interface
+        correctly,
+
+        even when a return is missing a component here.
+
+
+        :param GO: The GO ID.
+
+        :param label: The label of the GO ID.
+
+        :param hierarchy: The hierarchy of the GO ID.
+    GraphType:
+      type: string
+      enum:
+        - topology_graph
+      const: topology_graph
+      title: GraphType
+      description: Enum for the different types of graphs that can be returned.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      title: ValidationError
+    app__routers__bioentity__RelationshipType:
+      type: string
+      enum:
+        - involved_in
+        - acts_upstream_of_or_within
+        - involved_in_regulation_of
+      title: RelationshipType
+      description: >-
+        Enumeration for Gene Ontology relationship types used for filtering
+        associations.
+
+
+        :param INVOLVED_IN: The 'involved_in' relationship type.
+
+        :param ACTS_UPSTREAM_OF_OR_WITHIN: The 'acts_upstream_of_or_within'
+        relationship type.
+
+        :param INVOLVED_IN_REGULATION_OF: The 'involved_in_regulation_of'
+        relationship type.
+    app__routers__slimmer__RelationshipType:
+      type: string
+      enum:
+        - acts_upstream_of_or_within
+        - involved_in
+      title: RelationshipType
+      description: Relationship type for slimmer.

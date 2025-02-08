@@ -1,0 +1,18 @@
+<configuration scan="true" scanPeriod="5 seconds">
+  <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d [%thread] %X{run.id} %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <root level="DEBUG">
+    <appender-ref ref="STDOUT" />
+  </root>
+  <logger name="org.eclipse.jetty" level="INFO" />
+  <logger name="org.sbml.jsbml" level="OFF" />
+  <logger name="com.zaxxer.hikari" level="INFO" />
+  <logger name="org.mongodb.driver" level="WARN" />
+  <logger name="org.apache.http" level="INFO" />
+</configuration>
+
+

@@ -1,0 +1,43 @@
+networks:
+  unknown:
+
+volumes:
+  unknown-db-data:
+  mongo-db-data:
+
+services:
+  unknown-db:
+    restart: unless-stopped
+    image: neo4j:5.26.1
+    hostname: unknown-db
+    environment:
+      - NEO4J_AUTH=none
+    volumes:
+      - unknown-db-data:/data
+    ports:
+      - 127.0.0.1:7474:7474
+      - 127.0.0.1:7687:7687
+    networks:
+      - unknown
+      
+  mongo-db:
+    restart: unless-stopped
+    image: mongodb/mongodb-community-server:7.0-ubi8
+    hostname: mongo-db
+    volumes:
+      - mongo-db-data:/data/db
+    ports:
+      - 127.0.0.1:27017:27017
+    networks:
+      - unknown
+      
+  unknown-graphql-api:
+    hostname: unknown-graphql-api
+    image: unknown-graphql-api
+    ports:
+      - 127.0.0.1:4000:4000
+    environment:
+      - NODE_ENV=development
+    command: ["node", "index.js", "neo4j://unknown-db:7687"]
+    networks:
+      - unknown
