@@ -1,5 +1,7 @@
-(ns uniprot.core
-  (:require [clojure.string :as str]))
+(ns biodb.uniprot.core
+  (:require [clojure.string :as str]
+            [cheshire.core :as json]
+            [clojure.java.io :as io]))
 
 (defn active-sites
   [uniprot-record]
@@ -133,21 +135,21 @@
     (zipmap (map :from parsed)
             (map :to parsed))))
 
-(def idmapping-result
+#_(def idmapping-result
   (parse-idmapping-result-json "idmapping_2024_10_23.json"))
 
-(let [seqs (take 2 (map-proteins (juxt (comp :value :sequence)
+#_(let [seqs (take 2 (map-proteins (juxt (comp :value :sequence)
                                        organism)
                                  idmapping-result))]
   (for [[accession [protein-seq {:keys [scientificName taxonId]}]] seqs]
     [(str ">UniprotAccession: " accession " UniprotTaxon: " taxonId " - " scientificName)
      protein-seq]))
 
-(map-proteins (comp (partial map :referencePositions)
+#_(map-proteins (comp (partial map :referencePositions)
                     :references)
               idmapping-result)
 
-(->>  idmapping-result
+#_(->>  idmapping-result
       (map (fn [[k v]]
              [k (:references v)]))
       (map (juxt first
@@ -166,7 +168,7 @@
    :references
    val))
 
-(distinct (flatten (map   idmapping-result)))
+#_(distinct (flatten (map   idmapping-result)))
 #_(def blast-uniprotkb-records (uniprot-results-from-blast-result blast-result))
 #_(spit "blast-uniprotkb-records.json" (json/generate-string blast-uniprotkb-records))
 #_(def blast-uniprotkb-records (parse-uniprot-records-json "blast-uniprotkb-records.json"))
@@ -182,16 +184,16 @@
 #_(def blast-records (merge blast-uniparc-records blast-uniprotkb-records))
 #_(distinct-sequences-count blast-records) ;; => 48
 
-(def structures
+#_(def structures
   (get-structures-for-uniprot-records! blast-records))
 
-(def known-sites-prots
+#_(def known-sites-prots
   (known-transpeptidase-sites-for-uniprot-records (merge uniparc-results uniprot-results)))
 
-(def seq-90-structures
+#_(def seq-90-structures
   (get-structures-for-uniprot-records! seq-90-percent-sim))
 
-(def seq-90-known-sites
+#_(def seq-90-known-sites
   (known-transpeptidase-sites-for-uniprot-records seq-90-percent-sim))
 
 

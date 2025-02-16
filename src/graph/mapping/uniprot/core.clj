@@ -1,0 +1,277 @@
+(ns graph.mapping.uniprot.core
+  (:require [graph.mapping.utils :refer :all]
+            [graph.mapping.uniprot.ncbi :as ncbi]
+            [clojure.string :as str]
+            [clojure.set :as set]))
+
+(defn taxon-ref-id [taxon] (sanitize-ref-id (str "T_UNIPROT_" (:taxonId taxon))))
+(defn proteome-ref-id [proteome] (sanitize-ref-id (str "PP_UNIPROT_" (:id proteome))))
+(defn protein-ref-id [protein] (sanitize-ref-id (str "P_UNIPROT_" (:primaryAccession protein))))
+(defn evidence-ref-id [evidence] (sanitize-ref-id (str "E_UNIPROT_" (:source evidence) "_" (:id evidence))))
+(defn cross-reference-ref-id [cross-reference] (sanitize-ref-id (str "CR_UNIPROT_" (:database cross-reference) "_" (:id cross-reference))))
+
+;; taxons
+(defn taxon->taxon-node
+  [taxon]
+  {:ref-id (taxon-ref-id taxon)
+   :labels [:taxon :uniprot-taxon]
+   :props  {:id              (:taxonId taxon)
+            :scientific-name (:scientificName taxon)
+            :rank            (:rank taxon)
+            :proteome-count  (get-in taxon [:statistics :proteomeCount])}})
+
+(defn taxon->taxon-ancestry
+  [taxon]
+  (let [lineage-nodes      (->> (set (map taxon->taxon-node (:lineage taxon))))
+        ancestry-relations (->> taxon
+                                (conj (:lineage taxon))
+                                (partition 2 1)
+                                (map
+                                 (fn [[parent child]]
+                                   (let [parent-id (:taxonId parent)
+                                         child-id  (:taxonId child)]
+                                     {:type   :lineage-parent
+                                      :ref-id (rel-ref-id
+                                               (taxon-ref-id parent)
+                                               (taxon-ref-id child))
+                                      :from   {:ref-id (taxon-ref-id parent)
+                                               :labels [:taxon :uniprot-taxon]
+                                               :props  {:id parent-id}}
+                                      :to     {:ref-id (taxon-ref-id child)
+                                               :labels [:taxon :uniprot-taxon]
+                                               :props  {:id child-id}}})))
+                                set)
+        database-relations (->> lineage-nodes
+                                (map (partial
+                                      rel-between
+                                      :contains
+                                      {:ref-id "D"
+                                       :labels [:database]
+                                       :props  {:id "UniprotTaxonomy"}}))
+                                set)]
+    {:nodes lineage-nodes
+     :rels  (set/union ancestry-relations database-relations)}))
+
+(defn taxon->neo4j
+  [taxon]
+  (let [t-node   (taxon->taxon-node taxon)
+        entities (merge-with
+                  into
+                  {:nodes [t-node]
+                   :rels  [(rel-between
+                            :contains
+                            {:ref-id "D"
+                             :labels [:database]
+                             :props  {:id "UniprotTaxonomy"}}
+                            t-node)]}
+                  (taxon->taxon-ancestry taxon))
+        ref-ids  (->> entities
+                      vals
+                      (apply concat)
+                      (map :ref-id)
+                      distinct)]
+    (-> (assoc entities :returns ref-ids)
+        (sanitize-graph))))
+
+;; proteomes
+(defn proteome->proteome-node
+  [proteome]
+  {:ref-id (proteome-ref-id proteome)
+   :labels [:proteome :uniprot-proteome]
+   :props  (merge
+            (select-keys proteome [:id
+                                   :proteinCount
+                                   :geneCount
+                                   :strain
+                                   :modified
+                                   :proteomeType
+                                   :redundantTo])
+            (:proteomeStatistics proteome))})
+
+(defn proteome->taxon-relation
+  [proteome]
+  (let [taxon       (-> proteome :taxonomy)
+        tax-id      (-> taxon :taxonId)
+        proteome-id (-> proteome :id)]
+    {:type   :has-proteome
+     :ref-id (rel-ref-id
+              (taxon-ref-id taxon)
+              (proteome-ref-id proteome))
+     :from   {:ref-id (taxon-ref-id taxon)
+              :labels [:taxon :uniprot-taxon]
+              :props  {:id tax-id}}
+     :to     {:ref-id (proteome-ref-id proteome)
+              :labels [:proteome :uniprot-proteome]
+              :props  {:id proteome-id}}}))
+
+(defn proteome->neo4j
+  [proteome]
+  (let [assembly-rel (ncbi/proteome->assembly-relation proteome)
+        p-node       (proteome->proteome-node proteome)
+        entities     {:nodes [p-node]
+                      :rels  [(proteome->taxon-relation proteome)
+                              (rel-between
+                               :contains
+                               {:ref-id "D"
+                                :labels [:database]
+                                :props  {:id "UniprotTaxonomy"}}
+                               p-node)
+                              assembly-rel]}
+        ref-ids      (->> entities
+                          vals
+                          (apply concat)
+                          (map :ref-id)
+                          set)]
+    (->> (assoc entities :returns ref-ids)
+         (sanitize-graph))))
+
+;; proteins
+(defn protein->protein-node
+  [protein]
+  {:ref-id (protein-ref-id protein)
+   :labels [:protein :uniprot-protein]
+   :props  (merge
+            (select-keys
+             protein
+             [:annotationScore
+              :proteinExistence
+              :entryType
+              :uniProtkbId])
+            {:id                     (:primaryAccession protein)
+             :sequence               (-> protein :sequence :value)
+             :sequence-weight        (-> protein :sequence :molWeight)
+             :recommended-name       (some->
+                                      protein
+                                      :proteinDescription
+                                      :recommendedName
+                                      :fullName
+                                      :value)
+             :recommended-short-name (some->
+                                      protein
+                                      :proteinDescription
+                                      :recommendedName
+                                      :shortName
+                                      :value)})})
+
+(defn feature->feature-node
+  [feature ref-id]
+  {:ref-id ref-id
+   :labels [(pascal-case-keyword (:type feature)) :protein-feature :uniprot-protein-feature]
+   :props  {:id             (str (random-uuid))
+            :start          (-> feature :location :start :value)
+            :start-modifier (-> feature :location :start :modifier)
+            :end            (-> feature :location :end :value)
+            :end-modifier   (-> feature :location :end :modifier)
+            :description    (feature :description)}})
+
+;; ligands in features reference ChEBI,
+;; which is not contained in the list of Uniprot reference databases
+;; and which only exposes a WSDL webservice
+#_:featureCrossReferences
+#_[{:database "ChEBI", :id "CHEBI:58805"}],
+
+(defn cross-reference->cross-reference-node
+  [cross-reference]
+  (let [id (str (random-uuid))]
+    {:ref-id   (cross-reference-ref-id (assoc cross-reference :id id))
+     :labels   [:cross-referenced-entity :uniprot-cross-referenced-entity]
+     :props    {:id           id         
+                :reference-id (:id cross-reference)}
+     :database (:database cross-reference)}))
+
+(defn protein->neo4j
+  [protein]
+  (let [p-node     (protein->protein-node protein)
+        f-nodes    (->> (map-indexed
+                         (fn [idx feature]
+                           (feature->feature-node
+                            feature
+                            (str "PF_" (:primaryAccession protein) "_" idx)))
+                         (:features protein)))
+        f-rels     (->> f-nodes
+                        (map (partial rel-between
+                                      :has-feature
+                                      p-node)))
+        c-nodes    (->> (:uniProtKBCrossReferences protein)
+                        ;; 
+                        (map cross-reference->cross-reference-node))
+        c-rels     (->> c-nodes
+                        (map (partial rel-between
+                                      :has-cross-reference
+                                      p-node)))
+        c-db-nodes (->> c-nodes
+                        (map (fn [c-node]
+                               (let [db-id (-> c-node :database)]
+                                 {:ref-id (sanitize-ref-id db-id)
+                                  :labels [:database]
+                                  :props  {:id db-id}}))))
+        c-db-rels  (->> c-nodes
+                        (map (fn [c-node]
+                               (rel-between
+                                :referenced-by-uniprot
+                                c-node
+                                (let [db-id (-> c-node :database)]
+                                  {:ref-id (sanitize-ref-id db-id)})))))
+        entities   {:lookups c-db-nodes
+                    :nodes   (concat [p-node]
+                                   f-nodes
+                                   c-nodes)
+                    :rels    (concat f-rels c-rels c-db-rels)}
+        ref-ids    (->> entities
+                        vals
+                        (apply concat)
+                        (map (comp :ref-id))
+                        set)]
+    (->> (assoc entities :returns ref-ids)
+         (sanitize-graph))))
+
+#_(let [protein user/uniprot-protein]
+    (protein->neo4j protein))
+
+;; evidences should reference ECO terms
+;; those need to be imported first
+#_(defn evidence->evidence-node
+    [evidence]
+    {:ref-id (evidence-ref-id evidence)
+     :labels [:evidence :uniprot]
+     :props  {:evidenceCode (:evidenceCode evidence)
+              :source       (:source evidence)
+              :id           (:id evidence)}})
+
+
+#_(->> user/uniprot-proteome-proteins
+       (map :uniProtKBCrossReferences)
+       (apply concat))
+
+;; databases
+(defn database->database-node
+  [database]
+  (->
+   {:ref-id (sanitize-ref-id (:abbrev database))
+    :labels [:database]
+    :props  {:id                             (:abbrev database)
+             :uniprot-id                     (:id database)
+             :category                       (:category database)
+             :name                           (:name database)
+             :doi                            (:doiId database)
+             :uniprot-reviewedProteinCount   (-> database :statistics :reviewedProteinCount)
+             :uniprot-unreviewedProteinCount (-> database :statistics :unreviewedProteinCount)
+             :urls                           (doall (:servers database))
+             :template-url                   (:dbUrl database)
+             :pubmed-id                      (:pubMedId database)
+             :uniprot-linkType               (:linkType database)}}
+   (update :props sanitize)))
+
+
+#{#_"RefSeq"
+  "PDB"
+  "AlphaFoldDB"
+  "STRING"
+  "KEGG"
+  "PseudoCAP"
+  #_"OrthoDB"
+  "BioCyc"
+  "Proteomes"
+  "GO"
+  #_"InterPro"
+  #_"PANTHER"}

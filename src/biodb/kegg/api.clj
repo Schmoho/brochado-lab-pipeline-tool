@@ -1,4 +1,4 @@
-(ns kegg.api
+(ns biodb.kegg.api
   (:require
    [cheshire.core :as json]
    [clj-http.client :as client]
@@ -9,38 +9,68 @@
    [clojure.java.shell :as sh]
    [clojure.tools.logging :as log]
    [clojure.set :as set]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io]
+   [biodb.http :as http]))
 
 (def kegg-api-base "https://rest.kegg.jp")
 
-(defn parse-genome-list
-  [list]
-  (->> list
-       (str/split-lines)
-       (map #(str/split % #"\t"))
-       (map (fn [[t-number organism-name]]
-              (->> (str/split organism-name #";" 2)
-                   (map str/trim)
-                   (concat [t-number]))))))
+(def kegg-organisms-in-ncbi-brite-id "br:br08610")
 
-(defn parse-organism-list
-  [list]
-  (str/split-lines)
-     (map (comp
-           (fn [[t-number kegg-code scientific-name lineage]]
-             [t-number kegg-code scientific-name (vec (str/split lineage #";"))])
-           #(str/split % #"\t"))))
+(defn list
+  [database]
+  (-> (http/get (format "%s/list/%s" kegg-api-base database))
+      :body))
 
-(def kegg-list
-  (memoize
-   (fn kegg-list
-     [database]
-     (let [result (-> (client/get (format "%s/list/%s" kegg-api-base database))
-                      :body)]
-       (case database
-         "genome" (parse-genome-list result)
-         "organism" (parse-organism-list result)
-         result)))))
+#_(str/split-lines (list "br:08908"))
+
+(defn get
+  [id]
+  (log/debug "Get entity" id "from KEGG.")
+  (-> (http/get (format "%s/get/%s" kegg-api-base id))
+      :body))
+
+(defn get-orthology
+  [id]
+  (-> (http/get (format "%s/get/ko:%s" kegg-api-base id))
+      :body))
+
+(defn get-pathway
+  [id]
+  (-> (http/get (format "%s/get/pathway:%s" kegg-api-base id))
+      :body))
+
+(defn get-json
+  [id]
+  (-> (http/get (format "%s/get/%s/json" kegg-api-base id))
+      :body
+      (json/parse-string true)))
+
+
+(defn find
+  [database query]
+  (-> (http/get (format "%s/find/%s/%s" kegg-api-base database query))
+      :body))
+
+;; (str/split-lines (find "brite" "taxonomy"))
+
+;; (->> (tree-seq
+;;       map?
+;;       :children
+;;       (get-json kegg-organisms-in-ncbi-brite-id))
+;;      (filter (fn [e]
+;;                (and (map? e) (:name e)
+;;                     (str/includes? (:name e) "[TAX:"))))
+;;      (map (fn [stuff]
+;;             [(second (re-find #"\[TAX:(\d+)\]" (:name stuff)))
+;;              #_(map (comp first #(str/split % #"\s+") :name) (:children stuff))
+;;              (:children stuff)]))
+;;      (filter (fn [[ncbi-tax-id stuff]]
+;;                (> (count stuff) 1 ))))
+
+(defn link
+  [target-database source-database]
+  (-> (http/get (format "%s/link/%s/%s" kegg-api-base target-database source-database))
+      :body))
 
 #_(->> (kegg-list "genome")
      (filter (fn [[_ _ org-name]]
@@ -49,98 +79,23 @@
                   (str/lower-case org-name)
                   "pseudomonas aeruginosa")))))
 
-(->> (kegg-list "genome"))
+#_(->> (kegg-list "genome"))
 
+;; (defn get!
+;;   [query]
+;;   (log/info (format "KEGG API - get %s" query))
+;;   (let [result (-> (client/get (format "%s/get/%s" base-url query))
+;;                    :body
+;;                    parse-kegg-get-result)]
+;;     (if (= 1 (count result))
+;;       (first result)
+;;       result)))
 
-
-
-(def pseudomonas "pau")
-(def ecoli "eco")
-
-(defn- update-if-exists
-  [m k f]
-  (if (contains? m k)
-    (update m k f)
-    m))
-
-(def two-part (partial map #(str/split % #"\s+" 2)))
-
-(defn split-bulk-response
-  [lines]
-  (let [idx (inc (.indexOf lines "///"))
-        [head tail] (split-at idx lines)]
-    (if (not-empty tail)
-      (concat [(drop-last head)] (lol tail))
-      [(drop-last head)])))
-
-(defn- parse-kegg-get-result
-  [body]
-  (let [responses (->> body
-                       (str/split-lines)
-                       split-bulk-response)
-        
-        prepped-responses
-        (->> responses
-             (map (fn [response]
-                    (->> response
-                         (map #(if (> (count %) 12)
-                                 [(subs % 0 12)
-                                  (subs % 12)]
-                                 [%]))
-                         (reduce (fn [acc [tag value]]
-                                   (if (str/blank? (str/trim tag))
-                                     (update acc
-                                             (dec (count acc))
-                                             #(conj % value))
-                                     (conj acc [tag value])))
-                                 [])
-                         (map (fn [[k & vs]]
-                                [(str/trim k) vs]))
-                         (into {})))))
-
-        parsed-responses
-        (->> prepped-responses
-             (map (fn [response]
-                    (-> response
-                        (update-if-exists "ORTHOLOGY" two-part)
-                        (update-if-exists "DBLINKS" (partial map #(str/split % #":\s+" 2)))
-                        #_(update-if-exists "DBLINKS"
-                                            (comp (partial into {})
-                                                  (partial map
-                                                           (fn [pair]
-                                                             (when pair
-                                                               (let [[k v]
-                                                                     (map str/trim
-                                                                          (str/split pair #":"))]
-                                                                 [k v]))))))
-                        (update-if-exists "NTSEQ" (comp (partial apply str)
-                                                        (partial drop 1)))
-                        (update-if-exists "AASEQ" (comp (partial apply str)
-                                                        (partial drop 1)))
-                        (update-if-exists "ORGANISM" two-part)
-                        (update-if-exists "PATHWAY" two-part)
-                        (update-if-exists "GENE" two-part)
-                        (update-if-exists "REL_PATHWAY" two-part)
-                        (update-if-exists "COMPOUND" two-part)
-                        (update-if-exists "PATHWAY_MAP" two-part)
-                        (update-if-exists "MODULE" two-part)))))]
-    parsed-responses))
-
-(defn get!
-  [query]
-  (log/info (format "KEGG API - get %s" query))
-  (let [result (-> (client/get (format "%s/get/%s" base-url query))
-                   :body
-                   parse-kegg-get-result)]
-    (if (= 1 (count result))
-      (first result)
-      result)))
-
-(defn get-ids!
-  [ids]
-  (->> (for [ids (partition-all 10 ids)]
-         (get! (str/join "+" ids)))
-       (apply concat)))
+;; (defn get-ids!
+;;   [ids]
+;;   (->> (for [ids (partition-all 10 ids)]
+;;          (get! (str/join "+" ids)))
+;;        (apply concat)))
 
 (defn get-all-genes!
   [organism]

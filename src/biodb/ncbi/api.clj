@@ -1,10 +1,8 @@
-(ns biodb.ncbi
+(ns biodb.ncbi.api
   (:require
    [biodb.http :as http]
    [clojure.string :as str]
    [cheshire.core :as json]))
-
-(def ncbi-tax-id "208964")
 
 (def ncbi-api-base "https://api.ncbi.nlm.nih.gov/datasets/v2")
 
@@ -21,8 +19,13 @@
          (:body)
          (json/parse-string true)))))
 
-#_(def taxon-report (taxon-dataset-report ncbi-tax-id {"page_size" 1000}))
-
+#_(def taxon-report (taxon-dataset-report "652611" {"page_size" 1000}))
+#_(-> taxon-report keys)
+;; => (:reports :total_count)
+#_(-> taxon-report :reports first keys)
+;; => (:accession :annotation_info :assembly_info :assembly_stats :average_nucleotide_identity :checkm_info :current_accession :organism :paired_accession :source_database)
+#_(-> taxon-report :reports first :organism keys)
+;; => (:tax_id :organism_name :infraspecific_names)
 
 (defn genome-annotation-summary
   ([accessions]

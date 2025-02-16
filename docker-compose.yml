@@ -2,7 +2,7 @@ networks:
   unknown:
 
 volumes:
-  unknown-db-data:
+  unknown-db-data-2:
   mongo-db-data:
 
 services:
@@ -12,8 +12,12 @@ services:
     hostname: unknown-db
     environment:
       - NEO4J_AUTH=none
+      - NEO4J_HOME=/var/lib/neo4j
+      - NEO4J_server_memory_heap_max__size=4G
+      - NEO4J_dbms_memory_transaction_total_max=4G
     volumes:
-      - unknown-db-data:/data
+      - unknown-db-data-2:/data
+      - ./csv:/var/lib/neo4j/import:rw
     ports:
       - 127.0.0.1:7474:7474
       - 127.0.0.1:7687:7687
@@ -32,8 +36,9 @@ services:
       - unknown
       
   unknown-graphql-api:
-    hostname: unknown-graphql-api
+    restart: unless-stopped
     image: unknown-graphql-api
+    hostname: unknown-graphql-api
     ports:
       - 127.0.0.1:4000:4000
     environment:
