@@ -63,12 +63,6 @@
    {}
    m))
 
-(defn sanitize-graph
-  [g]
-  {:lookups (some->> g :lookups (map #(update % :props sanitize)) set)
-   :nodes (some->> g :nodes (map #(update % :props sanitize)) set)
-   :rels  (some->> g :rels (map #(update % :props sanitize)) set)})
-
 (defn pascal-case-keyword
   [s]
   (->> (str/split s #"[\ -]")
@@ -86,6 +80,13 @@
     (str/replace s #"[\\.\-\\:|]" "_")
     s))
 
+(defn sanitize-graph
+  [g]
+  {:lookups (some->> g :lookups (map #(update % :props sanitize)) set)
+   :nodes (some->> g :nodes (map #(update % :props sanitize)) set)
+   :rels  (some->> g :rels (map #(update % :props sanitize)) set)
+   :returns (some->> g :returns (map sanitize-ref-id) set)})
+
 (defn rel-ref-id
   [a b]
   (sanitize-ref-id (str "REL_" a "__" b)))
@@ -96,12 +97,14 @@
    :ref-id (rel-ref-id
             (:ref-id a)
             (:ref-id b))
-   :from   a
-   :to     b})
+   :from   {:ref-id (:ref-id a)
+            :props  {:id (-> a :props :id)}}
+   :to     {:ref-id (:ref-id b)
+            :props  {:id (-> b :props :id)}}})
 
 (defn merge-graphs
   [& gs]
-  (log/info "Merging!")
-  {:nodes   (doall (distinct (apply concat (map :nodes gs))))
+  {:lookups (doall (distinct (apply concat (map :lookups gs))))
+   :nodes   (doall (distinct (apply concat (map :nodes gs))))
    :rels    (doall (distinct (apply concat (map :rels gs))))
    :returns (doall (distinct (apply concat (map :returns gs))))})

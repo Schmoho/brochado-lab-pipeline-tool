@@ -10,7 +10,7 @@
 (def last-val (atom nil))
 (def last-val-tap #(reset! last-val %))
 (add-tap last-val-tap)
-
+@last-val
 #_(add-tap (bound-fn* clojure.pprint/pprint))
 
 #_[expound.alpha :as expound]

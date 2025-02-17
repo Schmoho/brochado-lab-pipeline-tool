@@ -8,7 +8,6 @@
 (defn proteome-ref-id [proteome] (sanitize-ref-id (str "PP_UNIPROT_" (:id proteome))))
 (defn protein-ref-id [protein] (sanitize-ref-id (str "P_UNIPROT_" (:primaryAccession protein))))
 (defn evidence-ref-id [evidence] (sanitize-ref-id (str "E_UNIPROT_" (:source evidence) "_" (:id evidence))))
-(defn cross-reference-ref-id [cross-reference] (sanitize-ref-id (str "CR_UNIPROT_" (:database cross-reference) "_" (:id cross-reference))))
 
 ;; taxons
 (defn taxon->taxon-node
@@ -49,16 +48,22 @@
                                        :labels [:database]
                                        :props  {:id "UniprotTaxonomy"}}))
                                 set)]
-    {:nodes lineage-nodes
-     :rels  (set/union ancestry-relations database-relations)}))
+    {:lookups #{{:ref-id "D"
+                :labels [:database]
+                :props  {:id "UniprotTaxonomy"}}}
+     :nodes   lineage-nodes
+     :rels    (set/union ancestry-relations database-relations)}))
 
 (defn taxon->neo4j
   [taxon]
   (let [t-node   (taxon->taxon-node taxon)
         entities (merge-with
                   into
-                  {:nodes [t-node]
-                   :rels  [(rel-between
+                  {:lookups #{{:ref-id "D"
+                              :labels [:database]
+                              :props  {:id "UniprotTaxonomy"}}}
+                   :nodes   [t-node]
+                   :rels    [(rel-between
                             :contains
                             {:ref-id "D"
                              :labels [:database]
@@ -108,13 +113,16 @@
   [proteome]
   (let [assembly-rel (ncbi/proteome->assembly-relation proteome)
         p-node       (proteome->proteome-node proteome)
-        entities     {:nodes [p-node]
-                      :rels  [(proteome->taxon-relation proteome)
+        entities     {:lookups #{{:ref-id "D"
+                                  :labels [:database]
+                                  :props  {:id "Proteomes"}}}
+                      :nodes   [p-node]
+                      :rels    [(proteome->taxon-relation proteome)
                               (rel-between
                                :contains
                                {:ref-id "D"
                                 :labels [:database]
-                                :props  {:id "UniprotTaxonomy"}}
+                                :props  {:id "Proteomes"}}
                                p-node)
                               assembly-rel]}
         ref-ids      (->> entities
@@ -156,8 +164,9 @@
 (defn feature->feature-node
   [feature ref-id]
   {:ref-id ref-id
-   :labels [(pascal-case-keyword (:type feature)) :protein-feature :uniprot-protein-feature]
-   :props  {:id             (str (random-uuid))
+   :labels [:protein-feature :uniprot-protein-feature]
+   :props  {:id             ref-id
+            :type           (:type feature)
             :start          (-> feature :location :start :value)
             :start-modifier (-> feature :location :start :modifier)
             :end            (-> feature :location :end :value)
@@ -170,60 +179,42 @@
 #_:featureCrossReferences
 #_[{:database "ChEBI", :id "CHEBI:58805"}],
 
-(defn cross-reference->cross-reference-node
-  [cross-reference]
-  (let [id (str (random-uuid))]
-    {:ref-id   (cross-reference-ref-id (assoc cross-reference :id id))
-     :labels   [:cross-referenced-entity :uniprot-cross-referenced-entity]
-     :props    {:id           id         
-                :reference-id (:id cross-reference)}
-     :database (:database cross-reference)}))
-
 (defn protein->neo4j
   [protein]
-  (let [p-node     (protein->protein-node protein)
-        f-nodes    (->> (map-indexed
-                         (fn [idx feature]
-                           (feature->feature-node
-                            feature
-                            (str "PF_" (:primaryAccession protein) "_" idx)))
-                         (:features protein)))
-        f-rels     (->> f-nodes
-                        (map (partial rel-between
-                                      :has-feature
-                                      p-node)))
-        c-nodes    (->> (:uniProtKBCrossReferences protein)
-                        ;; 
-                        (map cross-reference->cross-reference-node))
-        c-rels     (->> c-nodes
-                        (map (partial rel-between
-                                      :has-cross-reference
-                                      p-node)))
-        c-db-nodes (->> c-nodes
-                        (map (fn [c-node]
-                               (let [db-id (-> c-node :database)]
-                                 {:ref-id (sanitize-ref-id db-id)
-                                  :labels [:database]
-                                  :props  {:id db-id}}))))
-        c-db-rels  (->> c-nodes
-                        (map (fn [c-node]
-                               (rel-between
-                                :referenced-by-uniprot
-                                c-node
-                                (let [db-id (-> c-node :database)]
-                                  {:ref-id (sanitize-ref-id db-id)})))))
-        entities   {:lookups c-db-nodes
-                    :nodes   (concat [p-node]
-                                   f-nodes
-                                   c-nodes)
-                    :rels    (concat f-rels c-rels c-db-rels)}
-        ref-ids    (->> entities
-                        vals
-                        (apply concat)
-                        (map (comp :ref-id))
-                        set)]
-    (->> (assoc entities :returns ref-ids)
-         (sanitize-graph))))
+  (let [p-node   (protein->protein-node protein)
+        f-nodes  (->> (map-indexed
+                       (fn [idx feature]
+                         (feature->feature-node
+                          feature
+                          (str "PF_" (:primaryAccession protein) "_" idx)))
+                       (:features protein)))
+        f-rels   (->> f-nodes
+                      (map (partial rel-between
+                                    :has-feature
+                                    p-node)))
+        entities {:lookups [{:ref-id "D"
+                             :labels [:database]
+                             :props  {:id "UniprotKB"}}]
+                  :nodes   (concat [p-node]
+                                   f-nodes)
+                  :rels    (conj f-rels
+                                 (rel-between
+                                  :contains
+                                  {:ref-id "D"
+                                   :labels [:database]
+                                   :props  {:id "UniprotKB"}}
+                                  p-node))}
+        ref-ids  (->> entities
+                      vals
+                      (apply concat)
+                      (map (comp :ref-id))
+                      set)
+        result   (->> (assoc entities :returns ref-ids)
+                      (sanitize-graph))]
+    (tap> result)
+    result))
+
+
 
 #_(let [protein user/uniprot-protein]
     (protein->neo4j protein))

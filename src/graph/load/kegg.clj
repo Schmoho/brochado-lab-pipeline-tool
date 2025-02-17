@@ -9,7 +9,9 @@
   (log/debug "Loading CDS into DB.")
   (->> cds
        (mapping/cds->cds-node)
-       (cypher/merge-node! connection)))
+       (cypher/merge-node-with-rels-by-id! connection)))
+
+
 
 ;; orthology
 ;; pathways

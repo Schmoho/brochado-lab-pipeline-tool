@@ -28,11 +28,12 @@
     (log/debug "Loading database node" (:abbrev database) ".")
     (load.uniprot/load-database! connection (update database :servers (fn [list-prop] (str "[" (str/join ","  list-prop) "]"))))))
 
-#_(define-constraints! connection)
-#_(delete-constraints! connection)
-#_(load-databases! connection)
-#_(user/clear-db! connection)
+#_(define-constraints! load.core/connection)
+#_(delete-constraints! load.core/connection)
 
+#_(do
+    (user/clear-db! load.core/connection)
+    (load-databases! load.core/connection))
 
 ;; Stuff
 

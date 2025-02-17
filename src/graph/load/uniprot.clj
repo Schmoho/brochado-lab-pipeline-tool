@@ -5,7 +5,8 @@
    [graph.mapping.uniprot.core :as mapping]))
 
 (def constraints
-  ["CREATE CONSTRAINT uniprot_taxon_id FOR (t:UniprotTaxon) REQUIRE t.id IS UNIQUE"
+  ["CREATE CONSTRAINT uniprot_database_id FOR (t:Database) REQUIRE t.id IS UNIQUE"
+   "CREATE CONSTRAINT uniprot_taxon_id FOR (t:UniprotTaxon) REQUIRE t.id IS UNIQUE"
    "CREATE CONSTRAINT uniprot_proteome_id FOR (t:UniprotProteome) REQUIRE t.id IS UNIQUE"
    "CREATE CONSTRAINT uniprot_protein_id FOR (t:UniprotProtein) REQUIRE t.id IS UNIQUE"
    "CREATE CONSTRAINT uniprot_protein_feature_id FOR (t:UniprotProteinFeature) REQUIRE t.id IS UNIQUE"
@@ -25,7 +26,8 @@
   (->> taxon
        (mapping/taxon->neo4j)
        #_(client/create-graph! connection)
-       (cypher/merge-graph! connection)))
+       #_(cypher/merge-graph! connection)
+       (cypher/merge-node-with-rels-by-id! connection)))
 
 (defn load-proteome!
   [connection proteome]
@@ -41,16 +43,8 @@
   (->> protein
        (mapping/protein->neo4j)
        #_(client/create-graph! connection)
-       (cypher/merge-graph! connection)))
-
-(defn load-proteins!
-  [connection proteins]
-  (->> proteins
-       (map mapping/protein->neo4j)
-       (merge-with into)
-       #_(client/create-graph! connection)
-       (cypher/merge-graph! connection)))
-
+       #_(cypher/merge-graph! connection)
+       (cypher/merge-node-with-rels-by-id! connection)))
 
 #_(def insane-taxonomic-levels
   #{"no rank"
