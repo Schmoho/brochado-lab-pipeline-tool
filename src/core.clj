@@ -20,9 +20,10 @@
     (if exit-message
       (exit (if ok? 0 1) exit-message)
       (do
-        (log/info "Running with config:" (:config-file options))
-        (or (:config-file options)
-            (edn/read-string (slurp (io/resource "default-config.edn"))))
-        (accrete/start! accrete/system)
-        (server/start!)))))
+        (let [input-config (or (:config-file options)
+                               (edn/read-string (slurp (io/resource "default-config.edn"))))]
+          (log/info "Running with config:" input-config)
+          (reset! config input-config)
+          (accrete/start! accrete/system)
+          (server/start! (:http-port @config)))))))
 
