@@ -113,13 +113,6 @@
            (json/parse-string true)
            :results)))))
 
-;; (def get-uniprotkb-record!
-;;   (memoize
-;;    (fn [url-or-id]
-;;      (if (str/includes? url-or-id "https://rest.uniprot.org/uniprotkb/")
-;;        (get-json url-or-id)
-;;        (get-json (str "https://rest.uniprot.org/uniprotkb/" url-or-id))))))
-
 
 ;; (defn get-inactive-record-via-parc!
 ;;   [{:keys [extraAttributes]}]

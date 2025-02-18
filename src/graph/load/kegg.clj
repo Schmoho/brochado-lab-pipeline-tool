@@ -7,9 +7,13 @@
 (defn load-cds!
   [connection cds]
   (log/debug "Loading CDS into DB.")
-  (->> cds
-       (mapping/cds->cds-node)
-       (cypher/merge-node-with-rels-by-id! connection)))
+  (let [result (->> cds
+                    (mapping/cds->cds-node)
+                    (cypher/merge-node-with-rels-by-id! connection))]
+    {:input-data cds
+     :db-result  result
+     :type       :kegg/cds
+     :id         (:id cds)}))
 
 
 

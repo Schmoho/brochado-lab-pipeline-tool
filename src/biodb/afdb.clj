@@ -1,4 +1,4 @@
-(ns docking.afdb
+(ns biodb.afdb
   (:require [clj-http.client :as client]
             [utils :refer [get-json]]))
 

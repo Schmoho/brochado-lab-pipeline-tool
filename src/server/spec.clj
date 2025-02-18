@@ -2,13 +2,16 @@
   (:require
    [clojure.spec.alpha :as s]))
 
+(s/def :uniprot/id string?)
+(s/def :uniprot/type keyword?)
+
+(s/def :uniprot/basic-response (s/keys :req-un [:uniprot/id :uniprot/type]))
+
 (s/def :uniprot/taxon-id some?)
 (s/def :uniprot/taxon-request (s/keys :req-un [:uniprot/taxon-id]))
-(s/def :uniprot/taxon-response some?)
 
 (s/def :uniprot/protein-id some?)
 (s/def :uniprot/protein-request (s/keys :req-un [:uniprot/protein-id]))
-(s/def :uniprot/protein-response some?)
 
 
 #_[reitit.ring.middleware.multipart :as multipart]

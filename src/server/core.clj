@@ -41,20 +41,20 @@
        ["/taxon"
         {:get  {:summary    "Initiate accretion of a taxon by ID."
                 :parameters {:query :uniprot/taxon-request}
-                :responses  {200 {:body nil?}}
+                :responses  {200 {:body :uniprot/basic-response}}
                 :handler    handler/uniprot-taxon-id-handler}
          :post {:summary    "Initiate accretion of a taxon by ID."
                 :parameters {:body :uniprot/taxon-request}
-                :responses  {200 {:body nil?}}
+                :responses  {200 {:body :uniprot/basic-response}}
                 :handler    handler/uniprot-taxon-id-handler}}]
        ["/protein"
         {:get  {:summary    "Initiate accretion of a protein by ID."
                 :parameters {:query :uniprot/protein-request}
-                :responses  {200 {:body nil?}}
+                :responses  {200 {:body :uniprot/basic-response}}
                 :handler    handler/uniprot-protein-id-handler}
          :post {:summary    "Initiate accretion of a protein by ID."
                 :parameters {:body :uniprot/protein-request}
-                :responses  {200 {:body nil?}}
+                :responses  {200 {:body :uniprot/basic-response}}
                 :handler    handler/uniprot-protein-id-handler}}]]]]
 
     {;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs

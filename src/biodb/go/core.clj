@@ -1,6 +1,6 @@
-(ns go
+(ns biodb.go.core
   (:require
-   [go.db :as db]
+   [biodb.go.db :as db]
    [cheshire.core :as json]
    [clojure.java.io :as java.io]
    [clojure.math :as math]
@@ -71,25 +71,25 @@
                      (get counts (inc (/ ccount 2)))))
       (get counts (inc (int (/ ccount 2)))))))
 
-(defn gaf-stats
-  [gaf]
-  (let [proteins->terms (proteins->terms gaf)]
-    {:count                     (count gaf)
-     :distinct-terms            (count (distinct (map :go-id gaf)))
-     :relation-types            (count-by gaf :relation)
-     :count-by-origin           (count-by gaf :db)
-     :count-by-evidence-code    (-> gaf
-                                 (count-by :evidence-code)
-                                 (translate-keys evidence-code-lookup))
-     :count-by-aspect           (->>
-                                 (for [aspect ["F" "C" "P"]]
-                                   [({"F" :function
-                                      "C" :compartment
-                                      "P" :process} aspect)
-                                 (count (get (group-by :aspect gaf) aspect))])
-                                 (into {}))
-     :median-terms-for-proteins (median-of-list-val-counts proteins->terms)
-     :mean-terms-for-proteins   (int (mean-of-list-val-counts proteins->terms))}))
+;; (defn gaf-stats
+;;   [gaf]
+;;   (let [proteins->terms (proteins->terms gaf)]
+;;     {:count                     (count gaf)
+;;      :distinct-terms            (count (distinct (map :go-id gaf)))
+;;      :relation-types            (count-by gaf :relation)
+;;      :count-by-origin           (count-by gaf :db)
+;;      :count-by-evidence-code    (-> gaf
+;;                                  (count-by :evidence-code)
+;;                                  (translate-keys evidence-code-lookup))
+;;      :count-by-aspect           (->>
+;;                                  (for [aspect ["F" "C" "P"]]
+;;                                    [({"F" :function
+;;                                       "C" :compartment
+;;                                       "P" :process} aspect)
+;;                                  (count (get (group-by :aspect gaf) aspect))])
+;;                                  (into {}))
+;;      :median-terms-for-proteins (median-of-list-val-counts proteins->terms)
+;;      :mean-terms-for-proteins   (int (mean-of-list-val-counts proteins->terms))}))
 
 ;; {:pseudocap (gaf-stats pseudocap-gaf)
 ;;  :uniprot   (gaf-stats pa-gaf)}
@@ -98,10 +98,10 @@
 ;; Wie groß ist der overlap zwischen den orthology-mapped Genen?
 ;; Dasselbe für Pathways an denen gemappte Gene beteiligt sind
 
-(-> @db/db :eco :proteins)
-;; => 5771
+;; (-> @db/db :eco :proteins)
+;; ;; => 5771
 
-(->> @db/db :eco :annotations (drop 20) first)
+;; (->> @db/db :eco :annotations (drop 20) first)
 
 (defn orthology-mappable-genes
   [gaf orthology-lookup]
@@ -111,68 +111,68 @@
        (filter #(and (orthology-lookup %)
                      (some? %)))))
 
-(count (orthology-mappable-genes ec-gaf kegg/ec-orthology-lookup))
-;; => 3126
-(count (orthology-mappable-genes pa-gaf kegg/pa-orthology-lookup))
-;; => 3165
+;; (count (orthology-mappable-genes ec-gaf kegg/ec-orthology-lookup))
+;; ;; => 3126
+;; (count (orthology-mappable-genes pa-gaf kegg/pa-orthology-lookup))
+;; ;; => 3165
 
-(let [ec-mapped (->> (map (comp kegg/ec-orthology-lookup :db-object-id) ec-gaf)
-                     (filter some?)
-                     set)
-      pa-mapped (->> (map (comp kegg/pa-orthology-lookup :db-object-id) pa-gaf)
-                     (filter some?)
-                     set)]
-  (count (set/intersection ec-mapped pa-mapped)))
-;; => 1584
+;; (let [ec-mapped (->> (map (comp kegg/ec-orthology-lookup :db-object-id) ec-gaf)
+;;                      (filter some?)
+;;                      set)
+;;       pa-mapped (->> (map (comp kegg/pa-orthology-lookup :db-object-id) pa-gaf)
+;;                      (filter some?)
+;;                      set)]
+;;   (count (set/intersection ec-mapped pa-mapped)))
+;; ;; => 1584
 
-(def go-lookup
-  (->> go
-      :graphs
-      first
-      :nodes
-      (map (fn [stuff]
-             (update stuff :id (fn [id-url]
-                                 (-> id-url
-                                     (str/split #"/")
-                                     last
-                                     (str/replace "_" ":"))))))
-      (group-by :id)
-      (map (fn [[id stuffs]]
-             [id (first stuffs)]))
-      (into {})))
+;; (def go-lookup
+;;   (->> go
+;;       :graphs
+;;       first
+;;       :nodes
+;;       (map (fn [stuff]
+;;              (update stuff :id (fn [id-url]
+;;                                  (-> id-url
+;;                                      (str/split #"/")
+;;                                      last
+;;                                      (str/replace "_" ":"))))))
+;;       (group-by :id)
+;;       (map (fn [[id stuffs]]
+;;              [id (first stuffs)]))
+;;       (into {})))
 
 (defn represented-go-terms
   [gene-name-lookup hits]
   (->> (map :gene hits)))
 
-(defn go-term-frequencies
-  [hits kegg->uniprot organism-go-terms gene-name-lookup]
-  (->> hits
-       (map :gene)
-       (map (fn [gene]
-              (let [go-terms (or (-> gene
-                                     kegg->uniprot
-                                     organism-go-terms)
-                                (->> gene
-                                     gene-name-lookup
-                                     (map kegg->uniprot)
-                                     (map organism-go-terms)))]
-               go-terms)))
-      flatten
-      (map (fn [go-term]
-             (when go-term
-               [(:relation go-term) (:go-id go-term)])))
-      (filter some?)
-      (frequencies)
-      (map (fn [[[relation go-term] frequency]]
-             [[relation
-               go-term
-               (-> (go-lookup go-term) :lbl)]
-              frequency]))
-      (sort-by (fn [[[relation go-term] frequency]]
-                 frequency))
-      reverse
-      (into {})))
+;; (defn go-term-frequencies
+;;   [hits kegg->uniprot organism-go-terms gene-name-lookup]
+;;   (->> hits
+;;        (map :gene)
+;;        (map (fn [gene]
+;;               (let [go-terms (or (-> gene
+;;                                      kegg->uniprot
+;;                                      organism-go-terms)
+;;                                 (->> gene
+;;                                      gene-name-lookup
+;;                                      (map kegg->uniprot)
+;;                                      (map organism-go-terms)))]
+;;                go-terms)))
+;;       flatten
+;;       (map (fn [go-term]
+;;              (when go-term
+;;                [(:relation go-term) (:go-id go-term)])))
+;;       (filter some?)
+;;       (frequencies)
+;;       (map (fn [[[relation go-term] frequency]]
+;;              [[relation
+;;                go-term
+;;                (-> (go-lookup go-term) :lbl)]
+;;               frequency]))
+;;       (sort-by (fn [[[relation go-term] frequency]]
+;;                  frequency))
+;;       reverse
+;;       (into {})))
 
 
 ;; (let [pa-freqs (->> (go-term-frequencies excel/pa-amikacin-hits

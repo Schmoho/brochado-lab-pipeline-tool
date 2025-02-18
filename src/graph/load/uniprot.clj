@@ -17,39 +17,45 @@
   (log/debug "Loading Uniprot DB into DB.")
   (->> database
        (mapping/database->database-node)
-       #_(client/create-node! connection)
        (cypher/merge-node! connection)))
 
 (defn load-taxon!
   [connection taxon]
   (log/debug "Loading Uniprot Taxon into DB.")
-  (->> taxon
-       (mapping/taxon->neo4j)
-       #_(client/create-graph! connection)
-       #_(cypher/merge-graph! connection)
-       (cypher/merge-node-with-rels-by-id! connection)))
+  (let [result (->> taxon
+                    (mapping/taxon->neo4j)
+                    (cypher/merge-node-with-rels-by-id! connection))]
+    {:input-data taxon
+     :db-result  result
+     :type       :uniprot/taxon
+     :id         (:taxonId taxon)}))
 
 (defn load-proteome!
   [connection proteome]
-  (->> proteome
-       (log/debug "Loading Uniprot Proteome into DB.")
-       (mapping/proteome->neo4j)
-       #_(client/create-graph! connection)
-       (cypher/merge-graph! connection)))
+  (log/debug "Loading Uniprot Proteome into DB.")
+  (let [result (->> proteome
+                    (mapping/proteome->neo4j)
+                    (cypher/merge-graph! connection))]
+    {:input-data proteome
+     :db-result  result
+     :type       :uniprot/proteome
+     :id         (:id proteome)}))
 
 (defn load-protein!
   [connection protein]
   (log/debug "Loading Uniprot Protein into DB.")
-  (->> protein
-       (mapping/protein->neo4j)
-       #_(client/create-graph! connection)
-       #_(cypher/merge-graph! connection)
-       (cypher/merge-node-with-rels-by-id! connection)))
+  (let [result (->> protein
+                    (mapping/protein->neo4j)
+                    (cypher/merge-node-with-rels-by-id! connection))]
+    {:input-data protein
+     :db-result  result
+     :type       :uniprot/protein
+     :id         (:primaryAccession protein)}))
 
 (defn connect-protein!
   [connection protein]
   (let [protein-id (:primaryAccession protein)
-        cross-ids  (mapping/protein->cross-ids)]
+        cross-ids  (mapping/protein->cross-ids protein)]
     (doseq [[db ids] cross-ids
             id       ids]
       (log/info "Connecting" id "and" protein-id)
@@ -64,17 +70,17 @@
 
 
 #_(def insane-taxonomic-levels
-  #{"no rank"
-    "phylum"
-    "class"
-    "order"
-    "family"
-    "superkingdom"
-    "kingdom"
-    "clade"
-    "subkingdom"
-    "subphylum"
-    "subclass"
-    "suborder"
-    "subfamily"
-    "tribe"})
+    #{"no rank"
+      "phylum"
+      "class"
+      "order"
+      "family"
+      "superkingdom"
+      "kingdom"
+      "clade"
+      "subkingdom"
+      "subphylum"
+      "subclass"
+      "suborder"
+      "subfamily"
+      "tribe"})

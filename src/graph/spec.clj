@@ -69,5 +69,5 @@
   (s/keys :req-un [:cypher/nodes :cypher/rels]))
 
 (s/def :cypher/connection
-  #(instance? neo4clj.client.Connection %))
-
+  some?
+  #_(instance? neo4clj/Connection %))

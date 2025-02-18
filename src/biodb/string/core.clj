@@ -1,4 +1,4 @@
-(ns string-db
+(ns biodb.string.core
   (:require
    [cheshire.core :as json]
    [clj-http.client :as http]

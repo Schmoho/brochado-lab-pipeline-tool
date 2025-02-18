@@ -1,11 +1,11 @@
-(ns docking.pubchem
+(ns biodb.pubchem.core
   (:require [clj-http.client :as client]
             [cheshire.core :as json]
             [clojure.string :as str]))
 
-(def http-get (memoize client/get))
+(def http-get client/get)
 
-#_(-> (http-get "https://pubchem.ncbi.nlm.nih.gov/rest/pug/substance/name/cefotaxim/cids/JSON?list_return=grouped")
+#_(-> (client/get "https://pubchem.ncbi.nlm.nih.gov/rest/pug/substance/name/cefotaxim/cids/JSON?list_return=grouped")
       :body
       (json/parse-string true)
       :InformationList :Information
@@ -22,9 +22,9 @@
       (json/parse-string true)
       :PC_Compounds))
 
-(def compounds (get-compounds "Cefotaxim"))
+;; (def compounds (get-compounds "Cefotaxim"))
 
-(def compound (-> compounds first))
+;; (def compound (-> compounds first))
 
 (def cid-prefix "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/")
 
