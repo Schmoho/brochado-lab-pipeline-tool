@@ -9,6 +9,10 @@
                  
                  [org.clojure/tools.logging "1.3.0"]
                  [ch.qos.logback/logback-classic "1.5.7"]
+
+                 [ring/ring-core "1.13.0"]
+                 [ring/ring-jetty-adapter "1.13.0"]
+                 [metosin/reitit "0.8.0-alpha1"]
                  
                  [com.github.full-spectrum/neo4clj-core "1.1.0"]
                  [com.novemberain/monger "3.6.0"]

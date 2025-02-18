@@ -254,6 +254,18 @@
    (update :props sanitize)))
 
 
+(defn protein->cross-ids
+  [protein]
+  (let [protein-id       (:primaryAccession protein)
+        cross-references (:uniProtKBCrossReferences protein)]
+    (-> (group-by :database cross-references)
+        (update-vals (partial map :id))
+        (update-keys
+         {"KEGG"      :kegg
+          "Proteomes" :uniprot/proteomes})
+        (assoc :uniprot/taxonomy [(-> protein :organism :taxonId)])
+        (dissoc nil))))
+
 #{#_"RefSeq"
   "PDB"
   "AlphaFoldDB"

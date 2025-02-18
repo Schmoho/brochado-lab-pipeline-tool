@@ -1,5 +1,8 @@
 (ns user
   (:require
+   [clojure.spec.alpha :as s]
+   [clojure.spec.test.alpha :as st]
+   [expound.alpha :as expound]
    [clj-http.client :as http]
    [neo4clj.client :as client]
    [biodb.ncbi.api :as ncbi.api]
@@ -13,10 +16,9 @@
 @last-val
 #_(add-tap (bound-fn* clojure.pprint/pprint))
 
-#_[expound.alpha :as expound]
-#_(alter-var-root #'s/*explain-out* (constantly expound/printer))
-#_[clojure.spec.test.alpha :as st]
-#_(st/instrument)
+(alter-var-root #'s/*explain-out* (constantly expound/printer))
+
+(st/instrument)
 
 (def ncbi-tax-id "652611")
 

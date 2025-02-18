@@ -46,6 +46,23 @@
        #_(cypher/merge-graph! connection)
        (cypher/merge-node-with-rels-by-id! connection)))
 
+(defn connect-protein!
+  [connection protein]
+  (let [protein-id (:primaryAccession protein)
+        cross-ids  (mapping/protein->cross-ids)]
+    (doseq [[db ids] cross-ids
+            id       ids]
+      (log/info "Connecting" id "and" protein-id)
+      (cypher/merge-node-by-id! connection {:ref-id "p"
+                                            :props  {:id protein-id}})
+      (cypher/merge-node-by-id! connection {:ref-id "c"
+                                            :props  {:id id}})
+      (cypher/merge-rel! connection {:ref-id "r"
+                                     :type   :references
+                                     :from   {:props {:id protein-id}}
+                                     :to     {:props {:id id}}}))))
+
+
 #_(def insane-taxonomic-levels
   #{"no rank"
     "phylum"

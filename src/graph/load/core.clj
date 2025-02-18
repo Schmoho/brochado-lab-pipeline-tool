@@ -1,5 +1,6 @@
 (ns graph.load.core
   (:require
+   [graph.spec]
    [biodb.kegg.api :as api.kegg]
    [biodb.kegg.parser :as parser.kegg]
    [biodb.uniprot.api :as api.uniprot]
@@ -10,7 +11,9 @@
    [neo4clj.client :as client]
    [clojure.tools.logging :as log]
    [graph.cypher :as cypher]
-   [graph.load.setup :as setup]))
+   [graph.load.setup :as setup]
+   [clojure.core.async :as a]
+   [graph.mapping.uniprot.core :as mapping.uniprot]))
 
 (def connection
   (client/connect "bolt://localhost:7687"))
@@ -29,27 +32,8 @@
                                            :input-channel (-> uniprot-protein-api :channels :protein)})
         cross-reference-sorter           (make-distributor-module!
                                           {:operation     (fn [protein]
-                                                            (let [protein-id       (:primaryAccession protein)
-                                                                  cross-references (:uniProtKBCrossReferences protein)
-                                                                  cross-ids        (-> (group-by :database cross-references)
-                                                                                       (update-vals (partial map :id))
-                                                                                       (update-keys
-                                                                                        {"KEGG"      :kegg
-                                                                                         "Proteomes" :uniprot/proteomes})
-                                                                                       (assoc :uniprot/taxonomy [(-> protein :organism :taxonId)])
-                                                                                       (dissoc nil))]
-                                                              (doseq [[db ids] cross-ids
-                                                                      id       ids]
-                                                                (log/info "connecting" id "and" protein-id)
-                                                                (cypher/merge-node-by-id! connection {:ref-id "p"
-                                                                                                      :props  {:id protein-id}})
-                                                                (cypher/merge-node-by-id! connection {:ref-id "c"
-                                                                                                      :props  {:id id}})
-                                                                (cypher/merge-rel! connection {:ref-id "r"
-                                                                                               :type   :references
-                                                                                               :from   {:props {:id protein-id}}
-                                                                                               :to     {:props {:id id}}}))
-                                                              cross-ids))
+                                                            (load.uniprot/connect-protein! connection protein)
+                                                            (mapping.uniprot/protein->cross-ids protein))
                                            :channel-names [:kegg :uniprot/proteomes :uniprot/taxonomy]
                                            :input-channel (-> uniprot-protein-api :channels :cross-references)
                                            :bulk-mapping  (constantly true)})
@@ -72,7 +56,19 @@
                                           {:operation     (partial load.kegg/load-cds! connection)
                                            :input-channel (:output-channel kegg-cds-api)})
         new-entities-funnel              (make-funnel! {:from [(:output-channel uniprot-protein-db-load)
-                                                               (:output-channel kegg-cds-db-load)]})]
+                                                               (:output-channel kegg-cds-db-load)]})
+        entrypoint                       (make-distributor-module!
+                                          {:operation     (fn [stuff]
+                                                            (case (:requested-accretion-type stuff)
+                                                              :uniprot/taxon
+                                                              {:uniprot/taxon-ids (:id stuff)}
+                                                              :uniprot/protein
+                                                              {:uniprot/protein-ids (:id stuff)}))
+                                           :channel-names [:uniprot/taxon-ids :uniprot/protein-ids]})
+        _                                (pipe! {:from (-> entrypoint :channels :uniprot/taxon-ids)
+                                                 :to   (-> uniprot-taxon-api :input-channel)})
+        _                                (pipe! {:from (-> entrypoint :channels :uniprot/protein-ids)
+                                                 :to   (-> uniprot-protein-api :input-channel)})]
     {:uniprot/taxon-api                uniprot-taxon-api
      :uniprot/taxon-db-load            uniprot-taxon-db-load
      :uniprot/proteome-by-taxon-id-api uniprot-proteome-by-taxon-id-api
@@ -81,16 +77,9 @@
      :uniprot/cross-reference-sorter   cross-reference-sorter
      :kegg/cds-api                     kegg-cds-api
      :kegg/cds-db-load                 kegg-cds-db-load
-     :new-entities-funnel              new-entities-funnel}))
+     :new-entities-funnel              new-entities-funnel
+     :entrypoint                       entrypoint}))
 
-(defn stop!
-  [system]
-  (walk/prewalk
-   (fn [e]
-     (if (= (type e) java.lang.Thread)
-       (do (.interrupt e) e)
-       e))
-   system))
 
 (defn status
   [system]
@@ -102,14 +91,34 @@
        :else e))
    system))
 
-(def system (atom {}))
+(defn stop!
+  [system]
+  (log/info "Terminating accretion system threads.")
+  (walk/prewalk
+   (fn [e]
+     (if (= (type e) java.lang.Thread)
+       (do (.interrupt e) e)
+       e))
+   system))
+
+(defn start!
+  [system-atom]
+  (log/info "Starting accretion system.")
+  (reset! system-atom (make-system!)))
 
 (defn restart!
-  []
-  (stop! @system)
-  (reset! system (make-system!)))
+  [system-atom]
+  (log/info "Restarting accretion system.")
+  (stop! @system-atom)
+  (reset! system-atom (make-system!)))
 
+(def system (atom {}))
 
+(defn submit!
+  [stuff]
+  (if-let [in (-> @system :entrypoint :input-channel)]
+    (.offer in stuff)
+    (log/error "Accretion system is not running.")))
 
 
 #_(-> @system :uniprot/protein-db-load :output-channel)

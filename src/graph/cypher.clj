@@ -1,5 +1,6 @@
 (ns graph.cypher
   (:require
+   [clojure.spec.alpha :as s]
    [neo4clj.client :as client]
    [neo4clj.query-builder :as builder]
    [neo4clj.cypher :as cypher]
@@ -100,3 +101,7 @@
       (merge-node-by-id! connection node))
     (for [rel (:rels graph)]
       (merge-rel! connection rel)))))
+
+(s/fdef merge-node-with-rels-by-id!
+  :args (s/cat :connection :cypher/connection :graph :cypher/graph))
+

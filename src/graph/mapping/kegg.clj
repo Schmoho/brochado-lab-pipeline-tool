@@ -1,16 +1,18 @@
 (ns graph.mapping.kegg
-  (:require [graph.mapping.utils :refer :all]
-            [graph.mapping.uniprot.ncbi :as ncbi]
-            [clojure.string :as str]
-            [clojure.set :as set]
-            [clojure.tools.logging :as log]
-            [neo4clj.query-builder :as builder]))
+  (:require
+   [clojure.spec.alpha :as s]
+   [graph.mapping.utils :refer :all]
+   [graph.mapping.uniprot.ncbi :as ncbi]
+   [clojure.string :as str]
+   [clojure.set :as set]
+   [clojure.tools.logging :as log]
+   [neo4clj.query-builder :as builder]
+   [clojure.spec.test.alpha :as st]))
 
 (defn cds-ref-id [cds] (sanitize-ref-id (str "G_KEGG_" (:id cds))))
 
 (defn cds->cds-node
   [cds]
-  (log/debug "Mapping CDS to DB node.")
   (let [ref-id (cds-ref-id cds)]
     {:nodes   [{:ref-id ref-id
                 :labels [:cds :kegg-cds]
@@ -27,3 +29,6 @@
                 :to   {:ref-id ref-id
                        :props  {:id (:id cds)}}}]}))
 
+(s/fdef cds->cds-node
+  :args (s/cat :cds map?)
+  :ret :cypher/graph)

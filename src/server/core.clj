@@ -1,0 +1,100 @@
+(ns server.core
+  (:require
+   [server.spec]
+   [server.handler :as handler]
+   [reitit.ring :as ring]
+   [reitit.coercion.spec]
+   [reitit.openapi :as openapi]
+   [reitit.swagger :as swagger]
+   [reitit.swagger-ui :as swagger-ui]
+   [reitit.ring.coercion :as coercion]
+   [reitit.dev.pretty :as pretty]
+   [reitit.ring.middleware.muuntaja :as muuntaja]
+   [reitit.ring.middleware.exception :as exception]
+   [reitit.ring.middleware.multipart :as multipart]
+   [reitit.ring.middleware.parameters :as parameters]
+                                        ; [reitit.ring.middleware.dev :as dev]
+   [reitit.ring.spec :as spec]
+                                        ; [spec-tools.spell :as spell]
+   [ring.adapter.jetty :as jetty]
+   [muuntaja.core :as m] 
+   [clojure.java.io :as io]
+   [clojure.tools.logging :as log]))
+
+(def app
+  (ring/ring-handler
+   (ring/router
+    [["/swagger.json"
+      {:get {:no-doc  true
+             :swagger {:info {:title "unknown-api"}}
+             :handler (swagger/create-swagger-handler)}}]
+     ["/openapi.json"
+      {:get {:no-doc  true
+             :openapi {:info {:title       "unknown-api"
+                              :description "gives cool"
+                              :version     "0.0.1"}}
+             :handler (openapi/create-openapi-handler)}}]
+
+     ["/accrete"
+      {:tags ["accrete"]}
+      ["/uniprot"
+       ["/taxon"
+        {:get  {:summary    "Initiate accretion of a taxon by ID."
+                :parameters {:query :uniprot/taxon-request}
+                :responses  {200 {:body nil?}}
+                :handler    handler/uniprot-taxon-id-handler}
+         :post {:summary    "Initiate accretion of a taxon by ID."
+                :parameters {:body :uniprot/taxon-request}
+                :responses  {200 {:body nil?}}
+                :handler    handler/uniprot-taxon-id-handler}}]
+       ["/protein"
+        {:get  {:summary    "Initiate accretion of a protein by ID."
+                :parameters {:query :uniprot/protein-request}
+                :responses  {200 {:body nil?}}
+                :handler    handler/uniprot-protein-id-handler}
+         :post {:summary    "Initiate accretion of a protein by ID."
+                :parameters {:body :uniprot/protein-request}
+                :responses  {200 {:body nil?}}
+                :handler    handler/uniprot-protein-id-handler}}]]]]
+
+    {;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
+     :validate  spec/validate ;; enable spec validation for route data
+     ;;:reitit.spec/wrap spell/closed ;; strict top-level validation
+     :exception pretty/exception
+     :data      {:coercion   reitit.coercion.spec/coercion
+                 :muuntaja   m/instance
+                 :middleware [;; swagger feature
+                              swagger/swagger-feature
+                              ;; query-params & form-params
+                              parameters/parameters-middleware
+                              ;; content-negotiation
+                              muuntaja/format-negotiate-middleware
+                              ;; encoding response body
+                              muuntaja/format-response-middleware
+                              ;; exception handling
+                              exception/exception-middleware
+                              ;; decoding request body
+                              muuntaja/format-request-middleware
+                              ;; coercing response bodys
+                              coercion/coerce-response-middleware
+                              ;; coercing request parameters
+                              coercion/coerce-request-middleware
+                              ;; multipart
+                              multipart/multipart-middleware]}})
+   (ring/routes
+    (swagger-ui/create-swagger-ui-handler
+     {:path   "/"
+      :config {:validatorUrl     nil
+               :urls             [{:name "swagger" :url "swagger.json"}
+                                  {:name "openapi" :url "openapi.json"}]
+               :urls.primaryName "openapi"
+               :operationsSorter "alpha"}})
+    (ring/create-default-handler))))
+
+
+(defn start!
+  [port]
+  (jetty/run-jetty #'app {:port port, :join? false})
+  (log/info (format "HTTP server running on port %s." port)))
+
+(comment (start! 3000))

@@ -116,3 +116,12 @@
     {:funnel funnelers
      :from   from
      :to     to}))
+
+(defn pipe!
+  [{:keys [from to]}]
+  {:pipe (make-thing-doer!
+          from
+          to
+          identity)
+   :from from
+   :to   to})
