@@ -1,12 +1,12 @@
-(ns graph.load.kegg
+(ns graph.accrete.kegg
   (:require
    [clojure.tools.logging :as log]
    [graph.cypher :as cypher]
    [graph.mapping.kegg :as mapping]))
 
-(defn load-cds!
+(defn accrete-cds!
   [connection cds]
-  (log/debug "Loading CDS into DB.")
+  (log/debug "Accreteing CDS into DB.")
   (let [result (->> cds
                     (mapping/cds->cds-node)
                     (cypher/merge-node-with-rels-by-id! connection))]

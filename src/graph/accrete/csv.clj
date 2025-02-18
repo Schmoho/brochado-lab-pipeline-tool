@@ -1,4 +1,4 @@
-(ns graph.load.csv
+(ns graph.accrete.csv
     (:require
    [biodb.ncbi.api :as api.ncbi]
    [biodb.uniprot.api :as api.uniprot]
@@ -8,10 +8,10 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [graph.cypher :as cypher]
-   [graph.load.core :as load]
-   [graph.load.ncbi :as load.ncbi]
-   [graph.load.presets :as presets]
-   [graph.load.uniprot :as load.uniprot]
+   [graph.accrete.core :as accrete]
+   [graph.accrete.ncbi :as accrete.ncbi]
+   [graph.accrete.presets :as presets]
+   [graph.accrete.uniprot :as accrete.uniprot]
    [graph.mapping.ncbi :as mapping.ncbi]
    [graph.mapping.uniprot.core :as mapping.uniprot]
    [graph.mapping.utils :refer :all]

@@ -5,7 +5,7 @@
    [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.tools.logging :as log]
-   [graph.load.core :as load]
+   [graph.accrete.core :as accrete]
    [server.core :as server]))
 
 (def config (atom nil))
@@ -23,6 +23,6 @@
         (log/info "Running with config:" (:config-file options))
         (or (:config-file options)
             (edn/read-string (slurp (io/resource "default-config.edn"))))
-        (load/start! load/system)
+        (accrete/start! accrete/system)
         (server/start!)))))
 

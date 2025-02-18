@@ -1,4 +1,4 @@
-(ns graph.load.uniprot
+(ns graph.accrete.uniprot
   (:require
    [clojure.tools.logging :as log]
    [graph.cypher :as cypher]
@@ -12,16 +12,16 @@
    "CREATE CONSTRAINT uniprot_protein_feature_id FOR (t:UniprotProteinFeature) REQUIRE t.id IS UNIQUE"
    "CREATE CONSTRAINT uniprot_cross_referenced_entity_id FOR (t:UniprotCrossReferencedEntity) REQUIRE t.id IS UNIQUE"])
 
-(defn load-database!
+(defn accrete-database!
   [connection database]
-  (log/debug "Loading Uniprot DB into DB.")
+  (log/debug "Accreteing Uniprot DB into DB.")
   (->> database
        (mapping/database->database-node)
        (cypher/merge-node! connection)))
 
-(defn load-taxon!
+(defn accrete-taxon!
   [connection taxon]
-  (log/debug "Loading Uniprot Taxon into DB.")
+  (log/debug "Accreteing Uniprot Taxon into DB.")
   (let [result (->> taxon
                     (mapping/taxon->neo4j)
                     (cypher/merge-node-with-rels-by-id! connection))]
@@ -30,9 +30,9 @@
      :type       :uniprot/taxon
      :id         (:taxonId taxon)}))
 
-(defn load-proteome!
+(defn accrete-proteome!
   [connection proteome]
-  (log/debug "Loading Uniprot Proteome into DB.")
+  (log/debug "Accreteing Uniprot Proteome into DB.")
   (let [result (->> proteome
                     (mapping/proteome->neo4j)
                     (cypher/merge-graph! connection))]
@@ -41,9 +41,9 @@
      :type       :uniprot/proteome
      :id         (:id proteome)}))
 
-(defn load-protein!
+(defn accrete-protein!
   [connection protein]
-  (log/debug "Loading Uniprot Protein into DB.")
+  (log/debug "Accreteing Uniprot Protein into DB.")
   (let [result (->> protein
                     (mapping/protein->neo4j)
                     (cypher/merge-node-with-rels-by-id! connection))]

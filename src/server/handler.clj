@@ -1,5 +1,5 @@
 (ns server.handler
-  (:require [graph.load.core :as load]
+  (:require [graph.accrete.core :as accrete]
             [clojure.tools.logging :as log]))
 
 (defn basic-id-handler
@@ -11,9 +11,9 @@
           submission  {:id                       id
                        :requested-accretion-type type}
           expectation (promise)]
-      (load/register-expectation! type id expectation)
+      (accrete/register-expectation! type id expectation)
       (log/debug "Submitting" submission)
-      (load/submit! submission)
+      (accrete/submit! submission)
       {:status 200
        :body   (select-keys
                 (deref expectation 10000
