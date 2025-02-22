@@ -1,32 +1,44 @@
 (ns biodb.afdb
-  (:require [clj-http.client :as client]
-            [utils :refer [get-json]]))
+  (:require
+   [biodb.http :as http]
+   [cheshire.core :as json]
+   [clojure.tools.logging :as log]))
 
+(def alpha-fold-db-api-base "https://alphafold.ebi.ac.uk/api")
 
-(defn get-alpha-fold-db-record!
+;; --- Simple Wrappers ---
+
+(def info-meta
+  {:biodb/source :afdb
+   :afdb/type :info})
+
+(def alpha-fold-info
+  (http/id-query
+   (str (format "%s/prediction/" alpha-fold-db-api-base) "%s")
+   info-meta))
+
+#_(alpha-fold-info "A0A0H2ZHP9")
+
+;; --- Convenience Wrapper ---
+
+(defn get-pdb
   [id]
-  (let [info (-> (get-json (str "https://alphafold.ebi.ac.uk/api/prediction/" id))
-                 first)
-        pdb  (-> (client/get (:pdbUrl info))
-                :body)]
-    [id {:info info
-         :pdb  pdb}]))
+  (let [info (alpha-fold-info id)]
+    (map (comp :body http/get :pdbUrl) info)))
 
-(defn afdb-id-from-uniprot-record
-  [uniprot-record]
-  (->> uniprot-record
-       :uniProtKBCrossReferences
-       (filter #(= "AlphaFoldDB"
-                   (:database %)))
-       first
-       :id))
+#_(get-pdb "A0A0H2ZHP9")
 
-(def get-structures-for-uniprot-records!
-  (memoize
-   (fn [records]
-     (->> records
-          (map (fn [[id record]]
-                 (when-let [afdb-id (afdb-id-from-uniprot-record record)]
-                   (get-alpha-fold-db-record! afdb-id))))
-          (filter some?)
-          (into {})))))
+(defn get-cif
+  [id]
+  (let [info (alpha-fold-info id)]
+    (map (comp :body http/get :cifUrl) info)))
+
+#_(get-cif "A0A0H2ZHP9")
+
+(defn get-structure-files
+  [id]
+  (let [info (alpha-fold-info id)]
+    {:cif (map (comp :body http/get :cifUrl) info)
+     :pdb (map (comp :body http/get :pdbUrl) info)}))
+
+#_(get-structure-files "A0A0H2ZHP9")
