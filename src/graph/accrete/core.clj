@@ -13,7 +13,8 @@
    [graph.cypher :as cypher]
    [graph.accrete.setup :as setup]
    [clojure.core.async :as a]
-   [graph.mapping.uniprot.core :as mapping.uniprot])
+   [graph.mapping.uniprot.core :as mapping.uniprot]
+   [biodb.uniprot.core :as uniprot])
   (:import (java.util.concurrent LinkedBlockingQueue)))
 
 (def connection
@@ -29,77 +30,56 @@
   [{:keys [input-data db-result type id] :as result}]
   (log/info "Registering result for" [type id])
   (let [listener (get @changes [type id])]
-    (log/info "Found listener" listener)
     (swap! changes #(dissoc % [type id]))
     (doseq [l listener]
       (deliver l result))))
 
-(defn make-system!
+(defn make-system-2!
   []
-  (let [uniprot-protein-api              (channels/make-distributor-module!
-                                          {:operation     (comp
-                                                           (fn [protein]
-                                                             {:protein          protein
-                                                              :cross-references protein})
-                                                           api.uniprot/uniprotkb-entry)
-                                           :channel-names [:protein :cross-references]})
-        uniprot-protein-db-accrete          (channels/make-linear-module!
-                                          {:operation     (partial accrete.uniprot/accrete-protein! connection)
-                                           :input-channel (-> uniprot-protein-api :channels :protein)})
-        cross-reference-sorter           (channels/make-distributor-module!
-                                          {:operation     (fn [protein]
-                                                            (accrete.uniprot/connect-protein! connection protein)
-                                                            (mapping.uniprot/protein->cross-ids protein))
-                                           :channel-names [:kegg :uniprot/proteomes :uniprot/taxonomy]
-                                           :input-channel (-> uniprot-protein-api :channels :cross-references)
-                                           :bulk-mapping  (constantly true)})
-        uniprot-taxon-api                (channels/make-linear-module!
-                                          {:operation     api.uniprot/taxonomy-entry
-                                           :input-channel (-> cross-reference-sorter :channels :uniprot/taxonomy)})
-        uniprot-taxon-db-accrete            (channels/make-linear-module!
-                                          {:operation     (partial accrete.uniprot/accrete-taxon! connection)
-                                           :input-channel (:output-channel uniprot-taxon-api)})
-        uniprot-proteome-by-taxon-id-api (channels/make-linear-module!
-                                          {:operation api.uniprot/proteomes-by-taxon-id})
-        uniprot-proteome-db-accrete         (channels/make-linear-module!
-                                          {:operation     (partial accrete.uniprot/accrete-proteome! connection)
-                                           :input-channel (:output-channel uniprot-proteome-by-taxon-id-api)})
-        kegg-cds-api                     (channels/make-linear-module!
-                                          {:operation     (comp parser.kegg/parse-kegg-get-result
-                                                                api.kegg/get)
-                                           :input-channel (-> cross-reference-sorter :channels :kegg)})
-        kegg-cds-db-accrete                 (channels/make-linear-module!
-                                          {:operation     (partial accrete.kegg/accrete-cds! connection)
-                                           :input-channel (:output-channel kegg-cds-api)})
-        new-entities-funnel              (channels/make-funnel! {:from [(:output-channel uniprot-taxon-db-accrete)
-                                                                        (:output-channel uniprot-protein-db-accrete)
-                                                                        (:output-channel kegg-cds-db-accrete)]})
-        change-registry                  (channels/make-sink! {:input-channel (:to new-entities-funnel)
-                                                               :operation     register-change!})
-        entrypoint                       (channels/make-distributor-module!
-                                          {:operation     (fn [stuff]
-                                                            (case (:requested-accretion-type stuff)
-                                                              :uniprot/taxon
-                                                              {:uniprot/taxon-ids (:id stuff)}
-                                                              :uniprot/protein
-                                                              {:uniprot/protein-ids (:id stuff)}))
-                                           :channel-names [:uniprot/taxon-ids :uniprot/protein-ids]})
-        _                                (channels/pipe! {:from (-> entrypoint :channels :uniprot/taxon-ids)
-                                                          :to   (-> uniprot-taxon-api :input-channel)})
-        _                                (channels/pipe! {:from (-> entrypoint :channels :uniprot/protein-ids)
-                                                          :to   (-> uniprot-protein-api :input-channel)})]
-    {:uniprot/taxon-api                uniprot-taxon-api
-     :uniprot/taxon-db-accrete            uniprot-taxon-db-accrete
-     :uniprot/proteome-by-taxon-id-api uniprot-proteome-by-taxon-id-api
-     :uniprot/protein-api              uniprot-protein-api
-     :uniprot/protein-db-accrete          uniprot-protein-db-accrete
-     :uniprot/cross-reference-sorter   cross-reference-sorter
-     :kegg/cds-api                     kegg-cds-api
-     :kegg/cds-db-accrete                 kegg-cds-db-accrete
-     :new-entities-funnel              new-entities-funnel
-     :entrypoint                       entrypoint
-     #_#_:change-registry              change-registry}))
-
+  (let [uniprot-protein-api              (a/chan 100 (map api.uniprot/uniprotkb-entry))
+        uniprot-protein-api-mult         (a/mult uniprot-protein-api)
+        uniprot-protein-db-accrete       (->> (a/chan 100 (map (partial accrete.uniprot/accrete-protein! connection)))
+                                              (a/tap uniprot-protein-api-mult))
+        cross-references                 (as-> (a/chan 100 (mapcat :uniProtKBCrossReferences)) $
+                                           (a/tap uniprot-protein-api-mult $)
+                                           (a/pub $ :database))
+        uniprot-taxon-api                (a/chan 100 (map api.uniprot/taxonomy-entry))
+        protein|taxon                    (as-> (a/chan 100 (map (comp :taxonId :organism))) $
+                                           (a/tap uniprot-protein-api-mult $)
+                                           (a/pipe $ uniprot-taxon-api))
+        uniprot-taxon-db-accrete         (a/chan 100 (map (partial accrete.uniprot/accrete-taxon! connection)))
+        uniprot-proteome-by-taxon-id-api (a/chan 100 (map api.uniprot/proteomes-by-taxon-id))
+        uniprot-proteome-db-accrete      (a/chan 100 (map (partial accrete.uniprot/accrete-proteome! connection)))
+        kegg-cds-api                     (a/chan 100 (map (comp parser.kegg/parse-kegg-get-result
+                                                                api.kegg/get)))
+        kegg-cds-db-accrete              (a/chan 100 (map (partial accrete.kegg/accrete-cds! connection)))
+        entrypoint                       (a/chan)
+        distributor                      (a/pub entrypoint :requested-accretion-type)]
+    (do
+      (let [c (a/chan 100 (map :id))] (a/sub distributor :uniprot/taxon c) (a/pipe c uniprot-taxon-api))
+      (let [c (a/chan 100 (map :id))] (a/sub distributor :uniprot/protein c) (a/pipe c uniprot-protein-api))
+      (let [c (a/chan 100 (map :id))] (a/sub cross-references "KEGG" c) (a/pipe c kegg-cds-api))
+      (a/pipe kegg-cds-api kegg-cds-db-accrete)
+      (a/pipe uniprot-taxon-api uniprot-taxon-db-accrete))
+    {:go-blocks  {:change-registry (a/go-loop []
+                                     (let [[change channel]
+                                           (a/alts! [uniprot-protein-db-accrete
+                                                     uniprot-taxon-db-accrete
+                                                     kegg-cds-db-accrete])]
+                                       (register-change! change))
+                                     (recur))}
+     :channels   {:uniprot/protein-api              uniprot-protein-api
+                  :uniprot/protein-api-mult         uniprot-protein-api-mult
+                  :uniprot/protein-db-accrete       uniprot-protein-db-accrete
+                  :uniprot/cross-references         cross-references
+                  :uniprot/taxon-api                uniprot-taxon-api
+                  :uniprot/taxon-db-accrete         uniprot-taxon-db-accrete
+                  :uniprot/protein|taxon            protein|taxon
+                  :uniprot/proteome-by-taxon-id-api uniprot-proteome-by-taxon-id-api
+                  :uniprot/proteome-db-accrete      uniprot-proteome-db-accrete
+                  :kegg/cds-api                     kegg-cds-api
+                  :kegg/cds-db-accrete              kegg-cds-db-accrete}     
+     :entrypoint entrypoint}))
 
 (defn status
   [system]
@@ -124,7 +104,7 @@
 (defn start!
   [system-atom]
   (log/info "Starting accretion system.")
-  (reset! system-atom (make-system!)))
+  (reset! system-atom (make-system-2!)))
 
 (defn restart!
   [system-atom]
@@ -136,8 +116,9 @@
 
 (defn submit!
   [stuff]
-  (if-let [in (-> @system :entrypoint :input-channel)]
-    (.offer in stuff)
+  (if-let [in (-> @system :entrypoint)]
+    (a/go
+      (a/>! in stuff))
     (log/error "Accretion system is not running.")))
 
 
@@ -161,4 +142,20 @@
     (setup/accrete-databases! connection)
     (restart! system))
 
+#_(start! system)
+
 #_(-> @system :uniprot/protein-api :input-channel (.offer "P02919"))
+
+;; (def sz 20)
+;; (def c (a/chan sz))
+;; (def mult-c (a/mult c))
+;; (def cx (a/chan sz))
+;; (def cy (a/chan sz))
+;; (def cz (a/chan sz))
+;; (a/tap mult-c cx)
+;; (a/tap mult-c cy)
+;; (a/tap mult-c cz)
+;; (a/put! c "sent to all")
+;; (a/<!! cx)
+;; (a/<!! cy)
+;; (a/<!! cz)
