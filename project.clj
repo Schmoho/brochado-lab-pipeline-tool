@@ -4,7 +4,7 @@
   :plugins [[refactor-nrepl "3.10.0"]
             [cider/cider-nrepl "0.52.0"]]
   :dependencies [[org.clojure/clojure "1.12.0"]
-                 [org.clojure/core.async "1.6.673"]
+                 [org.clojure/core.async "1.5.648"]
                  [org.clojure/tools.cli "1.1.230"]
                  
                  [org.clojure/tools.logging "1.3.0"]
