@@ -83,8 +83,8 @@
 (defn sanitize-graph
   [g]
   {:lookups (some->> g :lookups (map #(update % :props sanitize)) set)
-   :nodes (some->> g :nodes (map #(update % :props sanitize)) set)
-   :rels  (some->> g :rels (map #(update % :props sanitize)) set)
+   :nodes   (some->> g :nodes (map #(update % :props sanitize)) set)
+   :rels    (some->> g :rels (map #(update % :props sanitize)) set)
    :returns (some->> g :returns (map sanitize-ref-id) set)})
 
 (defn rel-ref-id

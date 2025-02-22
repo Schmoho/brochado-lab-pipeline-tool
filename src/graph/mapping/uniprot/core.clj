@@ -211,7 +211,6 @@
                       set)
         result   (->> (assoc entities :returns ref-ids)
                       (sanitize-graph))]
-    (tap> result)
     result))
 
 

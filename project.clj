@@ -1,6 +1,9 @@
 (defproject unknown "1.0.0-SNAPSHOT"
   :main core
   :uberjar-name "unknown.jar"
+  :repl-options {:nrepl-middleware [portal.nrepl/wrap-portal]}
+  :repositories {"ebi"      {:url "https://www.ebi.ac.uk/uniprot/artifactory/public"}
+                 "ebi-repo" {:url "https://www.ebi.ac.uk/~maven/m2repo"}}
   :plugins [[refactor-nrepl "3.10.0"]
             [cider/cider-nrepl "0.52.0"]]
   :dependencies [[org.clojure/clojure "1.12.0"]
@@ -25,14 +28,17 @@
                  [org.clojure/data.csv "1.1.0"]
                  [camel-snake-kebab "0.4.3"]
                  [org.clojure/data.xml "0.0.8"]
-                 [dk.ative/docjure "1.14.0"]]
+                 [dk.ative/docjure "1.14.0"]
+
+                 [uk.ac.ebi.uniprot/japi "1.3.3"]]
 
   :source-paths ["src"]
   :resource-paths ["resources"]
 
   :profiles {:dev {:dependencies [[ring/ring-mock "0.4.0"]
                                   [ring/ring-devel "1.9.5"]
-                                  [prone "2021-04-23"]]
+                                  [prone "2021-04-23"]
+                                  [djblue/portal "0.58.5"]]
                    
                    :source-paths ["env/dev"]
                    
