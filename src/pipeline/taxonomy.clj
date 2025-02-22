@@ -9,7 +9,8 @@
    [clojure.string :as str]
    [graph.accrete.core]
    [graph.mapping.uniprot.blast :as mapping.uniprot.blast]
-   [graph.cypher :as cypher]))
+   [graph.cypher :as cypher]
+   [biodb.uniprot.blast :as blast]))
 
 ;; protein-id
 ;; ;; -> taxon-id
@@ -20,6 +21,47 @@
 ;; ;; ;; ;; ;; ;; ;; -> gene:geneName + taxonomy
 ;; ;; -> uniref-clusters
 ;; ;; ;; -> filter by taxonomic lineage
+
+(defn pipeline
+  [protein-id gene-name]
+  (let [protein               (-> protein-id (api.uniprot/uniprotkb-entry))
+        blast                 (blast/run-blast-query!
+                               {:blast/database       :uniprot-bacteria
+                                :blast/query-sequence (-> protein :sequence :value)})
+        blast-proteins        (mapv (comp api.uniprot/uniprotkb-entry :id) @blast)
+        taxon                 (-> protein :organism :taxonId (api.uniprot/taxonomy-entry))
+        species               (or (->> pa :lineage (drop-while #(not= (:rank %) "species")) first)
+                                  taxon)
+        proteins-by-gene-name (api.uniprot/uniprotkb-search
+                               {:query
+                                (format "gene:%s AND taxonomy_name:%s"
+                                        gene-name
+                                        (:scientificName species))})
+        uniref-clusters       (-> protein :primaryAccession api.uniprot/uniref-by-protein-id)
+        get-clusters          (fn [type]
+                                (->> uniref-clusters
+                                     (map :entryType)
+                                     (filter #(= type %))
+                                     (map (comp :members api.uniprot/uniref-entry))))
+        get-cluster-proteins  (fn [cluster]
+                                (let [{:keys [uni-prot-kb-id uni-parc]}
+                                      (-> (group-by :memberIdType cluster)
+                                          (update-keys csk/->kebab-case-keyword))]
+                                  {:uniprotkb (->> uni-prot-kb-id
+                                                   (mapcat :accessions)
+                                                   (distinct)
+                                                   (mapv api.uniprot/uniprotkb-entry))
+                                   :uniparc   (->> uni-parc
+                                                   (map :memberId)
+                                                   (distinct)
+                                                   (mapv api.uniprot/uniparc-entry))}))
+        uniref-90             (->> (get-clusters "UniRef90") (map get-cluster-proteins))
+        uniref-100            (->> (get-clusters "UniRef100") (map get-cluster-proteins))]
+    #_(->> 
+         (map (comp formats.fasta/->fasta
+                    #(or (uniprot.core/domain-restricted-protein "transpeptidase" %) %)))
+         (clustalo/clustalo))
+    ))
 
 #_(def pa-mrcb
     (api.uniprot/uniprotkb-entry "A0A0H2ZHP9"))
@@ -52,20 +94,19 @@
                               #_"UniRef100_A0A0U4NUB5"))
 
 #_(def mrcb-uniref-90-entries
-    (let [{:keys [uni-prot-kb-id
-                  uni-parc]}
+  (let [{:keys [uni-prot-kb-id uni-parc]}
           (as-> mrcb-uniref-90 $
             (:members $)
             (group-by :memberIdType $)
             (update-keys $ csk/->kebab-case-keyword))]
-      {:uniprotkb (->> uni-prot-kb-id
-                       (mapcat :accessions)
-                       (distinct)
-                       (mapv api.uniprot/uniprotkb-entry))
-       :uniparc   (->> uni-parc
-                       (map :memberId)
-                       (distinct)
-                       (mapv api.uniprot/uniparc-entry))}))
+    {:uniprotkb (->> uni-prot-kb-id
+                     (mapcat :accessions)
+                     (distinct)
+                     (mapv api.uniprot/uniprotkb-entry))
+     :uniparc   (->> uni-parc
+                     (map :memberId)
+                     (distinct)
+                     (mapv api.uniprot/uniparc-entry))}))
 
 #_(def b
     (edn/read (java.io.PushbackReader. (io/reader "blast-mrcb.edn"))))
