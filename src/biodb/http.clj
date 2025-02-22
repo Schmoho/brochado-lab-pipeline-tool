@@ -26,3 +26,16 @@
               :url     url
               :request req)
              (dissoc :http-client)))))))
+
+(defn id-query
+  [url-template result-meta]
+  (fn -id-query
+      ([id]
+       (-id-query id {}))
+      ([id query-params]
+       (let [url    (format url-template id)
+             _      (log/debug "Query" url "with" query-params)
+             result (-> (get url {:query-params query-params})
+                        (:body)
+                        (json/parse-string true))]
+        (with-meta result result-meta)))))

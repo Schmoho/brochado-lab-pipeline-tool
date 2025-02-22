@@ -14,16 +14,10 @@
   {:biodb/source :uniprot
    :uniprot/type :taxon})
 
-(defn taxonomy-entry
-  ([taxon-id]
-   (taxonomy-entry taxon-id {}))
-  ([taxon-id query-params]
-   (let [url   (format "%s/taxonomy/%s" uniprot-api-base taxon-id)
-         _     (log/debug "Query" url "with" query-params)
-         taxon (-> (http/get url {:query-params query-params})
-                   (:body)
-                   (json/parse-string true))]
-     (with-meta taxon taxon-meta))))
+(def taxonomy-entry
+  (http/id-query
+   (str (format "%s/taxonomy/" uniprot-api-base) "%s")
+   taxon-meta))
 
 #_(:lineage (taxonomy-entry "208964"))
 
@@ -32,16 +26,10 @@
   {:biodb/source :uniprot
    :uniprot/type :proteome})
 
-(defn proteomes-entry
-  ([proteome-id]
-   (proteomes-entry proteome-id {}))
-  ([proteome-id query-params]
-   (let [url      (format "%s/proteomes/%s" uniprot-api-base proteome-id)
-         _        (log/debug "Query" url "with" query-params)
-         proteome (-> (http/get url {:query-params query-params})
-                      (:body)
-                      (json/parse-string true))]
-     (with-meta proteome proteome-meta))))
+(def proteomes-entry
+  (http/id-query
+   (str (format "%s/proteomes/" uniprot-api-base) "%s")
+   proteome-meta))
 
 #_(proteomes-entry "UP000014183")
 
@@ -63,16 +51,10 @@
   {:biodb/source :uniprot
    :uniprot/type :uniprotkb-entry})
 
-(defn uniprotkb-entry
-  ([accession]
-   (uniprotkb-entry accession {}))
-  ([accession query-params]
-   (let [url   (format "%s/uniprotkb/%s" uniprot-api-base accession)
-         _     (log/debug "Query" url "with" query-params)
-         entry (-> (http/get url {:query-params query-params})
-                   (:body)
-                   (json/parse-string true))]
-     (with-meta entry uniprotkb-entry-meta))))
+(def uniprotkb-entry
+  (http/id-query
+   (str (format "%s/uniprotkb/" uniprot-api-base) "%s")
+   uniprotkb-entry-meta))
 
 #_(uniprotkb-entry "G3XCV0")
 
@@ -110,16 +92,10 @@
    :uniprot/type             :uniparc-entry
    :biotools/fasta-mappable? true})
 
-(defn uniparc-entry
-  ([accession]
-   (uniparc-entry accession {}))
-  ([accession query-params]
-   (let [url   (format "%s/uniparc/%s" uniprot-api-base accession)
-         _     (log/debug "Query" url "with" query-params)
-         entry (-> (http/get url {:query-params query-params})
-                   (:body)
-                   (json/parse-string true))]
-     (with-meta entry uniparc-entry-meta))))
+(def uniparc-entry
+  (http/id-query
+   (str (format "%s/uniparc/" uniprot-api-base) "%s")
+   uniparc-entry-meta))
 
 #_(uniparc-entry "UPI00053A1130")
 
@@ -129,18 +105,10 @@
   {:biodb/source :uniprot
    :uniprot/type :uniref-entry})
 
-(defn uniref-entry
-  ([uniref-id]
-   (uniref-entry uniref-id {}))
-  ([uniref-id query-params]
-   (let [url   (format "%s/uniref/%s"
-                     uniprot-api-base
-                     uniref-id)
-         _     (log/debug "Query" url "with" query-params)
-         entry (-> (http/get url {:query-params query-params})
-                   (:body)
-                   (json/parse-string true))]
-     (with-meta entry uniref-meta))))
+(def uniref-entry
+  (http/id-query
+   (str (format "%s/uniref/" uniprot-api-base) "%s")
+   uniref-meta))
 
 #_(uniref-entry #_"UniRef50_Q4K603"
                 "UniRef90_G3XD31"
