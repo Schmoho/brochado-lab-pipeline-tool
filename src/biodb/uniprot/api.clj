@@ -2,7 +2,9 @@
   (:require
    [biodb.http :as http]
    [cheshire.core :as json]
-   [clojure.tools.logging :as log]))
+   [clojure.tools.logging :as log]
+   [camel-snake-kebab.core :as csk]
+   [clojure.string :as str]))
 
 (def uniprot-api-base "https://rest.uniprot.org")
 
@@ -156,11 +158,13 @@
                      url
                      {:query-params
                       {:query (format "ancestor:%s" taxon-id)}})
-        taxons(-> http-result
+        taxons      (-> http-result
                         :body
                         (json/parse-string true)
                         :results)]
     taxons))
+
+#_(count (downstream-lineage 136841))
 
 (defn proteins-by-proteome
   [proteome-id]
@@ -200,8 +204,53 @@
 
 #_(map :id (:results (uniref-by-protein-id "A0A0H2ZHP9")))
 
+(defn uniref-entries-by-protein-id
+  ([protein-id] (uniref-entries-by-protein-id protein-id #{"UniRef90" "UniRef100"}))
+  ([protein-id uniref-cluster-types]
+   (let [uniref-clusters (uniref-by-protein-id protein-id)]
+     (->> uniref-clusters
+          (filter #((set uniref-cluster-types) (:entryType %)))
+          (map (comp (fn [[type entry-id]]
+                        [type (-> entry-id uniref-entry :members)])
+                      (juxt :entryType :id)))
+          (into {})))))
 
+#_(uniref-entries-by-protein-id "A0A0H2ZHP9")
 
+(defn uniref-proteins-by-protein-id
+  ([protein-id] (uniref-proteins-by-protein-id protein-id #{"UniRef90" "UniRef100"}))
+  ([protein-id uniref-cluster-types]
+   (let [cluster (uniref-entries-by-protein-id "A0A0H2ZHP9")]
+     (->> (for [[cluster-type cluster] cluster]
+            (let [{:keys [uni-prot-kb-id uni-parc]}
+                  (-> (group-by :memberIdType cluster)
+                      (update-keys csk/->kebab-case-keyword))]
+              [cluster-type
+               {:uniprotkb (->> uni-prot-kb-id
+                                (mapcat :accessions)
+                                (distinct)
+                                (mapv uniprotkb-entry))
+                :uniparc   (->> uni-parc
+                                (map :memberId)
+                                (distinct)
+                                (mapv uniparc-entry))}]))
+          (into {})))))
+
+#_(uniref-proteins-by-protein-id "A0A0H2ZHP9")
+
+(defn proteins-by-taxa-and-genes
+  [taxa genes]
+  (let [or-query-part (fn [search-term input]
+                        (str "("
+                             (str/join " OR "
+                                       (map (partial format (str search-term ":%s")) input))
+                             ")"))
+        gene-query-part (or-query-part "gene" genes)
+        taxa-query-part (or-query-part "taxonomy_name" taxa)]
+    (uniprotkb-search
+     {:query (str gene-query-part " AND " taxa-query-part)})))
+
+#_(count (map :organism (proteins-by-taxa-and-genes ["'Pseudomonas aeruginosa'"] ["mrcA" "mrcB"])))
 
 ;;;; Stuff
 

@@ -1,3 +1,9 @@
 /target/
 /.nrepl-port
 /dev-config.edn
+/.calva/
+/.clj-kondo/
+/.lsp/
+/.shadow-cljs/
+/node_modules/
+/package-lock.json

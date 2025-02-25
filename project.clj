@@ -24,13 +24,16 @@
                  [clj-http "3.13.0"]
                  
                  [cheshire "5.13.0"]
-                 [clj-commons/clj-yaml "1.0.29"]
+                 #_[clj-commons/clj-yaml "1.0.29"]
                  [org.clojure/data.csv "1.1.0"]
                  [camel-snake-kebab "0.4.3"]
                  [org.clojure/data.xml "0.0.8"]
                  [dk.ative/docjure "1.14.0"]
 
-                 [uk.ac.ebi.uniprot/japi "1.3.3"]]
+                 [uk.ac.ebi.uniprot/japi "1.3.3"]
+                 
+                 [metasoarous/oz "1.6.0-alpha36"]
+                 [progrock "1.0.0"]]
 
   :source-paths ["src"]
   :resource-paths ["resources"]

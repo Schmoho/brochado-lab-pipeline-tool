@@ -8,9 +8,9 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [graph.accrete.core]
-   [graph.mapping.uniprot.blast :as mapping.uniprot.blast]
-   [graph.cypher :as cypher]
-   [biodb.uniprot.blast :as blast]))
+   [biodb.uniprot.blast :as blast]
+   #_[progrock.core :as pr]
+   [clojure.set :as set]))
 
 ;; protein-id
 ;; ;; -> taxon-id
@@ -22,48 +22,96 @@
 ;; ;; -> uniref-clusters
 ;; ;; ;; -> filter by taxonomic lineage
 
-(defn pipeline
-  [protein-id gene-name]
-  (let [protein               (-> protein-id (api.uniprot/uniprotkb-entry))
-        blast                 (blast/run-blast-query!
-                               {:blast/database       :uniprot-bacteria
-                                :blast/query-sequence (-> protein :sequence :value)})
-        blast-proteins        (mapv (comp api.uniprot/uniprotkb-entry :id) @blast)
-        taxon                 (-> protein :organism :taxonId (api.uniprot/taxonomy-entry))
-        species               (or (->> pa :lineage (drop-while #(not= (:rank %) "species")) first)
-                                  taxon)
-        proteins-by-gene-name (api.uniprot/uniprotkb-search
-                               {:query
-                                (format "gene:%s AND taxonomy_name:%s"
-                                        gene-name
-                                        (:scientificName species))})
-        uniref-clusters       (-> protein :primaryAccession api.uniprot/uniref-by-protein-id)
-        get-clusters          (fn [type]
-                                (->> uniref-clusters
-                                     (map :entryType)
-                                     (filter #(= type %))
-                                     (map (comp :members api.uniprot/uniref-entry))))
-        get-cluster-proteins  (fn [cluster]
-                                (let [{:keys [uni-prot-kb-id uni-parc]}
-                                      (-> (group-by :memberIdType cluster)
-                                          (update-keys csk/->kebab-case-keyword))]
-                                  {:uniprotkb (->> uni-prot-kb-id
-                                                   (mapcat :accessions)
-                                                   (distinct)
-                                                   (mapv api.uniprot/uniprotkb-entry))
-                                   :uniparc   (->> uni-parc
-                                                   (map :memberId)
-                                                   (distinct)
-                                                   (mapv api.uniprot/uniparc-entry))}))
-        uniref-90             (->> (get-clusters "UniRef90") (map get-cluster-proteins))
-        uniref-100            (->> (get-clusters "UniRef100") (map get-cluster-proteins))]
-    #_(->> 
-         (map (comp formats.fasta/->fasta
-                    #(or (uniprot.core/domain-restricted-protein "transpeptidase" %) %)))
-         (clustalo/clustalo))
-    ))
+(def insane-taxonomic-levels
+  #{"no rank"
+    "phylum"
+    "class"
+    "order"
+    "family"
+    "superkingdom"
+    "kingdom"
+    "clade"
+    "subkingdom"
+    "subphylum"
+    "subclass"
+    "suborder"
+    "subfamily"
+    "tribe"})
 
-#_(def pa-mrcb
+(def all-taxonomic-levels
+  (set/union #{"species" "strain"}
+             insane-taxonomic-levels))
+
+(def protein-id "A0A0H2ZHP9")
+(def protein (-> protein-id (api.uniprot/uniprotkb-entry)))
+
+(def blast (edn/read (java.io.PushbackReader. (io/reader "blast-mrcb.edn"))))
+(def blast-proteins (->> blast (mapv (comp api.uniprot/uniprotkb-entry :id))))
+
+;; (let [before (atom nil)
+;;       after (atom nil)]
+;;   (reset! before (java.time.Instant/now))
+;;   (Thread/sleep 5000)
+;;   (reset! after (java.time.Instant/now))
+;;   [@before @after])
+
+;; benchmark den Uniprot Blast damit man abschätzen kann wie lange der braucht
+;; führ das alles auf separaten threads aus
+;; schreib die alignments raus
+;; implementier die restriction
+;; factor die restriction raus, s.d. man das separat ausführen kann
+;; CLI interface for now?
+
+(defn pipeline
+  ([protein-id] (pipeline protein-id {:uniprot.blast/database                         :uniprot-bacteria
+                                      :uniprot.blast/filter-blast-result-by-taxonomy? false
+                                      :uniprot.uniref/cluster-types                   ["UniRef90" "UniRef100"]
+                                      :uniprot.uniref/filter-clusters-by-taxonomy?    false
+                                      :uniprot.taxonomy/top-level-taxon               :species}))
+  ([protein-id {:keys [gene-names
+                       restriction-domains
+                       uniprot-blast/database
+                       uniprot.taxonomy/top-level-taxon]}]   
+   (let [protein (-> protein-id (api.uniprot/uniprotkb-entry))
+         taxon   (-> protein :organism :taxonId (api.uniprot/taxonomy-entry))
+         taxon-rank (:rank taxon)]
+     
+     (let [;; TODO blast muss asynchron ausgeführt werden!
+           ;; blast                  (blast/run-blast-query!
+           ;;                         {:blast/database database
+           ;;                          :blast/query-sequence (-> protein :sequence :value)})
+           ;; blast-proteins         (->> @blast (mapv (comp api.uniprot/uniprotkb-entry :id)))
+           gene-names             (or gene-names (->> protein :genes (map (comp :value :geneName))))
+           species                (or (->> pa :lineage (drop-while #(not= (:rank %) "species")) first)
+                                      taxon)
+           ;; TODO: multiple gene names!
+           proteins-by-gene-names (api.uniprot/proteins-by-taxa-and-genes
+                                   [(:scientificName species)]
+                                   genes)
+           cluster-type->proteins (uniref-proteins-by-protein-id protein-id)]
+       #_(->> blast-proteins
+              (map (comp formats.fasta/->fasta
+                         #(or (uniprot.core/domain-restricted-protein "transpeptidase" %) %)))
+              (clustalo/clustalo)))
+     )))
+
+;; ungefähr so sollte das nachher abgespeichert werden
+{"path"
+ {"/raw-data"
+  {"/uniprot"
+   ["proteins" "taxons" "cluster" "blast"]}
+  "/alignments"
+  {"/blast"
+   ["/{domain}" "full"]
+   "/taxonomy"
+   {"/{gene}"
+    ["/{domain}" "full"]}
+   "/uniref90"
+   ["/{domain}" "full"]
+   "/uniref100"
+   ["/{domain}" "full"]}}}
+
+(def pa-mrcb
     (api.uniprot/uniprotkb-entry "A0A0H2ZHP9"))
 
 #_(def pa
@@ -128,14 +176,14 @@
 ;; --- Interessante Sachen ---
 
 ;; Tabellenansicht der Features auf den Uniparc-Dingern
-;; (->> (:uniparc mrcb-uniref-90-entries)
-;;      (mapv (comp #(some-> % (with-meta {:portal.viewer/default :portal.viewer/table}))
-;;                  :sequenceFeatures)))
+#_(->> (:uniparc mrcb-uniref-90-entries)
+     (mapv (comp #(some-> % (with-meta {:portal.viewer/default :portal.viewer/table}))
+                 :sequenceFeatures)))
 
 ;; das hier ist der Grund warum ich bei domain-restriction nur nach INTERPRO groups suche
-;; (filter (complement :interproGroup)
-;;         (mapcat :sequenceFeatures
-;;          (:uniparc mrcb-uniref-90-entries)))
+#_(filter (complement :interproGroup)
+        (mapcat :sequenceFeatures
+         (:uniparc mrcb-uniref-90-entries)))
 
 
 ;; das hier zeigt, dass was der Uniprot-BLAST ausspuckt nicht zu den queries
@@ -143,10 +191,11 @@
 ;; (->> (map
 ;;       (fn [a b]
 ;;         (with-meta [a b] {:portal.viewer/default :portal.viewer/diff-text}))
-;;       (mapv (comp :value :sequence) mrcb-blast-proteins)
-;;       (map (comp :query-seq first :alignments) b))
-;;      (filter (fn [[a b]]
-;;                (not= a b))))
+;;       mrcb-blast-proteins
+;;       b)
+;;      (filter (fn [[a b]] 
+;;                (not= (-> a :sequence :value )
+;;                      (-> b :alignments first :query-seq)))))
 
 
 ;; doing blast
@@ -164,20 +213,32 @@
 ;; (with-open [wr (clojure.java.io/writer "blast-mrcb.edn")]
 ;;   (.write wr (with-out-str (clojure.pprint/pprint @bonkers))))
 
-(cypher/merge-graph!
- graph.accrete.core/connection
- (mapping.uniprot.blast/blast-result->blast-graph
-  pa-mrcb
-  {:blast/database       :uniprot-bacteria
-   :blast/query-sequence mrcB}
-  b))
+;; (cypher/merge-graph!
+;;  graph.accrete.core/connection
+;;  q(mapping.uniprot.blast/blast-result->blast-graph
+;;   pa-mrcb
+;;   {:blast/database       :uniprot-bacteria
+;;    :blast/query-sequence mrcB}
+;;   b))
 
 
-(cypher/create-merge-graph-query
- (mapping.uniprot.blast/blast-result->blast-graph
-  pa-mrcb
-  {:blast/database       :uniprot-bacteria
-   :blast/query-sequence mrcB}
-  b))
+;; (cypher/create-merge-graph-query
+;;  (mapping.uniprot.blast/blast-result->blast-graph
+;;   pa-mrcb
+;;   {:blast/database       :uniprot-bacteria
+;;    :blast/query-sequence mrcB}
+;;   b))
 
 
+;; (def bar (pr/progress-bar 100))
+
+;; (pr/render (pr/tick bar 25))
+
+;; (pr/print (pr/tick bar 35))
+
+;; (loop [bar (pr/progress-bar 100)]
+;;   (if (= (:progress bar) (:total bar))
+;;     (pr/print (pr/done bar))
+;;     (do (Thread/sleep 100)
+;;         (pr/print bar)
+;;         (recur (pr/tick bar)))))

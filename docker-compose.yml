@@ -17,7 +17,7 @@ services:
       - NEO4J_dbms_memory_transaction_total_max=4G
     volumes:
       - unknown-db-data-2:/data
-      - ./csv:/var/lib/neo4j/import:rw
+#      - ./csv:/var/lib/neo4j/import:rw
     ports:
       - 127.0.0.1:7474:7474
       - 127.0.0.1:7687:7687

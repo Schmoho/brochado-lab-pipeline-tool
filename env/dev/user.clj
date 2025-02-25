@@ -79,7 +79,7 @@
   (filter #(= db (:database %))
           (:uniProtKBCrossReferences uniprot-protein)))
 
-(def p (p/open))
+(def p (p/open  {:portal.colors/theme :portal.colors/solarized-light}))
 
 #_(p/close p )
 
