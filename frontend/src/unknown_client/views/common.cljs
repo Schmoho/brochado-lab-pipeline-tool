@@ -112,17 +112,17 @@
 
 (defn navbar-link
   [link-text route]
-  (fn []
-    (let [hover?  (r/atom false)]
-         [re-com/button
-          :src       (at)
-          :label    link-text
-          :on-click #(re-frame/dispatch
-                      (if (coll? route)
-                        (into [::events/navigate]
-                              route)
-                        [::events/navigate route]))
-          :class    (styles/inner-page-link)
-          :style    {:background-color (if @hover? "#0072bb" "#4d90fe")}
-          :attr     {:on-mouse-over (re-com/handler-fn (reset! hover? true))
-                     :on-mouse-out  (re-com/handler-fn (reset! hover? false))}])))
+  (let  [hover?  (r/atom false)]
+    (fn []
+      [re-com/button
+       :src       (at)
+       :label    link-text
+       :on-click #(re-frame/dispatch
+                   (if (coll? route)
+                     (into [::events/navigate]
+                           route)
+                     [::events/navigate route]))
+       :class    (styles/inner-page-link)
+       :style    {:background-color (if @hover? "#0072bb" "#00796b")}
+       :attr     {:on-mouse-over (re-com/handler-fn (reset! hover? true))
+                  :on-mouse-out  (re-com/handler-fn (reset! hover? false))}])))

@@ -51,3 +51,15 @@
 
 (def base-api "https://localhost:3001")
 
+(re-frame/reg-event-fx
+ ::start-taxonomic-comparison!
+ (fn-traced
+  [{:keys [db]} _]
+  {:db db
+   :http-xhrio
+   {:method          :post
+    :uri             (str base-api "/taxonomic-comparison")
+    :params          (-> db :taxonomic-comparison :form)
+    :timeout         10000
+    :on-success      [::post-taxonomic-comparison-success]
+    :on-failure      [::post-taxonomic-comparison-failure]}}))

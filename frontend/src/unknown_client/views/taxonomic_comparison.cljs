@@ -172,24 +172,65 @@ Pipeline" )
      [[:h1 {:class (styles/section-header)} "Inputs"]
       [h
        :children
-       [[re-com/label :label "Protein IDs"
-         :style {:padding "5px 5px"}]
-        [help-thingie {:title "What kind of Protein IDs?"
-                       :text "Uniprot. Here be a screenshot that shows you where to get them."}]
-        [re-com/input-text
+       [[v
+         :style {:padding "0px 50px"}
+         :children
+         [[h :src (at)
+           :gap      "4px"
+           :children [[:span.field-label "Protein IDs"]
+                      [re-com/info-button
+                       :src (at)
+                       :info [v :src (at)
+                              :children [[:p.info-heading "Input Protein IDs"]
+                                         [re-com/hyperlink-href :src (at)
+                                          :label  "Link to docs."
+                                          :href   ""
+                                          :target "_blank"]]]]]]
+          [re-com/input-textarea
+           :model (-> form :uniprot/protein :protein-ids)
+           :on-change #(re-frame/dispatch [::events/set-form-data
+                                           :taxonomic-comparison
+                                           :uniprot/protein
+                                           :protein-ids
+                                           %])]]]
+        [v
+         :children
+         [[h :src (at)
+           :gap      "4px"
+           :children [[:span.field-label "Gene Names"]
+                      [re-com/info-button
+                       :src (at)
+                       :info [v :src (at)
+                              :children [[:p.info-heading "Input Gene Names"]
+                                         [re-com/hyperlink-href :src (at)
+                                          :label  "Link to docs."
+                                          :href   ""
+                                          :target "_blank"]]]]]]
+          [re-com/input-textarea
          :model (-> form :uniprot/protein :protein-ids)
          :on-change #(re-frame/dispatch [::events/set-form-data
                                          :taxonomic-comparison
                                          :uniprot/protein
                                          :protein-ids
-                                         %])]
-        [re-com/md-icon-button
-         :src (at)
-         :class (styles/plus-button)
-         :md-icon-name "zmdi-plus"
-         :size :smaller
-         :tooltip "Add another protein ID"
-         :on-click identity]]]]]))
+                                         %])]]]]]]]))
+        
+
+"Search by taxonomy uses these gene names in tandem with the taxon implied by the protein ID."
+"Uniprot. Here be a screenshot that shows you where to get them."
+
+(defn start-button
+  []
+  (let [hover? (r/atom false)]
+    (fn []
+      [re-com/button
+     :src       (at)
+     :label    "START PIPELINE"
+     :class    (styles/inner-page-link)
+       :style    {:background-color "#0072bb"}
+       :on-click #(re-frame/dispatch [::events/start-taxonomic-comparison!])
+       :style    {:background-color (if @hover? "#0072bb" "#4d90fe")}
+       :attr     {:on-mouse-over (re-com/handler-fn (reset! hover? true))
+                  :on-mouse-out  (re-com/handler-fn (reset! hover? false))}])))
 
 (defn taxonomic-comparison-form
   []
@@ -201,7 +242,8 @@ Pipeline" )
     [inputs]
     [tree-search-form]
     [blast-form]
-    [uniref-form]]])
+    [uniref-form]
+    [start-button]]])
 
 (defn taxonomic-comparison-panel []
   #_[v
@@ -210,6 +252,3 @@ Pipeline" )
      :children [[taxonomic-comparison-title]
                 [common/link-to-page "go to About Page" :about]]]
   [taxonomic-comparison-form])
-
-
-

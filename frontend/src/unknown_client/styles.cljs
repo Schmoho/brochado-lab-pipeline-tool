@@ -25,9 +25,12 @@
 
 (defclass header
   []
-  {:color :black
+  {:color :white
+   :font-weight "500"
+   :height "100px"
+   :text-align "center"
    :border "solid black 1px"
-   :background-color :orange})
+   :background-color :#4db6ac})
 
 (defclass navbar
   []
@@ -59,8 +62,8 @@
   []
   {:color         "white"
    :width         "100%"
-   :font-size     "20"
-   :font-weight   "300"
+   :font-size     "24"
+   :font-weight   "400"
    :border        "none"
    :border-radius "0px"
    :padding       "10px 10px"

@@ -32,8 +32,12 @@
        :class (styles/navbar)
        :children
        [[navbar-link "Home" :home]
+        [re-com/gap :src (at) :size "60px"]
         [navbar-link "Taxonomic Comparison" :taxonomic-comparison]
-        [navbar-link  "Structural Comparison" :structural-comparison]]])))
+        [navbar-link "Results" :taxonomic-comparison-results]
+        [re-com/gap :src (at) :size "60px"]
+        [navbar-link  "Structural Comparison" :structural-comparison]
+        [navbar-link "Results" :structural-comparison-results]]])))
 
 (defn footer
   []
