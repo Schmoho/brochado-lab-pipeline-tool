@@ -9,16 +9,9 @@
     },
     "dependencies": {
         "@apollo/client": "^3.12.11",
-        "alignment-viewer-2": "^2.0.0-beta-23",
         "graphql": "^16.10.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
-    },
-    "overrides": {
-        "alignment-viewer-2": {
-            "react": "$react",
-            "react-dom": "$react-dom"
-        }
     },
     "devDependencies": {
         "css-loader": "^7.1.2",

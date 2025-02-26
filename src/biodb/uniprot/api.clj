@@ -91,8 +91,7 @@
 
 (def uniparc-entry-meta
   {:biodb/source             :uniprot
-   :uniprot/type             :uniparc-entry
-   :biotools/fasta-mappable? true})
+   :uniprot/type             :uniparc-entry})
 
 (def uniparc-entry
   (http/id-query

@@ -137,8 +137,8 @@
     (api.uniprot/uniref-by-protein-id (:primaryAccession pa-mrcb)))
 
 #_(def mrcb-uniref-90
-    (api.uniprot/uniref-entry #_"UniRef50_Q4K603"
-                              "UniRef90_G3XD31"
+    (api.uniprot/uniref-entry "UniRef50_Q4K603"
+                              #_"UniRef90_G3XD31"
                               #_"UniRef100_A0A0U4NUB5"))
 
 #_(def mrcb-uniref-90-entries
@@ -163,10 +163,16 @@
     (mapv (comp api.uniprot/uniprotkb-entry :id) b))
 
 
-(->> mrcb-blast-proteins
-     (map (comp formats.fasta/->fasta
-                #_(or (uniprot.core/domain-restricted-protein "transpeptidase" %) %)))
-     (clustalo/clustalo))
+;; (->> mrcb-uniref-90-entries
+;;      (map (comp formats.fasta/->fasta
+;;                 #_(or (uniprot.core/domain-restricted-protein "transpeptidase" %) %)))
+;;      (clustalo/clustalo))
+
+
+;; (with-open [wr (clojure.java.io/writer "uniref-50.edn")]
+;;   (.write wr (with-out-str (clojure.pprint/pprint (->> (concat (:uniprotkb mrcb-uniref-90-entries)
+;;                                                               (:uniparc mrcb-uniref-90-entries))
+;;                                                        (mapv formats.fasta/->fasta))))))
 
 
 #_(map (partial uniprot.core/domains "transpeptidase") (:uniprotkb mrcb-uniref-90-entries))

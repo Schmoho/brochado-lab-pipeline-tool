@@ -5,7 +5,6 @@ var ALL = {};
 ALL["react-dom/client"] = require("react-dom/client");
 ALL["react-dom"] = require("react-dom");
 ALL["react"] = require("react");
-ALL["alignment-viewer-2"] = require("alignment-viewer-2");
 global.shadow$bridge = function shadow$bridge(name) {
   var ret = ALL[name];
 
