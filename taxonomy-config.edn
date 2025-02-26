@@ -5,7 +5,7 @@
                     ;; TODO: gucken dass das mit Kapitalisierungsfehlern umgehen kann
                     :cluster-types                ["UniRef50" "UniRef90"]
                     :filter-clusters-by-taxonomy? false}
- :uniprot/taxonomy {:top-level-taxon                             "species"
+ :uniprot/taxonomy {:top-level                            "species"
                     ;; You can also use a taxon name like this:
                     ;; :top-level-taxon       "Pseudomonas aeruginosa group"
                     ;; Note: when using a taxon name, it needs to be an exact(!)
@@ -14,8 +14,8 @@
                     ;; You can also use a taxon ID like this:
                     ;; :top-level-taxon       652611
                     ;; :top-level-taxon       "652611"
-                    :use-taxonomic-search?                       true
-                    :dont-warn-against-broad-taxonomic-category? false}
+                    :use-taxonomic-search?                true
+                    :really-use-broad-taxonomic-category? false}
  :uniprot/protein  {:protein-ids         ["P02919"
                                           "A0A0H2ZHP9"]
                     :gene-names          ["mrcB"]

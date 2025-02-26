@@ -9,6 +9,10 @@
 (defmethod panels :default []
   [:div "No panel found for this route."])
 
+(defmulti header identity)
+(defmethod header :default []
+  [:div "No header found for this route."])
+
 (def routes
   (atom
    ["/" {""        :home
@@ -16,7 +20,9 @@
                      [:taxons/id "/"]} :taxons
                    [:taxons/id "/proteome/"]
                    {[:proteomes/id ""] :proteomes}}
-         "about"   :about}]))
+         "about"   :about
+         "taxonomic-comparison" :taxonomic-comparison
+         "structural-comparison" :structural-comparison}]))
 
 
 (defn parse

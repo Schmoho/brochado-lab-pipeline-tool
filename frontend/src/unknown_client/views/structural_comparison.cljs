@@ -1,4 +1,4 @@
-(ns unknown-client.views.home
+(ns unknown-client.views.structural-comparison
   (:require
    [re-frame.core :as re-frame]
    [reagent.core :as r]
@@ -12,20 +12,24 @@
    [unknown-client.subs :as subs]
    [unknown-client.views.common :refer [help-thingie checkbox]]))
 
-(defn home-header []
-  (let [name (re-frame/subscribe [::subs/name])]
-    [re-com/title
-     :src   (at)
-     :label (str "Sweet Baby Jesus. Hello from " @name "." )
-     :level :level1
-     :class (styles/header)]))
 
-(defn home-panel []
-  [v
-   :gap      "1em"
-   :children [[h
-               :height "100px"
-               :children [[:h1 "Hallo"]]]]])
+(defn structural-comparison-header
+  []
+  [re-com/title
+   :src   (at)
+   :label "Structure!"
+   :level :level1
+   :class (styles/header)])
+
+(defn structural-comparison-panel []
+  #_[v
+     :src      (at)
+
+     :children [[structural-comparison-title]
+                [common/link-to-page "go to About Page" :about]]]
+  [:p "Text"])
+
+
 
 
 

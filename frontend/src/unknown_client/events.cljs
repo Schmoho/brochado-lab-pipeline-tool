@@ -1,6 +1,8 @@
 (ns unknown-client.events
   (:require
    [re-frame.core :as re-frame]
+   [unknown-client.tours :as tours]
+   [re-com.core :as re-com]
    [unknown-client.db :as db]
    [day8.re-frame.tracing :refer-macros [fn-traced]]))
 
@@ -23,4 +25,29 @@
                         :active-route route
                         :active-panel (:handler route))}))
 
+(re-frame/reg-event-db
+ ::set-form-data
+ (fn-traced [db [_ form & keys]]
+            (prn (concat [form :form]
+                                 (butlast keys)))
+            (assoc-in db (concat [form :form]
+                                 (butlast keys))
+                      (last keys))))
+
+(re-frame/reg-event-db
+ ::toggle-form-bool
+ (fn-traced [db [_ form & keys]]
+            (update-in db (concat [form :form]
+                                  keys)
+                       not)))
+
+(re-frame/reg-event-fx
+ ::start-a-tour
+ (fn-traced
+  [{:keys [db]} [_ tour-key]]
+  (let [tour (re-com/make-tour (tours/tour-lookup tour-key))]
+    {:db db
+     :start-tour tour})))
+
 (def base-api "https://localhost:3001")
+

@@ -163,11 +163,10 @@
     (mapv (comp api.uniprot/uniprotkb-entry :id) b))
 
 
-;; (->> (concat (:uniparc mrcb-uniref-90-entries)
-;;              (:uniprotlb mrcb-uniref-90-entries))
-;;      (map (comp formats.fasta/->fasta
-;;                 #(or (uniprot.core/domain-restricted-protein "transpeptidase" %) %)))
-;;      #_(clustalo/clustalo))
+(->> mrcb-blast-proteins
+     (map (comp formats.fasta/->fasta
+                #_(or (uniprot.core/domain-restricted-protein "transpeptidase" %) %)))
+     (clustalo/clustalo))
 
 
 #_(map (partial uniprot.core/domains "transpeptidase") (:uniprotkb mrcb-uniref-90-entries))

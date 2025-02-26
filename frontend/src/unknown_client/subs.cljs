@@ -23,3 +23,13 @@
  :<- [::active-route]
  (fn [active-route]
    (:route-params active-route)))
+
+(re-frame/reg-sub
+ :taxonomic-comparison/form
+ (fn [db _]
+   (-> db :taxonomic-comparison :form)))
+
+(re-frame/reg-sub
+ ::tour
+ (fn [db _]
+   (-> db :tour)))
