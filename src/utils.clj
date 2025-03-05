@@ -5,7 +5,8 @@
    [clojure.java.shell :as sh]
    [clojure.pprint :as pprint]
    [clojure.string :as str]
-   [clojure.walk :as walk])
+   [clojure.walk :as walk]
+   [clojure.set :as set])
   (:import
    (org.apache.commons.io FilenameUtils)))
 
@@ -30,13 +31,18 @@
   (io/copy file-to-copy target-file)
   (io/file target-file))
 
-(defmulti read (fn [file] (FilenameUtils/getExtension (.getName (io/file file)))))
+(defn extension
+  [file-name]
+  (FilenameUtils/getExtension file-name))
 
-(defmethod read "edn"
+(defmulti read-file (fn [file] (FilenameUtils/getExtension (.getName (io/file file)))))
+
+(defmethod read-file "edn"
   [file]
+  (tap> file)
   (edn/read (java.io.PushbackReader. (io/reader file))))
 
-(defmethod read :default
+(defmethod read-file :default
   [file]
   (slurp file))
 
@@ -50,6 +56,15 @@
     (.deleteOnExit temp-file)
     temp-file))
 
+(defn white-space-safe-keywordize-keys
+  [m]
+  (->> m
+       (walk/prewalk (fn [e]
+                       (if (and (map-entry? e)
+                                (string? (key e)))
+                         (update e 0 #(str/replace % #"\s+" ""))
+                         e)))
+       walk/keywordize-keys))
 
 (defn files-with-ending
   "Path is a string, ending needs to contain the dot."

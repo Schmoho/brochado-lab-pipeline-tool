@@ -4,7 +4,8 @@
    [clj-http.client :as http]
    [clojure.string :as str]
    [mongo.core :as mongo]
-   [clojure.tools.logging :as log]))
+   [clojure.tools.logging :as log]
+   [utils :as utils]))
 
 (defn get
   ([url]
@@ -13,19 +14,18 @@
    (get "results" url req))
   ([collection url req]
    (or (-> (mongo/get-api-result
-              collection
-              {:url     url
-               :request req}))
+            collection
+            {:url     url
+             :request req}))
        (let [_      (log/debug "Did not find" url "with" req "in MongoDB" collection)
-         result (http/get url req)]
-     result
-     (mongo/save-api-result!
-        collection
-        (->  result
-             (assoc
-              :url     url
-              :request req)
-             (dissoc :http-client)))))))
+             result (http/get url req)]
+         (mongo/save-api-result!
+          collection
+          (->  result
+               (assoc
+                :url     url
+                :request req)
+               (dissoc :http-client)))))))
 
 (defn id-query
   [url-template result-meta]
@@ -37,5 +37,6 @@
              _      (log/debug "Query" url "with" query-params)
              result (-> (get url {:query-params query-params})
                         (:body)
-                        (json/parse-string true))]
+                        (json/parse-string)
+                        (utils/white-space-safe-keywordize-keys))]
         (with-meta result result-meta)))))

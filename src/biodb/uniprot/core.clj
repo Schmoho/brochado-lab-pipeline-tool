@@ -106,7 +106,10 @@
                          (apply max (mapcat (comp (partial map :end) :locations) domains))))))))
 
 
-(defmulti active-sites (fn [_ protein] (meta protein)))
+(defmulti active-sites
+  "Returns protein feature maps that represent an active site with the given name.
+  Dispatches on protein metadata."
+  (fn [_ protein] (meta protein)))
 
 (defmethod active-sites
   {:biodb/source :uniprot
