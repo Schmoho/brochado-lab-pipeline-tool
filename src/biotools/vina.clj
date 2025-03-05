@@ -1,10 +1,8 @@
 (ns biotools.vina
   (:require
    [biotools.utils :refer :all]
-   [clojure.java.io :as io]
    [clojure.java.shell :as sh]
-   [clojure.string :as str]
-   [clojure.tools.logging :as log]))
+   [clojure.string :as str]))
 
 (is-command-available? "vina")
 
@@ -47,38 +45,38 @@
     parsed-lines))
 
 
-(defn run-docking!
-  [receptor config out-path]
-  (.mkdirs (io/file out-path))
-  (->> (for [index (range 1 4)]
-         (let [{:keys [exit out err]}
-               (vina (.getPath (io/file receptor))
-                     (.getPath (io/file config))
-                     "resources/drugs/Cefotaxime - 5742673.3D.pdbqt"
-                     (format "%s/docked-%s-%d.pdbqt"
-                             out-path
-                             (.getName (io/file receptor))
-                             index))]
-           (spit (str out-path "/dock-" (.getName (io/file receptor)) "-" index ".log")
-                 (if (= 0 exit)
-                   out
-                   err))
-           [index
-            (if (= 0 exit)
-              (parsed-vina-output out)
-              err)]))
-       (apply concat)))
+;; (defn run-docking!
+;;   [receptor config out-path]
+;;   (.mkdirs (io/file out-path))
+;;   (->> (for [index (range 1 4)]
+;;          (let [{:keys [exit out err]}
+;;                (vina (.getPath (io/file receptor))
+;;                      (.getPath (io/file config))
+;;                      "resources/drugs/Cefotaxime - 5742673.3D.pdbqt"
+;;                      (format "%s/docked-%s-%d.pdbqt"
+;;                              out-path
+;;                              (.getName (io/file receptor))
+;;                              index))]
+;;            (spit (str out-path "/dock-" (.getName (io/file receptor)) "-" index ".log")
+;;                  (if (= 0 exit)
+;;                    out
+;;                    err))
+;;            [index
+;;             (if (= 0 exit)
+;;               (parsed-vina-output out)
+;;               err)]))
+;;        (apply concat)))
 
 #_(produce-obabel-3d-conformer! "drugs/Cefotaxime - 5742673.sdf" "drugs/Cefotaxime - 5742673.3D.pdbqt")
 
-(defn docking-scores
-  [folder]
-  (->> (files-with-ending folder "log")
-       (concat)
-       (map (comp :affinity
-                  first
-                  parsed-vina-output
-                  slurp))))
+;; (defn docking-scores
+;;   [folder]
+;;   (->> (utils/files-with-ending folder "log")
+;;        (concat)
+;;        (map (comp :affinity
+;;                   first
+;;                   parsed-vina-output
+;;                   slurp))))
 
 #_(spit
  "output/docking-scores.json"
@@ -94,62 +92,62 @@
        (into {}))))
 
 
-(defn dock!
-  ([protein
-    ligand-binding-site-index
-    alignment-reference
-    output-folder]
-   (.mkdirs (io/file output-folder))
-   (let [protein-base-name (-> (io/file protein)
-                               (.getName)
-                               (str/replace ".pdb" ""))
-         aligned-file      (io/file (str (.getAbsolutePath (io/file output-folder))
-                                         "/"
-                                         (io/file (str protein-base-name ".aligned.pdb"))))]
-     (log/info (str "Aligning pdb with output file " aligned-file))
-     (align/align-3d-structure!
-      protein
-      alignment-reference
-      output-folder
-      aligned-file)
+;; (defn dock!
+;;   ([protein
+;;     ligand-binding-site-index
+;;     alignment-reference
+;;     output-folder]
+;;    (.mkdirs (io/file output-folder))
+;;    (let [protein-base-name (-> (io/file protein)
+;;                                (.getName)
+;;                                (str/replace ".pdb" ""))
+;;          aligned-file      (io/file (str (.getAbsolutePath (io/file output-folder))
+;;                                          "/"
+;;                                          (io/file (str protein-base-name ".aligned.pdb"))))]
+;;      (log/info (str "Aligning pdb with output file " aligned-file))
+;;      (align/align-3d-structure!
+;;       protein
+;;       alignment-reference
+;;       output-folder
+;;       aligned-file)
 
-     (dock! aligned-file
-            ligand-binding-site-index
-            output-folder)))
-  ([protein
-    ligand-binding-site-index
-    output-folder]
-   (let [protein-base-name (-> (io/file protein)
-                               (.getName)
-                               (str/replace ".pdb" ""))
-         config-file       (io/file (str (.getAbsolutePath (io/file output-folder))
-                                         "/"
-                                         protein-base-name
-                                         ".config"))]
-     (log/info (str "Producing config at "
-                    config-file))
-     (write-vina-box-config!
-      25
-      (pdb/parsed-pdb (slurp  protein))
-      ligand-binding-site-index
-      config-file)
+;;      (dock! aligned-file
+;;             ligand-binding-site-index
+;;             output-folder)))
+;;   ([protein
+;;     ligand-binding-site-index
+;;     output-folder]
+;;    (let [protein-base-name (-> (io/file protein)
+;;                                (.getName)
+;;                                (str/replace ".pdb" ""))
+;;          config-file       (io/file (str (.getAbsolutePath (io/file output-folder))
+;;                                          "/"
+;;                                          protein-base-name
+;;                                          ".config"))]
+;;      (log/info (str "Producing config at "
+;;                     config-file))
+;;      (write-vina-box-config!
+;;       25
+;;       (pdb/parsed-pdb (slurp  protein))
+;;       ligand-binding-site-index
+;;       config-file)
      
-     (let [pdbqt-file (str (.getAbsolutePath (io/file output-folder))
-                           "/"
-                           protein-base-name
-                           ".pdbqt")]
-       (log/info (str "Producing pdbqt at "
-                      pdbqt-file))
-       (produce-pbdqt!
-        (.getAbsolutePath (io/file protein))
-        pdbqt-file)
+;;      (let [pdbqt-file (str (.getAbsolutePath (io/file output-folder))
+;;                            "/"
+;;                            protein-base-name
+;;                            ".pdbqt")]
+;;        (log/info (str "Producing pdbqt at "
+;;                       pdbqt-file))
+;;        (produce-pbdqt!
+;;         (.getAbsolutePath (io/file protein))
+;;         pdbqt-file)
 
-       (log/info (str "Running docking with output-folder "
-                    output-folder))
-       (run-docking!
-        pdbqt-file
-        config-file
-        output-folder)))))
+;;        (log/info (str "Running docking with output-folder "
+;;                     output-folder))
+;;        (run-docking!
+;;         pdbqt-file
+;;         config-file
+;;         output-folder)))))
 
 #_(do
   #_(dock! (io/resource "BW25113/uniprot/pbp1b.hydrogenated.pdb")
@@ -304,22 +302,22 @@
 
 ;; #{468 471 508 509 511 527 528 529 530 566 655 657 659 691 692}
 
-(doseq [mutated-file-basename
-         (->> (file-seq (io/file (io/resource "PA14/mutated-ala")))
-              (filter #(.isFile %))
-              (map (comp #(str/replace % ".pdb" "")
-                         #(.getName %))))]
-   (do
-     (hydrogenate!
-      (-> (format "PA14/mutated-ala/%s.pdb"
-                  mutated-file-basename)
-          io/resource
-          io/file
-          .getAbsolutePath)
-      (format "resources/PA14/mutated-ala/%s.hydro.pdb"
-              mutated-file-basename))
-     (dock! (io/resource (format "PA14/mutated-ala/%s.hydro.pdb"
-                                 mutated-file-basename))
-            510
-            (format "output/docking/PA14/mutated-ala/%s"
-                    mutated-file-basename))))
+;; (doseq [mutated-file-basename
+;;          (->> (file-seq (io/file (io/resource "PA14/mutated-ala")))
+;;               (filter #(.isFile %))
+;;               (map (comp #(str/replace % ".pdb" "")
+;;                          #(.getName %))))]
+;;    (do
+;;      (hydrogenate!
+;;       (-> (format "PA14/mutated-ala/%s.pdb"
+;;                   mutated-file-basename)
+;;           io/resource
+;;           io/file
+;;           .getAbsolutePath)
+;;       (format "resources/PA14/mutated-ala/%s.hydro.pdb"
+;;               mutated-file-basename))
+;;      (dock! (io/resource (format "PA14/mutated-ala/%s.hydro.pdb"
+;;                                  mutated-file-basename))
+;;             510
+;;             (format "output/docking/PA14/mutated-ala/%s"
+;;                     mutated-file-basename))))

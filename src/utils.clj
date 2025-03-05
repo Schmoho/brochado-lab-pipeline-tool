@@ -5,8 +5,7 @@
    [clojure.java.shell :as sh]
    [clojure.pprint :as pprint]
    [clojure.string :as str]
-   [clojure.walk :as walk]
-   [clojure.set :as set])
+   [clojure.walk :as walk])
   (:import
    (org.apache.commons.io FilenameUtils)))
 
@@ -66,23 +65,6 @@
                          e)))
        walk/keywordize-keys))
 
-(defn files-with-ending
-  "Path is a string, ending needs to contain the dot."
-  [path ending]
-  (->> (file-seq (io/file path))
-       (filter #(.isFile %))
-       (filter #(str/ends-with? (.getName %) ending))))
-
-(defn keywordize-third-level
-  [m]
-  (->> m
-      (map (fn [[tax prots]]
-             [tax (into {}
-                        (map (fn [[accession prot]]
-                               [accession (walk/keywordize-keys prot)])
-                             prots))]))
-      (into {})))
-
 (defn is-command-available?
   [cmd]
   (try
@@ -91,17 +73,27 @@
        (catch Throwable t
          false)))
 
-(defn read-between-markers
-  [o start-marker end-marker]
-  (loop [lines   (str/split-lines o)
-         inside? false
-         result  []]
-        (if (empty? lines)
-          result
-          (let [line            (first lines)
-                remaining-lines (rest lines)]
-            (cond
-              (and (not inside?) (= line start-marker))   (recur (rest remaining-lines) true result)
-              (and inside? (.startsWith line end-marker)) result
-              inside?                                     (recur remaining-lines inside? (conj result line))
-              :else                                       (recur remaining-lines inside? result))))))
+(defn hash [x]
+  (str/replace (str (clojure.core/hash x)) "-" "0"))
+
+;; (defn files-with-ending
+;;   "Path is a string, ending needs to contain the dot."
+;;   [path ending]
+;;   (->> (file-seq (io/file path))
+;;        (filter #(.isFile %))
+;;        (filter #(str/ends-with? (.getName %) ending))))
+
+;; (defn read-between-markers
+;;   [o start-marker end-marker]
+;;   (loop [lines   (str/split-lines o)
+;;          inside? false
+;;          result  []]
+;;         (if (empty? lines)
+;;           result
+;;           (let [line            (first lines)
+;;                 remaining-lines (rest lines)]
+;;             (cond
+;;               (and (not inside?) (= line start-marker))   (recur (rest remaining-lines) true result)
+;;               (and inside? (.startsWith line end-marker)) result
+;;               inside?                                     (recur remaining-lines inside? (conj result line))
+;;               :else                                       (recur remaining-lines inside? result))))))

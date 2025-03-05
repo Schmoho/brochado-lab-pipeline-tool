@@ -1,4 +1,4 @@
-(ns db
+(ns db.core
   (:require
    [biodb.afdb :as afdb]
    [biodb.pubchem :as pubchem]
@@ -74,66 +74,3 @@
            ((if read?
               utils/read-file
               identity))))
-
-(defn initialize-db
-  []
-  (reset! db {}))
-
-(defn protein-by-id
-  [protein-id]
-  (with-meta
-    (if-let [protein (get [:raw :uniprot :uniprotkb protein-id])]
-     protein
-     (let [protein (api.uniprot/uniprotkb-entry protein-id)]
-       (insert! [:raw :uniprot :uniprotkb protein-id] "edn" protein)))
-    api.uniprot/uniprotkb-entry-meta))
-
-(defn- acquire-structures-by-id!
-  [protein-id]
-  (let [structure (afdb/get-structure-files protein-id)]
-    (if (or (< 1 (count (:pdb structure)))
-            (< 1 (count (:cif structure))))
-      (throw (ex-info "Multiple structure files. Deal with it!"
-                      {:protein-id protein-id}))
-      (let [{:keys [pdb cif]}
-            (->  structure
-                 (update :pdb first)
-                 (update :cif first))]
-        {:pdb (insert! [:raw :afdb :pdb protein-id] "pdb" pdb)
-         :cif (insert! [:raw :afdb :cif protein-id] "cif" cif)}))))
-
-(defn pdb-by-id
-  [protein-id]
-  (if-let [pdb-file (get [:raw :afdb :pdb protein-id])]
-    pdb-file
-    (:pdb (acquire-structures-by-id! protein-id))))
-
-(defn- acquire-compound-sdf-by-id!
-  [pubchem-compound-id & {:keys [read?]
-                          :or {read? true}}]
-  (let [sdf (pubchem/get-sdf-by-compound-id pubchem-compound-id)]
-    (insert! [:raw :pubchem :compound pubchem-compound-id] "sdf" sdf :read? read?)))
-
-(defn sdf-by-compound-id
-  [pubchem-compound-id & {:keys [read?]
-                          :or {read? true}}]
-  (if-let [sdf-file (get [:raw :pubchem :compound pubchem-compound-id] :read? read?)]
-    sdf-file
-    (acquire-compound-sdf-by-id! pubchem-compound-id :read? read?)))
-
-(defn pdbqt-file-by-compound-id
-  [pubchem-compound-id]
-  (let [obabel-hash (str (hash {:args    obabel/obabel-3d-conformer-args
-                                :version (obabel/obabel-version)}))
-        path [:processed :obabel :pdbqt pubchem-compound-id obabel-hash]]
-    (if-let [pdbqt-file (get path)]
-      pdbqt-file
-      (let [sdf-file        (sdf-by-compound-id pubchem-compound-id :read? false)
-            output-tmp-file (utils/create-temp-file "pdbqt")]
-        (obabel/produce-obabel-3d-conformer! sdf-file
-                                             output-tmp-file
-                                             obabel/obabel-3d-conformer-args)
-        (insert! path
-                 "pdbqt"
-                 output-tmp-file
-                 :read? false)))))

@@ -4,30 +4,30 @@
    [biotools.adfr-suite :as adfr-suite]
    [biotools.obabel :as obabel]
    [biotools.vina :as vina]
-   [clojure.string :as str]
-   [db :as db]
+   [db.api :as db]
+   [db.core :as db.core]
    [formats.pdb :as formats.pdb]
-   [utils :as utils]))
+   [utils :as utils]
+   [clojure.string :as str]))
 
 (defn preprocessing-pipeline
-  ([pdb] (preprocessing-pipeline pdb nil))
-  ([pdb plddt-tail-cutoff]
-   (let [intermediate-file (utils/create-temp-file "pdb")
-         result-file       (utils/create-temp-file "pdbqt")]
-     (if plddt-tail-cutoff
-       (->> pdb
-            (str/split-lines)
-            (formats.pdb/filter-tail-regions
-             #(> plddt-tail-cutoff (:temperature-factor %)))
-            (str/join "\n")
-            (spit intermediate-file))
-       (spit intermediate-file pdb))
-     (obabel/hydrogenate! (.getAbsolutePath intermediate-file))
-     (adfr-suite/produce-pbdqt!
-      (.getAbsolutePath intermediate-file)
-      (.getAbsolutePath result-file))
-     {:preprocessed-pdb   intermediate-file
-      :preprocessed-pdbqt result-file})))
+  [protein-id
+   {:keys [plddt-tail-cutoff]
+    :as   params}]
+  (let [params      (assoc params :obabel/version (obabel/obabel-version))
+        params-hash (utils/hash params)]
+    (if-let [pdbqt-file (db/pdbqt-by-id protein-id params-hash)]
+      pdbqt-file
+      (let [pdb  (db/pdb-by-id protein-id)
+            path [:processed :obabel :protein :pdbqt protein-id params-hash]
+            pdbqt-file
+            (cond->> pdb
+              plddt-tail-cutoff (formats.pdb/filter-tail-regions
+                                 #(> plddt-tail-cutoff (:temperature-factor %)))
+              true              (obabel/hydrogenate!)
+              true              (adfr-suite/produce-pdbqt!))]
+        (db.core/insert! (conj path "params") "edn" params :read? false)
+        (db.core/insert! (conj path protein-id) "pdbqt" pdbqt-file :read? false)))))
 
 (defn- get-active-site-locations-from-annotations
   [{:keys [active-site-name uuid]} protein-id]
@@ -44,24 +44,31 @@
       (let [active-site-location (first active-site-locations)]
         [protein-id active-site-location]))))
 
-(defn- prepare-structure
-  [{:keys [plddt-cutoff]} protein-id]
-  (let [pdb (db/pdb-by-id protein-id)
-        {:keys [preprocessed-pdbqt]} (preprocessing-pipeline pdb
-                                                             plddt-cutoff)]
-    [protein-id  preprocessed-pdbqt]))
-
 (defn- prepare-box-config
-  [{:keys [uuid active-site-lookup box-size]}
+  [{:keys [active-site-lookup box-size]}
    [protein-id preprocessed-file]]
-  (let [active-site-residue (formats.pdb/residue
-                             (formats.pdb/parsed-pdb preprocessed-file)
-                             (active-site-lookup protein-id))
+  (let [active-site-residue (formats.pdb/residue preprocessed-file
+                                                 (active-site-lookup protein-id))
         active-site-center  (formats.pdb/center-of-residue active-site-residue)
         box-config          (vina/vina-box-config active-site-center box-size)
         tmp-file            (utils/create-temp-file "config")]
     (spit tmp-file box-config)
     [protein-id tmp-file]))
+
+(defn prepare-ligand
+  [pubchem-compound-id]
+  (let [params      {:obabel/args    obabel/obabel-3d-conformer-args
+                     :obabel/version (obabel/obabel-version)}
+        params-hash (utils/hash params)
+        path        [:processed :obabel :ligand :pdbqt pubchem-compound-id params-hash]]
+    (if-let [pdbqt-file (db/pdbqt-file-by-compound-id pubchem-compound-id params-hash)]
+      pdbqt-file
+      (let [sdf-file   (db/sdf-by-compound-id pubchem-compound-id :read? false)
+            pdbqt-file (obabel/produce-obabel-3d-conformer! sdf-file
+                                                            obabel/obabel-3d-conformer-args)]
+
+        (db.core/insert! (conj path "params") "edn" params :read? false)
+        (db.core/insert! (conj path pubchem-compound-id) "pdbqt" pdbqt-file :read? false)))))
 
 (def params
   {:params.uniprot/protein              {:protein-ids      ["A0A0H2ZHP9"
@@ -79,29 +86,29 @@
            params.alpha-fold/structure
            params.pubchem/ligand
            params/docking]
-    :as params}]
-  (let [protein-ids              (-> protein :protein-ids)
-        active-site-name         (-> protein :active-site-name)
-        plddt-cutoff             (-> structure :plddt-cutoff)
-        active-site-locations    (->> protein-ids
-                                      (mapv (partial get-active-site-locations-from-annotations
-                                                     {:active-site-name active-site-name
-                                                      :uuid             uuid}))
-                                      (into {}))
-        prepared-structures      (mapv (partial prepare-structure
-                                                {:uuid         uuid
-                                                 :plddt-cutoff plddt-cutoff})
-                                       protein-ids)
-        ligand-structures        (mapv (juxt identity db/pdbqt-file-by-compound-id)
-                                       (-> ligand :ligand-ids))
-        box-configs              (mapv (partial prepare-box-config
-                                                {:uuid               uuid
-                                                 :active-site-lookup active-site-locations
-                                                 :box-size           (-> docking :box-size)})
-                                       prepared-structures)]
-    {:prepared-structures prepared-structures
-     :ligand-structures   ligand-structures
-     :box-configs         box-configs
-     :active-site-locations active-site-locations}))
+    :as   params}]
+  (let [ligand-structures     (->> (:ligand-ids ligand)
+                                   (mapv (juxt identity prepare-ligand)))
+        active-site-locations (->> (:protein-ids protein)
+                                   (mapv (partial get-active-site-locations-from-annotations
+                                                  {:active-site-name (-> protein :active-site-name)
+                                                   :uuid             uuid}))
+                                   (into {}))
+        prepared-structures   (->> (:protein-ids protein)
+                                   (mapv (fn [protein-id]
+                                           [protein-id
+                                            (preprocessing-pipeline
+                                             protein-id
+                                             {:plddt-cutoff (-> structure :plddt-cutoff)})])))
+        box-configs           (->>  prepared-structures
+                                    (mapv (partial prepare-box-config
+                                                   {:uuid               uuid
+                                                    :active-site-lookup active-site-locations
+                                                    :box-size           (-> docking :box-size)})))]
+    {:prepared-structures   prepared-structures
+     :ligand-structures     ligand-structures
+     :box-configs           box-configs
+     :active-site-locations active-site-locations
+     :params                params}))
 
 #_(pipeline params)

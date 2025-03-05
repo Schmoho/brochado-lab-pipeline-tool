@@ -1,17 +1,11 @@
 (ns pipeline.taxonomy
   (:require
-   [biotools.clustalo :as clustalo]
    [biodb.uniprot.api :as api.uniprot]
-   [biodb.uniprot.core :as uniprot.core]
-   [camel-snake-kebab.core :as csk]
-   [clojure.edn :as edn]
+   [biotools.clustalo :as clustalo]
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [graph.accrete.core]
-   [biodb.uniprot.blast :as blast]
-   [clojure.set :as set]
-   [formats.fasta :as formats.fasta]
-   [clojure.tools.logging :as log]))
+   [clojure.tools.logging :as log]
+   [formats.fasta :as formats.fasta]))
 
 ;; benchmark den Uniprot Blast damit man abschätzen kann wie lange der braucht
 ;; führ das alles auf separaten threads aus
@@ -51,8 +45,6 @@
             cluster-type->proteins (api.uniprot/uniref-proteins-by-protein-id
                                     protein-id
                                     (:cluster-types uniref))]
-        (tap> proteins-by-gene-names)
-        (tap> cluster-type->proteins)
         (if (< 1 (count proteins-by-gene-names))
           (do
             (log/info "Align by taxonomy")

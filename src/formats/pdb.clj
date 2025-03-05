@@ -1,6 +1,8 @@
 (ns formats.pdb
   (:require
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [utils :as utils]
+   [clojure.java.io :as io]))
 
 (defn pad-to-80 [s]
   (let [len (count s)]
@@ -62,29 +64,34 @@
   [pdb-string]
   (->> pdb-string
        str/split-lines
-       (map (comp (partial parse-pdb-line pdb-map)
-                  pad-to-80))))
+       (mapv (comp (partial parse-pdb-line pdb-map)
+                   pad-to-80))))
 
 (defmethod parsed-pdb java.io.File
   [pdb-file]
   (->> (slurp pdb-file)
        str/split-lines
-       (map (comp (partial parse-pdb-line pdb-map)
-                  pad-to-80))))
+       (mapv (comp (partial parse-pdb-line pdb-map)
+                   pad-to-80))))
+
+(defmethod parsed-pdb java.util.List
+  [pdb-lines]
+  (if (every? map? pdb-lines)
+    pdb-lines
+    (->> pdb-lines
+         (mapv (comp (partial parse-pdb-line pdb-map)
+                     pad-to-80)))))
 
 (defn atoms
   [pdb]
-  (filter #(and (map? %)
-                (= (:record-name %) "ATOM"))
-          pdb))
-
-#_(defn residue
-  [pdb n]
-    (get (group-by :residue-sequence-number (atoms pdb)) n))
+  (->> (parsed-pdb pdb)
+       (filter #(and (map? %)
+                     (= (:record-name %) "ATOM")))))
 
 (defn residue
-  [pdb-lines n]
-  (get (group-by :residue-sequence-number (atoms pdb-lines)) n))
+  [pdb n]
+  (-> (group-by :residue-sequence-number (atoms pdb))
+      (get n)))
 
 (defn center-of-residue
   [residue]
@@ -95,31 +102,49 @@
      :y (mean (map :y residue))
      :z (mean (map :z residue))}))
 
-(defn filter-tail-regions
+(defmulti filter-tail-regions (fn [filter-fn pdb] (type pdb)))
+
+(defmethod filter-tail-regions java.io.File
+  [filter-fn pdb]
+  (let [intermediate-file (utils/create-temp-file "pdb")]
+    (->> (file-seq pdb)
+         (filter-tail-regions filter-fn)
+         (str/join "\n")
+         (spit intermediate-file))))
+
+(defmethod filter-tail-regions java.lang.String
+  [filter-fn pdb]
+  (->> pdb
+       str/split-lines
+       (filter-tail-regions filter-fn)
+       (str/join "\n")))
+
+(defmethod filter-tail-regions java.util.List
   [filter-fn pdb-lines]
-  (let [non-atoms-start                (->> pdb-lines
+  (let [parse                          (if (every? map? pdb-lines) identity (partial parse-pdb-line pdb-map))
+        non-atoms-start                (->> pdb-lines
                                             (take-while (comp
                                                          #(not= "ATOM" (:record-name %))
-                                                         (partial parse-pdb-line pdb-map))))
+                                                         parse)))
         non-atoms-end                  (->> pdb-lines
                                             reverse
                                             (take-while (comp
                                                          #(not= "ATOM" (:record-name %))
-                                                         (partial parse-pdb-line pdb-map)))
+                                                         parse))
                                             reverse)
         atoms                          (->> pdb-lines
                                             (filter (comp
                                                      #(= "ATOM" (:record-name %))
-                                                     (partial parse-pdb-line pdb-map))))
+                                                     parse)))
         filtered-atoms-from-beginning  (->> atoms
                                             (drop-while (comp
                                                          filter-fn
-                                                         (partial parse-pdb-line pdb-map))))
+                                                         parse)))
         filtered-atoms-from-both-sides (->> filtered-atoms-from-beginning
                                             reverse
                                             (drop-while (comp
                                                          filter-fn
-                                                         (partial parse-pdb-line pdb-map)))
+                                                         parse))
                                             reverse)]
     (concat non-atoms-start
             filtered-atoms-from-both-sides
