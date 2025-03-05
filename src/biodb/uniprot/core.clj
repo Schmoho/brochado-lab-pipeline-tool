@@ -1,9 +1,7 @@
 (ns biodb.uniprot.core
-  (:require [clojure.string :as str]
-            [cheshire.core :as json]
-            [clojure.java.io :as io]
-            [formats.fasta :refer [->fasta]]
-            [clojure.edn :as edn]))
+  (:require
+   [clojure.string :as str]
+   [formats.fasta :refer [->fasta]]))
 
 (defmethod ->fasta 
   {:biodb/source :uniprot
@@ -61,7 +59,7 @@
        (filter (fn [{:keys [type description]}]
                  (and (= "Domain" type)
                       (str/includes? (str/lower-case description)
-                                     domain-name))))))
+                                     (str/lower-case domain-name)))))))
 
 (defmethod domains
   {:biodb/source :uniprot
@@ -73,7 +71,7 @@
                  (some-> interproGroup
                          :name
                          str/lower-case
-                         (str/includes? domain-name))))))
+                         (str/includes? (str/lower-case domain-name)))))))
 
 (defn restricted-sequence
   [feature protein]
@@ -106,6 +104,29 @@
                    (subs s
                          (apply min (mapcat (comp (partial map :start) :locations) domains))
                          (apply max (mapcat (comp (partial map :end) :locations) domains))))))))
+
+
+(defmulti active-sites (fn [_ protein] (meta protein)))
+
+(defmethod active-sites
+  {:biodb/source :uniprot
+   :uniprot/type :uniprotkb-entry}
+  [active-site-name protein]
+  (->> protein
+       :features
+       (filter (fn [{:keys [type description]}]
+                 (and (= "Active site" type)
+                      (str/includes? (str/lower-case description)
+                                     (str/lower-case active-site-name)))))))
+
+(defn active-site-location
+  [active-site]
+  (let [start (-> active-site :location :start :value)
+        end(-> active-site :location :end :value)]
+    (if-not (= start end)
+      (throw (ex-info "Weird location annotation! start != end"
+                      active-site))
+      start)))
 
 ;; (->fasta
 ;;  (with-meta

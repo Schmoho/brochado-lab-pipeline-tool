@@ -1,0 +1,4 @@
+{:params.uniprot/protein              {:protein-ids ["P02919"
+                                                     "A0A0H2ZHP9"]}
+ :params.pubchem/ligand               {:ligand-ids ["5742673"]}
+ :params.taxonomy-pipeline-output/msa {:job-id nil}}

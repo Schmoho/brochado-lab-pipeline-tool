@@ -33,3 +33,19 @@
  ::tour
  (fn [db _]
    (-> db :tour)))
+
+(re-frame/reg-sub
+ :taxonomic-comparison/results
+ (fn [db _]
+   (->> db
+        :taxonomic-comparison
+        :results
+        (mapv (fn [[uuid {:keys [params.uniprot/taxonomy
+                                 params.uniprot/uniref
+                                 params.uniprot/blast
+                                 params.uniprot/protein]
+                          :as result}]]
+                {:id                   (str uuid)
+                 :protein-ids          (-> protein :protein-ids str)
+                 :gene-names           (-> protein :gene-names str)
+                 :blast-still-running? (-> result :blast-still-running? str)})))))

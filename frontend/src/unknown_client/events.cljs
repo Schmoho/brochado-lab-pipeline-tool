@@ -1,6 +1,9 @@
 (ns unknown-client.events
   (:require
+   [clojure.string :as str]
    [re-frame.core :as re-frame]
+   [day8.re-frame.http-fx]
+   [ajax.core :as ajax] 
    [unknown-client.tours :as tours]
    [re-com.core :as re-com]
    [unknown-client.db :as db]
@@ -16,7 +19,8 @@
 (re-frame/reg-event-fx
  ::navigate
  (fn-traced [_ [_ handler]]
-            {:navigate handler}))
+            {:navigate       handler
+             :get-route-data handler}))
 
 (re-frame/reg-event-fx
  ::set-active-route
@@ -49,7 +53,7 @@
     {:db db
      :start-tour tour})))
 
-(def base-api "https://localhost:3001")
+(def base-api "http://localhost:3001")
 
 (re-frame/reg-event-fx
  ::start-taxonomic-comparison!
@@ -59,7 +63,57 @@
    :http-xhrio
    {:method          :post
     :uri             (str base-api "/taxonomic-comparison")
-    :params          (-> db :taxonomic-comparison :form)
+    :params          (-> db :taxonomic-comparison :form
+                         (update-in [:params.uniprot/protein :protein-ids]
+                                    #(-> %
+                                         (str/replace #"[,;]" " ")
+                                         (str/split #"\s+")
+                                         set))
+                         (update-in [:params.uniprot/protein :gene-names]
+                                    #(-> %
+                                         (str/replace #"[,;]" " ")
+                                         (str/split #"\s+")
+                                         set)))
     :timeout         10000
-    :on-success      [::post-taxonomic-comparison-success]
-    :on-failure      [::post-taxonomic-comparison-failure]}}))
+    :format          (ajax/transit-request-format)
+    :response-format (ajax/transit-response-format {:keyswords? true})
+    :on-success      [::start-taxonomic-comparison-success]
+    :on-failure      [::http-failure]}}))
+
+(re-frame/reg-event-fx
+ ::get-taxonomic-comparison-results
+ (fn-traced
+  [{:keys [db]} _]
+  {:db db
+   :http-xhrio
+   {:method          :get
+    :uri             (str base-api "/taxonomic-comparison-results")
+    :timeout         10000
+    :format          (ajax/transit-request-format)
+    :response-format (ajax/transit-response-format {:keyswords? true})
+    :on-success      [::get-taxonomic-comparison-results-success]
+    :on-failure      [::http-failure]}}))
+
+(re-frame/reg-event-fx
+ ::http-failure
+ (fn-traced
+  [{:keys [db]} [_ response]]
+  (js/alert response)))
+
+(re-frame/reg-event-fx
+ ::start-taxonomic-comparison-success
+ (fn-traced
+  [{:keys [db]} [_ response]]
+  {:db       db
+   :navigate :taxonomic-comparison-results}))
+
+(re-frame/reg-event-fx
+ ::get-taxonomic-comparison-results-success
+ (fn-traced
+  [{:keys [db]} [_ response]]
+  {:db       (assoc-in db [:taxonomic-comparison :results] (zipmap
+                                                            (map :pipeline/uuid
+                                                                 (:results response))
+                                                            (:results response)))
+   :navigate :taxonomic-comparison-results}))
+

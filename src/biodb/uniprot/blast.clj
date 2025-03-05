@@ -80,3 +80,21 @@
     (.stop blast-service)
     (future (blast-result->clj @result))))
 
+
+
+;; (cypher/merge-graph!
+;;  graph.accrete.core/connection
+;;  q(mapping.uniprot.blast/blast-result->blast-graph
+;;   pa-mrcb
+;;   {:blast/database       :uniprot-bacteria
+;;    :blast/query-sequence mrcB}
+;;   b))
+
+
+;; (cypher/create-merge-graph-query
+;;  (mapping.uniprot.blast/blast-result->blast-graph
+;;   pa-mrcb
+;;   {:blast/database       :uniprot-bacteria
+;;    :blast/query-sequence mrcB}
+;;   b))
+

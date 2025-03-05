@@ -83,6 +83,8 @@
 
 #_(p/close p )
 
+
+
 (def defaults
   {string? v/text
    bytes?  v/bin})
@@ -111,6 +113,7 @@
     (p/submit value)))
 
 (add-tap submit)
+
 
 ;; (remove-tap submit)
 
@@ -152,3 +155,4 @@
 ;;   (sp/keys :req-un [:numerical-coll/x :numerical-coll/y]))
 
 ;; (s/exercise ::tabular-data)
+

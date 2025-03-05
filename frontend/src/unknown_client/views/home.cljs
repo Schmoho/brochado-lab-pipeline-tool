@@ -16,7 +16,7 @@
   (let [name (re-frame/subscribe [::subs/name])]
     [re-com/title
      :src   (at)
-     :label (str "Sweet Baby Jesus. Hello from " @name "." )
+     :label (str "Diese Seite braucht irgendeinen Titel!")
      :level :level1
      :class (styles/header)]))
 
@@ -25,7 +25,7 @@
    :gap      "1em"
    :children [[h
                :height "100px"
-               :children [[:h1 "Hallo"]]]]])
+               :children [[:h1 "Hallo Hallo!"]]]]])
 
 
 

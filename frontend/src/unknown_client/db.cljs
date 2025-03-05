@@ -4,7 +4,10 @@
   {:name "Unknown Client"
    :taxonomic-comparison
    {:form
-    {:uniprot/uniref
-     {:cluster-types #{:uniref-100 :uniref-90}}
-     :uniprot/blast
-     {:database :uniprot-bacteria}}}})
+    {:params.uniprot/taxonomy
+     {:use-taxonomic-search? true}
+     :params.uniprot/uniref
+     {:use-uniref? true
+      :cluster-types #{:uniref-100 :uniref-90}}
+     :params.uniprot/blast
+     {:use-blast? false}}}})

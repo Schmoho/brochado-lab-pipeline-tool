@@ -2,7 +2,8 @@
   (:require [biotools.utils :refer :all]
             [clojure.java.shell :as sh]
             [clojure.string :as str]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [clojure.tools.logging :as log]))
 
 (is-command-available? "clustalo")
 
@@ -86,6 +87,7 @@
   ([fasta-elements]
    (clustalo {:sequence-input {:in "-"}} fasta-elements))
   ([params fasta-elements]
+   (log/info "Running ClustalO of" (count fasta-elements) "sequences")
    (let [in-string              (str/join "\n"
                                           (map #(str (:fasta/header %) "\n" (:fasta/sequence %))
                                                fasta-elements))

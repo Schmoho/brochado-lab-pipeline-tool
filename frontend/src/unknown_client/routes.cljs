@@ -15,14 +15,15 @@
 
 (def routes
   (atom
-   ["/" {""        :home
-         #_#_"taxon/" {#{[:taxons/id ""]
-                     [:taxons/id "/"]} :taxons
-                   [:taxons/id "/proteome/"]
-                   {[:proteomes/id ""] :proteomes}}
-         "about"   :about
-         "taxonomic-comparison" :taxonomic-comparison
-         "structural-comparison" :structural-comparison}]))
+   ["/" {""                             :home
+         #_#_                           "taxon/" {#{[:taxons/id ""]
+                                                    [:taxons/id "/"]} :taxons
+                                                  [:taxons/id "/proteome/"]
+                                                  {[:proteomes/id ""] :proteomes}}
+         "about"                        :about
+         "taxonomic-comparison"         :taxonomic-comparison
+         "taxonomic-comparison-results" :taxonomic-comparison-results
+         "structural-comparison"        :structural-comparison}]))
 
 
 (defn parse
@@ -56,3 +57,11 @@
  (fn [handler]
    (navigate! handler)))
 
+
+(re-frame/reg-fx
+ :get-route-data
+ (fn [route]
+   (case route
+     :taxonomic-comparison-results (re-frame/dispatch
+                                    [::events/get-taxonomic-comparison-results])
+     nil)))

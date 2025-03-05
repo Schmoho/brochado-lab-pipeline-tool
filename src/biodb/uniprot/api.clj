@@ -1,10 +1,11 @@
 (ns biodb.uniprot.api
   (:require
    [biodb.http :as http]
-   [cheshire.core :as json]
-   [clojure.tools.logging :as log]
+   [biodb.uniprot.core :as uniprot]
    [camel-snake-kebab.core :as csk]
-   [clojure.string :as str]))
+   [cheshire.core :as json]
+   [clojure.string :as str]
+   [clojure.tools.logging :as log]))
 
 (def uniprot-api-base "https://rest.uniprot.org")
 
@@ -217,9 +218,11 @@
 #_(uniref-entries-by-protein-id "A0A0H2ZHP9")
 
 (defn uniref-proteins-by-protein-id
-  ([protein-id] (uniref-proteins-by-protein-id protein-id #{"UniRef90" "UniRef100"}))
+  ([protein-id] (uniref-proteins-by-protein-id protein-id
+                                               #{"UniRef90" "UniRef100"}))
   ([protein-id uniref-cluster-types]
-   (let [cluster (uniref-entries-by-protein-id "A0A0H2ZHP9")]
+   (let [cluster (uniref-entries-by-protein-id protein-id
+                                               uniref-cluster-types)]
      (->> (for [[cluster-type cluster] cluster]
             (let [{:keys [uni-prot-kb-id uni-parc]}
                   (-> (group-by :memberIdType cluster)

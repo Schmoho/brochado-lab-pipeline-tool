@@ -13,12 +13,15 @@
    [unknown-client.views.home :as home]
    [unknown-client.views.structural-comparison :as structural-comparison]
    [unknown-client.views.taxonomic-comparison :as taxonomic-comparison]
+   [unknown-client.views.taxonomic-comparison-results :as taxonomic-comparison-results]
    [unknown-client.views.common :refer [navbar-link link-to-page help-thingie checkbox]]))
 
 (defmethod routes/panels :home [] [home/home-panel])
 (defmethod routes/header :home [] [home/home-header])
 (defmethod routes/panels :taxonomic-comparison [] [taxonomic-comparison/taxonomic-comparison-panel])
 (defmethod routes/header :taxonomic-comparison [] [taxonomic-comparison/taxonomic-comparison-header])
+(defmethod routes/panels :taxonomic-comparison-results [] [taxonomic-comparison-results/taxonomic-comparison-results-panel])
+(defmethod routes/header :taxonomic-comparison-results [] [taxonomic-comparison-results/taxonomic-comparison-results-header])
 (defmethod routes/panels :structural-comparison [] [structural-comparison/structural-comparison-panel])
 (defmethod routes/header :structural-comparison [] [structural-comparison/structural-comparison-header])
 
@@ -75,6 +78,6 @@
                              :height   "100%"
                              :gap      "1em"
                              :children [(routes/panels @active-panel)]]]]
-                [footer]]]))
+                #_[footer]]]))
 
 #_(.reload js/location)

@@ -34,29 +34,16 @@
                               :description "gives cool"
                               :version     "0.0.1"}}
              :handler (openapi/create-openapi-handler)}}]
-
-     ["/accrete"
-      {:tags ["accrete"]}
-      ["/uniprot"
-       ["/taxon"
-        {:get  {:summary    "Initiate accretion of a taxon by ID."
-                :parameters {:query :uniprot/taxon-request}
-                :responses  {200 {:body :uniprot/basic-response}}
-                :handler    handler/uniprot-taxon-id-handler}
-         :post {:summary    "Initiate accretion of a taxon by ID."
-                :parameters {:body :uniprot/taxon-request}
-                :responses  {200 {:body :uniprot/basic-response}}
-                :handler    handler/uniprot-taxon-id-handler}}]
-       ["/protein"
-        {:get  {:summary    "Initiate accretion of a protein by ID."
-                :parameters {:query :uniprot/protein-request}
-                :responses  {200 {:body :uniprot/basic-response}}
-                :handler    handler/uniprot-protein-id-handler}
-         :post {:summary    "Initiate accretion of a protein by ID."
-                :parameters {:body :uniprot/protein-request}
-                :responses  {200 {:body :uniprot/basic-response}}
-                :handler    handler/uniprot-protein-id-handler}}]]]]
-
+     ["/taxonomic-comparison"
+      {:post {:summary    "Start taxonomic comparison pipeline."
+              ;; :parameters {:body map?}
+              #_#_:responses  {200 {:body :uniprot/basic-response}}
+              :handler    handler/start-taxonomic-comparison-handler}}]
+     ["/taxonomic-comparison-results"
+      {:get {:summary    "Get taxonomic comparison results."
+              ;; :parameters {:body map?}
+              #_#_:responses  {200 {:body :uniprot/basic-response}}
+             :handler    handler/get-taxonomic-comparison-results-handler}}]]
     {;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
      :validate  spec/validate ;; enable spec validation for route data
      ;;:reitit.spec/wrap spell/closed ;; strict top-level validation
@@ -91,10 +78,33 @@
                :operationsSorter "alpha"}})
     (ring/create-default-handler))))
 
-
 (defn start!
   [port]
   (jetty/run-jetty #'app {:port port, :join? false})
   (log/info (format "HTTP server running on port %s." port)))
 
-(comment (start! 3000))
+(comment (def server (start! 3001)))
+
+#_(.stop server)
+
+;; ["/accrete"
+;;       {:tags ["accrete"]}
+;;       ["/uniprot"
+;;        ["/taxon"
+;;         {:get  {:summary    "Initiate accretion of a taxon by ID."
+;;                 :parameters {:query :uniprot/taxon-request}
+;;                 :responses  {200 {:body :uniprot/basic-response}}
+;;                 :handler    handler/uniprot-taxon-id-handler}
+;;          :post {:summary    "Initiate accretion of a taxon by ID."
+;;                 :parameters {:body :uniprot/taxon-request}
+;;                 :responses  {200 {:body :uniprot/basic-response}}
+;;                 :handler    handler/uniprot-taxon-id-handler}}]
+;;        ["/protein"
+;;         {:get  {:summary    "Initiate accretion of a protein by ID."
+;;                 :parameters {:query :uniprot/protein-request}
+;;                 :responses  {200 {:body :uniprot/basic-response}}
+;;                 :handler    handler/uniprot-protein-id-handler}
+;;          :post {:summary    "Initiate accretion of a protein by ID."
+;;                 :parameters {:body :uniprot/protein-request}
+;;                 :responses  {200 {:body :uniprot/basic-response}}
+;;                 :handler    handler/uniprot-protein-id-handler}}]]]

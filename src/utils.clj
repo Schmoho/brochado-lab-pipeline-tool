@@ -1,17 +1,55 @@
 (ns utils
   (:require
-   [cheshire.core :as json]
-   [clj-http.client :as client]
+   [clojure.edn :as edn]
    [clojure.java.io :as io]
+   [clojure.java.shell :as sh]
+   [clojure.pprint :as pprint]
    [clojure.string :as str]
-   [clojure.walk :as walk]
-   [clojure.java.shell :as sh]))
+   [clojure.walk :as walk])
+  (:import
+   (org.apache.commons.io FilenameUtils)))
 
-(defn get-json
-  [url]
-  (-> (client/get url {:accept :json})
-      :body
-      (json/parse-string true)))
+(defmulti write! (fn [target-file content] (type content)))
+
+(defmethod write! java.lang.String
+  [fileo content]
+  (.mkdirs (.getParentFile (io/file fileo)))
+  (spit fileo content)
+  (io/file fileo))
+
+(defmethod write! :default
+  [fileo content]
+  (.mkdirs (.getParentFile (io/file fileo)))
+  (with-open [wr (io/writer fileo)]
+    (.write wr (with-out-str (pprint/pprint content))))
+  (io/file fileo))
+
+(defn copy!
+  [target-file file-to-copy]
+  (.mkdirs (.getParentFile (io/file target-file)))
+  (io/copy file-to-copy target-file)
+  (io/file target-file))
+
+(defmulti read (fn [file] (FilenameUtils/getExtension (.getName (io/file file)))))
+
+(defmethod read "edn"
+  [file]
+  (edn/read (java.io.PushbackReader. (io/reader file))))
+
+(defmethod read :default
+  [file]
+  (slurp file))
+
+(defn create-temp-file
+  [file-ending]
+  (let [temp-file (java.io.File/createTempFile "unknown-"
+                                               (if (str/starts-with? file-ending ".")
+                                                 file-ending
+                                                 (str "." file-ending)))]
+    ;; Ensure the file is deleted when the JVM exits:
+    (.deleteOnExit temp-file)
+    temp-file))
+
 
 (defn files-with-ending
   "Path is a string, ending needs to contain the dot."

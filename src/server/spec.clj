@@ -2,6 +2,17 @@
   (:require
    [clojure.spec.alpha :as s]))
 
+;; (s/def :params.uniprot/blast
+;;   (s/keys :requn [:params.uniprot.blast/use-blast?
+;;                   :params.uniprot.blast/database
+;;                   :params.uniprot.blast/use-blast?]))
+
+;; (s/def :frontend/taxonomic-comparison-form
+;;   (s/keys :req [:params.uniprot/blast
+;;                 :params.uniprot/uniref
+;;                 :params.uniprot/taxonomy
+;;                 :params.uniprot/protein]))
+
 (s/def :uniprot/id string?)
 (s/def :uniprot/type keyword?)
 

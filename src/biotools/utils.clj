@@ -1,5 +1,8 @@
 (ns biotools.utils
-  (:require [clojure.java.shell :as sh]))
+  (:require
+   [clojure.java.shell :as sh]
+   [clojure.java.io :as io]
+   [clojure.string :as str]))
 
 
 (defn is-command-available?
@@ -9,3 +12,5 @@
        true
        (catch Throwable t
          false)))
+
+
