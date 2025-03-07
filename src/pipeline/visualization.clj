@@ -73,35 +73,63 @@
 (oz/start-server!)
 
 (def line-plot
-  {:data      {:values (->> processed
-                            (map (fn [m]
-                                   (assoc m :url (str "https://www.uniprot.org/uniprotkb?query=" (:clustername m)))))
-                            #_(map (fn [m]
-                                     (select-keys m [:slopeH1 :rssH0 :rssH1 :F_statistic]))))}
-   :params    [{:name   "effect_type",
-                :select {:type "point", :fields ["detected_effectH1"]},
-                :bind   "legend"}],
-   :transform [{:calculate "(datum.slopeH1 > 0 ? 1 : -1) * sqrt(datum.rssH0 - datum.rssH1)",
-                :as        "effect_size"},
-               {:calculate "log(datum.F_statistic + 1) / log(2)",
-                :as        "log_transformed_F_statistic"}]
-   :encoding  {:x           {:field "effect_size",
-                             :type  "quantitative",
-                             :title "Effect Size"},
-               :y           {:field "log_transformed_F_statistic",
-                             :type  "quantitative",
-                             :title "Log2(F-statistic + 1)"}
-               :color       {:field "detected_effectH1"
-                             :type  "nominal"
-                             :title "Effect type"}
-               :opacity     {:condition {:param "effect_type", :value 1},
-                             :value     0}
-               :tooltip [{:field "clustername", :title "Gene Cluster Name" :type "nominal"}
-                         {:field "effect_size", :title "Fold Change" :type "quantitative"}]
-               :href        {:field "url", :type "nominal"}}
-   :mark      #_{:type "point", :tooltip true} "point"
-   :width 400,
-   :height 400,})
+  {:params [{:name  "vertical_threshold",
+             :value 0,
+             :bind  {:input "range", :min -10, :max 10, :step 0.1}},
+            {:name  "horizontal_threshold",
+             :value 5,
+             :bind  {:input "range", :min 0, :max 10, :step 0.1}}]
+   :layer  [{:data      {:values (->> processed
+                                      (map (fn [m]
+                                             (assoc m :url (str "https://www.uniprot.org/uniprotkb?query=" (:clustername m)))))
+                                      #_(map (fn [m]
+                                               (select-keys m [:slopeH1 :rssH0 :rssH1 :F_statistic]))))}
+             :params    [{:name   "effect_type",
+                          :select {:type "point", :fields ["detected_effectH1"]},
+                          :bind   "legend"}]
+             :transform [{:calculate "(datum.slopeH1 > 0 ? 1 : -1) * sqrt(datum.rssH0 - datum.rssH1)",
+                          :as        "effect_size"},
+                         {:calculate "log(datum.F_statistic + 1) / log(2)",
+                          :as        "log_transformed_F_statistic"}]
+             :encoding  {:x       {:field "effect_size",
+                                   :type  "quantitative",
+                                   :title "Effect Size"},
+                         :y       {:field "log_transformed_F_statistic",
+                                   :type  "quantitative",
+                                   :title "Log2(F-statistic + 1)"}
+                         :color   {:condition {:test  "datum.effect_size > vertical_threshold && datum.log_transformed_F_statistic > horizontal_threshold",
+                                               :field "detected_effectH1",
+                                               :type  "nominal"
+                                               :title "Effect type"},
+                                   :value     "grey"}
+                         :opacity {:condition {:param "effect_type", :value 1},
+                                   :value     0}
+                         :tooltip [{:field "clustername", :title "Gene Cluster Name" :type "nominal"}
+                                   {:field "effect_size", :title "Fold Change" :type "quantitative"}]
+                         :href    {:field "url", :type "nominal"}}
+             :mark      #_{:type "point", :tooltip true} "point"}
+            #_#_{:mark     {:type        "rule",
+                            :strokeDash  [4, 4],
+                            :color       "black",
+                            :strokeWidth 2},
+                 :encoding {:x {:field "vertical_threshold"}}}
+              {:mark     {:type         "rule",
+                          :strokeDash   [4, 4],
+                          :color        "black",
+                          "strokeWidth" 2},
+               :encoding {:y {:field "horizontal_threshold"}}}
+
+            {:data {:values [{}]},
+             :transform [{:calculate "vertical_threshold", :as "vt"}],
+             :mark {:type "rule", :strokeDash [4, 4], :color "black", :strokeWidth 2},
+             :encoding {:x {:field "vt", :type "quantitative"}}}
+
+            {:data {:values [{}]},
+             :transform [{:calculate "horizontal_threshold", :as "ht"}],
+             :mark {:type "rule", :strokeDash [4, 4], :color "black", :strokeWidth 2},
+             :encoding {:y {:field "ht", :type "quantitative"}}}]
+   :width  400,
+   :height 400})
 
 (oz/view! line-plot)
 
@@ -115,3 +143,4 @@
 (oz/view! viz)
 
 (oz/export! viz "test.html")
+
