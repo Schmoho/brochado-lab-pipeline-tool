@@ -1,11 +1,10 @@
 (ns biotools.clustalo
-  (:require [biotools.utils :refer :all]
+  (:require [utils :as utils]
             [clojure.java.shell :as sh]
             [clojure.string :as str]
-            [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]))
 
-(is-command-available? "clustalo")
+(utils/is-command-available? "clustalo")
 
 (def mapping
   {:sequence-input   {:in         "--infile"

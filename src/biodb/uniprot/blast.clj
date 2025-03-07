@@ -98,3 +98,18 @@
 ;;    :blast/query-sequence mrcB}
 ;;   b))
 
+
+
+;; doing blast
+
+;; (defonce bonkers
+;;   (blast/run-blast-query!
+;;    {:blast/database       :uniprot-bacteria
+;;     :blast/query-sequence mrcB}))
+
+;; @bonkers
+
+;; (with-open [wr (clojure.java.io/writer "blast-mrcb.edn")]
+;;   (.write wr (with-out-str (clojure.pprint/pprint @bonkers))))
+
+

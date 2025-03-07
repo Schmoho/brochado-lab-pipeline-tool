@@ -2,132 +2,127 @@
   (:require
    [biodb.uniprot.api :as api.uniprot]
    [biotools.clustalo :as clustalo]
-   [clojure.java.io :as io]
-   [clojure.string :as str]
    [clojure.tools.logging :as log]
-   [formats.fasta :as formats.fasta]))
-
-;; benchmark den Uniprot Blast damit man abschätzen kann wie lange der braucht
-;; führ das alles auf separaten threads aus
-;; implementier die restriction
-;; factor die restriction raus, s.d. man das separat ausführen kann
+   [formats.fasta :as formats.fasta]
+   [utils :as utils]
+   [biodb.uniprot.core :as uniprot]))
 
 (def running-blast-jobs (atom #{}))
 
+;; metadata!
+(defn with-taxonomy-protein-set
+  [gene-names]
+  (map
+   (fn [protein]
+     (when-let [gene-names (not-empty
+                            (or gene-names
+                                (->> protein :genes (map (comp :value :geneName)))))]
+       (api.uniprot/proteins-by-taxa-and-genes
+        [(-> protein :organism :scientificName)]
+        gene-names)))))
+
+;; metadata!
+(defn with-uniref-protein-sets
+  [uniref-params]
+  (mapcat
+   (fn [protein]
+     (api.uniprot/uniref-proteins-by-protein-id
+      (:primaryAccession protein)
+      (:cluster-types uniref-params)))))
+
+;; metadata!
+(defn with-spin-off-blast-job
+  [uuid blast-params]
+  (map
+   (fn [protein]
+     ;; benchmark den Uniprot Blast damit man abschätzen kann wie lange der braucht
+     ;; blast                  (blast/run-blast-query!
+     ;;                         {:blast/database database
+     ;;                          :blast/query-sequence (-> protein :sequence :value)})
+     ;; blast-proteins         (->> @blast (mapv (comp api.uniprot/uniprotkb-entry :id)))
+     (future (swap! running-blast-jobs conj uuid)
+             (Thread/sleep (* 90 1000))
+             (swap! running-blast-jobs disj uuid)))))
+
+;; metadata!
+(defn domain-restricting
+  [restriction-domains]
+  (mapcat
+   (fn [protein-set]
+     (conj
+      (for [restriction-domain restriction-domains]
+        (map (partial uniprot/domain-restricted-protein restriction-domain)
+             protein-set))
+      protein-set))))
+
+;; metadata!
+(defn taxonomy-filtering
+  [taxonomy-params]
+  (mapcat
+   (fn [protein-set]
+     [protein-set nil])))
+
+(def align-protein-set
+  (map
+   (comp
+    clustalo/clustalo
+    (partial map formats.fasta/->fasta))))
+
+(def params
+  {:params.uniprot/blast    {:use-blast?                       true
+                             :database                         :uniprot-bacteria
+                             :filter-blast-result-by-taxonomy? false}
+   :params.uniprot/uniref   {:use-uniref?                  true
+                             :cluster-types                ["UniRef50" "UniRef90"]
+                             :filter-clusters-by-taxonomy? false}
+   :params.uniprot/taxonomy {:top-level                            "species"
+                             :filter-taxon                         "Pseudomonas"
+                             :use-taxonomic-search?                true
+                             :really-use-broad-taxonomic-category? false}
+   :params.uniprot/protein  {:protein-ids         ["P02919"
+                                                   "A0A0H2ZHP9"]
+                             :gene-names          ["mrcB"]
+                             :restriction-domains ["transpeptidase"
+                                                   {"A0A0H2ZHP9" "transglycosylase"}]}})
+
 (defn pipeline
-  [{:keys [params.uniprot/blast
-           params.uniprot/uniref
-           params.uniprot/protein
-           params.uniprot/taxonomy
-           pipeline/uuid]}]
-  (.mkdirs (io/file (format "results/%s" uuid)))
-  (let [protein-ids    (set (:protein-ids protein))
-        gene-names     (set (:gene-names protein))
-        taxonomy-level (or (:top-level taxonomy))]
-    (doseq [protein-id protein-ids]
-      (let [protein    (-> protein-id (api.uniprot/uniprotkb-entry))
-            blast-dummy (future (swap! running-blast-jobs conj uuid)
-                                (Thread/sleep (* 90 1000))
-                                (swap! running-blast-jobs disj uuid))
-            #_#_taxon      (-> protein :organism :taxonId (api.uniprot/taxonomy-entry))
-            ;; TODO blast muss asynchron ausgeführt werden!
-            ;; blast                  (blast/run-blast-query!
-            ;;                         {:blast/database database
-            ;;                          :blast/query-sequence (-> protein :sequence :value)})
-            ;; blast-proteins         (->> @blast (mapv (comp api.uniprot/uniprotkb-entry :id)))
-            gene-names             (or gene-names
-                                       (->> protein :genes (map (comp :value :geneName))))
-            proteins-by-gene-names (if (not-empty gene-names)
-                                     (api.uniprot/proteins-by-taxa-and-genes
-                                      [(-> protein :organism :scientificName)]
-                                      gene-names)
-                                     [])
-            cluster-type->proteins (api.uniprot/uniref-proteins-by-protein-id
-                                    protein-id
-                                    (:cluster-types uniref))]
-        (if (< 1 (count proteins-by-gene-names))
-          (do
-            (log/info "Align by taxonomy")
-            (->> proteins-by-gene-names
-                 (map formats.fasta/->fasta)
-                 (clustalo/clustalo)
-                 (formats.fasta/->fasta-string :clustalo/aligned-sequence)
-                 (spit (format "results/%s/%s_%s_taxonomy.fa" uuid protein-id (str/join "-" gene-names)) )))
-          (log/info "Only one protein in taxonomy, nothing to align."))
-        (doseq [[cluster-type {:keys [uniprotkb uniparc]}]
-                cluster-type->proteins]
-          (->> (concat uniprotkb uniparc)
-               (map formats.fasta/->fasta)
-               (clustalo/clustalo)
-               (formats.fasta/->fasta-string :clustalo/aligned-sequence)
-               (spit (format "results/%s/%s_%s_%s.fa" uuid protein-id (str/join "-" gene-names) cluster-type))))
-        (log/info "Done.")))))
+  [{{:keys [use-blast?]
+     :as   blast-params}          :params.uniprot/blast
+    {:keys [use-uniref?]
+     :as   uniref-params}         :params.uniprot/uniref
+    {:keys [gene-names
+            protein-ids
+            restriction-domains]} :params.uniprot/protein
+    {:keys [use-taxonomy-search?]
+     :as   taxonomy-params}       :params.uniprot/taxonomy
+    uuid                          :pipeline/uuid}]
+  (let [protein-ids (set protein-ids)
+        gene-names  (set gene-names)
+        alignments
+        (->> protein-ids
+             (transduce
+              (comp
+               (map api.uniprot/uniprotkb-entry)
+               (utils/branching
+                (when use-taxonomy-search?
+                  (with-taxonomy-protein-set gene-names))
+                (when use-uniref?
+                  (with-uniref-protein-sets uniref-params))
+                (when use-blast?
+                  (with-spin-off-blast-job uuid blast-params)))
+               (domain-restricting restriction-domains)
+               (taxonomy-filtering taxonomy-params)
+               (map align-protein-set))
+              conj
+              []))]
+    ;;  (< 1 (count proteins-by-gene-names))
+    #_(doseq [alignment alignments]
+        (->> alignment
+             (formats.fasta/->fasta-string :clustalo/aligned-sequence)
+             (spit "lol")))
+    (log/info "Done.")))
 
 
-#_ (do
-     (def protein-id "A0A0H2ZHP9")
-     (def protein (-> protein-id (api.uniprot/uniprotkb-entry)))
-
-     (def taxon
-       (-> protein :organism :taxonId (api.uniprot/taxonomy-entry)))
-
-     (defn upstream-species
-       [taxon]
-       (->> taxon
-            :lineage
-            (drop-while #(not= (:rank %) "species"))
-            first))
-
-     (def taxon-lineage
-       (->> (upstream-species taxon)
-            :taxonId
-            (api.uniprot/downstream-lineage)))
-
-     (def all-taxon-proteins-by-gene-name
-       (api.uniprot/uniprotkb-search {:query (format "gene:%s AND taxonomy_name:%s"
-                                                     "mrcb" "Pseudomonas aeruginosa")}))
-
-     (def uniref-cluster
-       (api.uniprot/uniref-by-protein-id (:primaryAccession protein)))
-
-     (def uniref-90
-       (api.uniprot/uniref-entry #_"UniRef50_Q4K603"
-                                 "UniRef90_G3XD31"
-                                 #_"UniRef100_A0A0U4NUB5"))
-
-     (def uniref-90-entries
-       (let [{:keys [uni-prot-kb-id uni-parc]}
-             (as-> uniref-90 $
-               (:members $)
-               (group-by :memberIdType $)
-               (update-keys $ csk/->kebab-case-keyword))]
-         {:uniprotkb (->> uni-prot-kb-id
-                          (mapcat :accessions)
-                          (distinct)
-                          (mapv api.uniprot/uniprotkb-entry))
-          :uniparc   (->> uni-parc
-                          (map :memberId)
-                          (distinct)
-                          (mapv api.uniprot/uniparc-entry))}))
-
-
-     (def blast (edn/read (java.io.PushbackReader. (io/reader "blast-mrcb.edn"))))
-     (def blast-proteins (->> blast (mapv (comp api.uniprot/uniprotkb-entry :id)))))
-
-
-;; (->> mrcb-uniref-90-entries
-;;      (map (comp formats.fasta/->fasta
-;;                 #_(or (uniprot.core/domain-restricted-protein "transpeptidase" %) %)))
-;;      (clustalo/clustalo))
-
-
-;; (with-open [wr (clojure.java.io/writer "uniref-50.edn")]
-;;   (.write wr (with-out-str (clojure.pprint/pprint (->> (concat (:uniprotkb mrcb-uniref-90-entries)
-;;                                                               (:uniparc mrcb-uniref-90-entries))
-;;                                                        (mapv formats.fasta/->fasta))))))
-
-
-#_(map (partial uniprot.core/domains "transpeptidase") (:uniprotkb mrcb-uniref-90-entries))
 
 
 ;; --- Interessante Sachen ---
@@ -153,45 +148,5 @@
 ;;      (filter (fn [[a b]] 
 ;;                (not= (-> a :sequence :value )
 ;;                      (-> b :alignments first :query-seq)))))
-
-
-;; ungefähr so sollte das nachher abgespeichert werden
-;; {"path"
-;;  {"/raw-data"
-;;   {"/uniprot"
-;;    ["proteins" "taxons" "cluster" "blast"]}
-;;   "/alignments"
-;;   {"/blast"
-;;    ["/{domain}" "full"]
-;;    "/taxonomy"
-;;    {"/{gene}"
-;;     ["/{domain}" "full"]}
-;;    "/uniref90"
-;;    ["/{domain}" "full"]
-;;    "/uniref100"
-;;    ["/{domain}" "full"]}}}
-
-
-;; doing blast
-
-;; (let [before (atom nil)
-;;       after (atom nil)]
-;;   (reset! before (java.time.Instant/now))
-;;   (Thread/sleep 5000)
-;;   (reset! after (java.time.Instant/now))
-;;   [@before @after])
-
-
-;; (def mrcB "MTRPRSPRSRNSKARPAPGLNKWLGWALKLGLVGLVLLAGFAIYLDAVVQEKFSGRRWTIPAKVYARPLELFNGLKLSREDFLRELDALGYRREPSVSGPGTVSVAASAVELNTRGFQFYEGAEPAQRVRVRFNGNYVSGLSQANGKELAVARLEPLLIGGLYPAHHEDRILVKLDQVPTYLIDTLVAVEDRDFWNHHGVSLKSVARAVWVNTTAGQLRQGGSTLTQQLVKNFFLSNERSLSRKINEAMMAVLLELHYDKRDILESYLNEVFLGQDGQRAIHGFGLASQYFFSQPLAELKLDQVALLVGMVKGPSYFNPRRYPDRALARRNLVLDVLAEQGVATQQEVDAAKQRPLGVTRQGSMADSSYPAFLDLVKRQLRQDYRDEDLTEEGLRIFTSFDPILQEKAETSVNETLKRLSGRKGVDQVEAAMVVTNPETGEIQALIGSRDPRFAGFNRALDAVRPIGSLIKPAVYLTALERPSKYTLTTWVQDEPFAVKGQDGQVWRPQNYDRRSHGTIFLYQGLANSYNLSTAKLGLDVGVPNVLQTVARLGINRDWPAYPSMLLGAGSLSPMEVATMYQTIASGGFNTPLRGIRSVLTADGQPLKRYPFQVEQRFDSGAVYLVQNAMQRVMREGTGRSVYSQLPSSLTLAGKTGTSNDSRDSWFSGFGGDLQAVVWLGRDDNGKTPLTGATGALQVWASFMRKAHPQSLEMPMPENVVMAWVDAQTGQGSAADCPNAVQMPYIRGSEPAQGPGCGSQNPAGEVMDWVRGWLN")
-
-;; (defonce bonkers
-;;   (blast/run-blast-query!
-;;    {:blast/database       :uniprot-bacteria
-;;     :blast/query-sequence mrcB}))
-
-;; @bonkers
-
-;; (with-open [wr (clojure.java.io/writer "blast-mrcb.edn")]
-;;   (.write wr (with-out-str (clojure.pprint/pprint @bonkers))))
 
 
