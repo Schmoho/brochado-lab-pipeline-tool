@@ -11,8 +11,6 @@
 
 (def kegg-organisms-in-ncbi-brite-id "br:br08610")
 
-"679895"
-
 ;; ### Simple Wrappers ###
 
 (defn list
@@ -80,22 +78,6 @@
                (:children stuff))]))
       (into {})))
 
-(map (comp count str/split-lines list) ["eco" "ecr" "pae" "pau" "stm" "seo"])
-
-(->> (list "eco")
-     (kegg.parser/parse-genome-list)
-     (transduce
-      (comp
-       (map first)
-       (partition-all 10)
-       (map (partial str/join "+"))
-       (map get)
-       (map kegg.parser/parse-kegg-get-result))
-      conj
-      [])
-     (apply concat)
-     (utils/write! "kegg-eco.edn"))
-
 (defn get-all-genes!
   [organism]
   (future
@@ -149,8 +131,20 @@
   ;;     ["99287" "stm"]
   ;;     ["588858" "seo"])
 
+  (map (comp count str/split-lines list) ["eco" "ecr" "pae" "pau" "stm" "seo"])
 
-  
+  (->> (list "eco")
+       (kegg.parser/parse-genome-list)
+       (transduce
+        (comp
+         (map first)
+         (partition-all 10)
+         (map (comp kegg.parser/parse-kegg-get-result get (partial str/join "+"))))
+        conj
+        [])
+       (apply concat)
+       (utils/write! "kegg-eco.edn"))
+
   (str/split-lines (list "br:08908"))
 
   (str/split-lines (find "brite" "taxonomy"))

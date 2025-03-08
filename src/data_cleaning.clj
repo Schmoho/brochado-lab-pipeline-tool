@@ -63,9 +63,9 @@
                    (log-transformed-F-statistic (:F_statistic row))
                    :fdr         (:FDR row)})))))
 
-  (let [raw-file         "resources/tpp-raw-cefotaxime-ecoli.csv"
-        processed-file   "resources/tpp-processed-cefotaxime-ecoli.csv"
-        output-file-name "tpp-cefotaxime-ecoli.csv"
+  (let [raw-file         "resources/tpp-raw-amikacin-pae.csv"
+        processed-file   "resources/tpp-processed-amikacin-pae.csv"
+        output-file-name "tpp-amikacin-pae.csv"
         raw
         (->> (csv/read-csv-data raw-file)
              (transduce

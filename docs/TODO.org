@@ -1,7 +1,16 @@
 * Visualization
-** annotationsbasiertes Preprocessing
-** FDR Schieber
+** DONE annotationsbasiertes Preprocessing
+CLOSED: [2025-03-08 Sa 17:10]
+:LOGBOOK:
+- State "DONE"       from "NEXT"       [2025-03-08 Sa 17:10]
+:END:
+** DONE FDR Schieber
+CLOSED: [2025-03-08 Sa 17:10]
+:LOGBOOK:
+- State "DONE"       from "NEXT"       [2025-03-08 Sa 17:10]
+:END:
 ** Integration in Website
+** Text-Box thingie
 * Taxonomy Pipeline
 ** Test
 * Structure Pipeline

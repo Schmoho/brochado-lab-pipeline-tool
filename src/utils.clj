@@ -78,6 +78,12 @@
 (defn hash [x]
   (str/replace (str (clojure.core/hash x)) "-" "0"))
 
+
+(defn represented-values
+  [accessor coll-of-maps]
+  (keys (group-by accessor coll-of-maps)))
+
+
 ;; (defn files-with-ending
 ;;   "Path is a string, ending needs to contain the dot."
 ;;   [path ending]

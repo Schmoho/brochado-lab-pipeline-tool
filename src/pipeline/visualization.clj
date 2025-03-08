@@ -2,24 +2,32 @@
   (:require
    [biodb.uniprot.api :as api.uniprot]
    [biodb.uniprot.core :as uniprot]
-   [clojure.string :as str]
    [csv-utils :as csv]
    [data-cleaning :as clean]
    [oz.core :as oz]
    [clojure.set :as set]
-   [cheshire.core :as json]))
+   [plots.volcanoes :as volcano]
+   [math :as math]
+   [clojure.string :as str]))
 
-(def cefotaxime-ecoli
-  (->> (csv/read-csv-data "resources/tpp-cefotaxime-ecoli.csv")
-       (map clean/numerify)))
-
-(def amikacin-ecoli
-  (->> (csv/read-csv-data "resources/tpp-amikacin-ecoli.csv")
-       (map clean/numerify)))
-
-(defonce proteome
-  (api.uniprot/uniprotkb-stream {:query "taxonomy_id:83333"}))
-
+(defn cross-data
+  [data-set-1 data-set-2]
+  (set/join
+   (->> data-set-1
+        (map #(set/rename-keys
+               %
+               {:effect_size                 :effect_size_1
+                :effect_type                 :effect_type_1
+                :log_transformed_f_statistic :log_transformed_f_statistic_1
+                :fdr                         :fdr_1})))
+   (->> data-set-2
+        (map
+         #(set/rename-keys
+           %
+           {:effect_size                 :effect_size_2
+            :effect_type                 :effect_type_2
+            :log_transformed_f_statistic :log_transformed_f_statistic_2
+            :fdr                         :fdr_2})))))
 
 (defn with-uniprot-id-fn
   [id-lookup]
@@ -40,211 +48,115 @@
                proteome-lookup
                (uniprot/has-go-term? go-term)))))
 
-
-(defn volcano-plot
-  [data]
-  {:data      {:values data}
-   :params    [{:name   "p_effect_type",
-                :select {:type "point", :fields ["effect_type"]},
-                :bind   "legend"}
-               {:name  "p_fdr_threshold",
-                :value 0.05,
-                :bind  {:input "range", :min 0, :max 1, :step 0.01}}
-               {:name   "grid",
-                :select "interval",
-                :bind   "scales"}]
-   :encoding  {:x       {:field "effect_size",
-                         :type  "quantitative",
-                         :title "Effect Size"},
-               :y       {:field "log_transformed_f_statistic",
-                         :type  "quantitative",
-                         :title "Log2(F-statistic + 1)"}
-               :color   {:field "effect_type",
-                         :type  "nominal"
-                         :title "Effect type"}
-               :opacity {:condition [{:test "(datum.fdr <= p_fdr_threshold)",
-                                      :value 1}
-                                     #_{:param "p_effect_type", :value 1}]
-                         :value 0.2}
-               :tooltip [{:field "gene_name", :title "Gene Name" :type "nominal"}
-                         {:field "effect_size", :title "Fold Change" :type "quantitative"}]
-               :href    {:field "url", :type "nominal"}}
-   :mark      "point"
-   :width     600,
-   :height    400})
-
-
-(defn volcano-cross-highlight
-  [data]
-  {:data     {:values data}
-   :hconcat [{:width    700,
-              :height   600,
-              :params   [{:name   "selectedGenes",
-                          :select {:type "interval", :encodings ["x" "y"]}}
-                         {:name   "p_effect_type",
-                          :select {:type "point", :fields ["effect_type"]},
-                          :bind   "legend"}
-                         {:name  "p_fdr_threshold",
-                          :value 0.05,
-                          :bind  {:input "range", :min 0, :max 1, :step 0.01}}
-                         #_{:name   "grid",
-                            :select "interval",
-                            :bind   "scales"}],
-              :mark     "point",
-              :encoding {:x       {:field "effect_size_1",
-                                   :type  "quantitative",
-                                   :title "Effect Size 1"},
-                         :y       {:field "log_transformed_f_statistic_1",
-                                   :type  "quantitative"},
-                         :opacity {:condition {:param "selectedGenes"
-                                               :value 1},
-                                   :value     0.2}
-                         :color   {:field "effect_type_1",
-                                   :type  "nominal"
-                                   :title "Effect type"},
-                         :tooltip [{:field "gene_name", :type "nominal", :title "Gene"}]}}
-             {:width    700,
-              :height   600,
-              :mark     "point",
-              :encoding {:x       {:field "effect_size_2",
-                                   :type  "quantitative",
-                                   :title "Effect Size 2"},
-                         :y       {:field "log_transformed_f_statistic_2",
-                                   :type  "quantitative"},
-                         :opacity {:condition {:param "selectedGenes"
-                                               :value 1},
-                                   :value     0.2}
-                         :color   {:field "effect_type_1",
-                                   :type  "nominal"
-                                   :title "Effect type"},
-                         :tooltip [{:field "gene_name", :type "nominal", :title "Gene"}]}}
-             {:width 400,
-              :height 100,
-              :mark "text",
-              :encoding {:text {:signal "selectedGenes && selectedGenes.length > 0 ? 'Selected Genes: ' + selectedGenes.map(d => d.gene_name).join(', ') : 'No genes selected'"}}}]})
-
-
-(defn volcano-cross-plot
-  [cross-data {:keys [x-label
-                      y-label]}]
-  {:data     {:values cross-data}
-   :params   [{:name  "p_fdr_threshold",
-               :value 0.05,
-               :bind  {:input "range", :min 0, :max 1, :step 0.01}}
-              {:name   "grid",
-               :select "interval",
-               :bind   "scales"}]
-   :vconcat
-   [{:width  400,
-     :height 80,
-     :transform [{:filter "datum.fdr_1 <= p_fdr_threshold && datum.fdr_2 <= p_fdr_threshold"}]
-
-     :mark   {:type "bar" :color "orange"}
-     :encoding {:x {:field "effect_size_1",
-                    :bin   {:maxbins 400},
-                    :type  "quantitative",
-                    :axis  nil},
-                :y {:aggregate "count", :type "quantitative"}}}
-    {:hconcat [{:width    400,
-                :height   400,
-                :params   [{:name   "p_effect_type_1",
-                            :select {:type "point", :fields ["effect_type_1"]},
-                            :bind   "legend"}
-                           {:name   "p_effect_type_2",
-                            :select {:type "point", :fields ["effect_type_2"]},
-                            :bind   "legend"}],
-                :mark     "point",
-                :encoding {:x       {:field "effect_size_1",
-                                     :type  "quantitative",
-                                     :title x-label},
-                           :y       {:field "effect_size_2",
-                                     :type  "quantitative",
-                                     :title y-label},
-                           :color   {:condition
-                                     [{:test  "datum.effect_size_1 >= datum.effect_size_2 + 1",
-                                       :value "steelblue"},
-                                      {:test  "datum.effect_size_2 >= datum.effect_size_1 + 1",
-                                       :value "orange"}],
-                                     :value "gray"},
-                           :opacity {:condition
-                                     {:test
-                                      "datum.fdr_1 > p_fdr_threshold || datum.fdr_2 > p_fdr_threshold",
-                                      :value 0.2},
-                                     :value 1},
-                           :tooltip [{:field "gene_name", :title "Gene Name", :type "nominal"}],
-                           :href    {:field "url", :type "nominal"}}}
-               {:width    80,
-                :height   400,
-                :transform [{:filter "datum.fdr_1 <= p_fdr_threshold && datum.fdr_2 <= p_fdr_threshold"}]
-                :mark     {:type "bar" :color "steelblue"}
-                :encoding {:x {:aggregate "count", :type "quantitative"}
-                           :y {:field "effect_size_2",
-                               :bin   {:maxbins 400},
-                               :type  "quantitative",
-                               :axis  nil}}}]}]})
-
-(def cross-data
-  (set/join
-  (map
-   #(set/rename-keys %
-                     {:effect_size :effect_size_1
-                      :effect_type :effect_type_1
-                      :log_transformed_f_statistic :log_transformed_f_statistic_1
-                      :fdr :fdr_1})
-   cefotaxime-ecoli)
-  (map
-   #(set/rename-keys %
-                     {:effect_size :effect_size_2
-                      :effect_type :effect_type_2
-                      :log_transformed_f_statistic :log_transformed_f_statistic_2
-                      :fdr :fdr_2})
-   amikacin-ecoli)))
-
-(defn plotify
+(defn decorate-data
   [data]
   (->> data
-       (map (with-uniprot-id-fn
-              (comp
-               :primaryAccession
-               (uniprot/proteome-lookup proteome))))
        #_(filter (go-term-filtering-fn proteome "GO:0009252"))
-       (map (fn [m]
-              (assoc m :url
-                     (some->> (:uniprot-id m)
-                              (str "https://www.uniprot.org/uniprotkb/")))))))
+       (map
+        #(assoc % :url
+                (some->> (:uniprot-id %)
+                         (str "https://www.uniprot.org/uniprotkb/"))))))
 
-(def cross-viz
-  (let [cefotaxime (plotify cefotaxime-ecoli)
-        amikacin   (plotify amikacin-ecoli)
-        cross-data (plotify cross-data)]
+(defn cross-viz
+  [data-set-1 data-set-2 {:keys [title
+                                 cross-plot-params]}]
+  (let [data-set-1 (decorate-data data-set-1)
+        data-set-2 (decorate-data data-set-2)
+        cross-data (decorate-data (cross-data
+                                   data-set-1
+                                   data-set-2))]
     [:div
-     [:h3 "Cefotaxime vs. Amikacin E.Coli"]
-     #_[:div {:style {:display        "flex"
-                      :flex-direction "row"}}
-        [:vega-lite (volcano-plot cefotaxime)]
-        [:vega-lite (volcano-plot amikacin)]]
+     [:h3 title]
      [:div {:style {:display        "flex"
                     :flex-direction "row"}}
-      [:vega-lite (volcano-cross-highlight cross-data)]]
-     #_[:div {:style {:display        "flex"
-                      :flex-direction "row"}}
-        [:vega-lite (volcano-cross-plot cross-data
-                                        {:x-label "Cefotaxime Fold Change"
-                                         :y-label "Amikacin Fold Change"})]]]))
+      [:vega-lite (volcano/standard data-set-1)]
+      [:vega-lite (volcano/standard data-set-2)]]
+     [:div {:style {:display        "flex"
+                    :flex-direction "row"}}
+      [:vega-lite (volcano/cross-highlighting cross-data)]]
+     [:div {:style {:display        "flex"
+                    :flex-direction "row"}}
+      [:vega-lite (volcano/two-volcanoes-cross-plot cross-data cross-plot-params)]]]))
+
 
 
 
 
 (comment
+  (def cefotaxime-ecoli
+    (->> (csv/read-csv-data "resources/tpp-cefotaxime-ecoli.csv")
+         (map clean/numerify)))
+
+  (def amikacin-ecoli
+    (->> (csv/read-csv-data "resources/tpp-amikacin-ecoli.csv")
+         (map clean/numerify)))
+
+  (def cefotaxime-pae
+    (->> (csv/read-csv-data "resources/tpp-cefotaxime-pae.csv")
+         (map clean/numerify)))
+
+  (def amikacin-pae
+    (->> (csv/read-csv-data "resources/tpp-amikacin-pae.csv")
+         (map clean/numerify)))
+
+  (defonce ecoli-proteome
+    (api.uniprot/uniprotkb-stream {:query "taxonomy_id:83333"}))
+
+  (defonce pau-proteome
+    (api.uniprot/uniprotkb-stream {:query "taxonomy_id:208963"}))
+
+  (defn distrustful-proteome
+    [data-set]
+    (->> data-set
+         (mapcat (comp #(str/split % #"\|") :protein_id))
+         (mapv api.uniprot/uniprotkb-entry)
+         (filter #(not= "Inactive" (:entryType %)))))
+
+  (do
+    (defonce distrustful-ecoli-amikacin (distrustful-proteome amikacin-ecoli))
+    (defonce distrustful-ecoli-cefotaxime (distrustful-proteome cefotaxime-ecoli))
+    (defonce distrustful-pae-amikacin (distrustful-proteome amikacin-pae))
+    (defonce distrustful-pae-cefotaxime (distrustful-proteome cefotaxime-pae)))
+ 
+  ;; schön: die IDs in deren Daten sind wenigstens korrekt gemapped
+  (->> distrustful-pae-amikacin
+       (map (comp :taxonId :organism))
+       distinct)
+  
+  ;; auch schön: darauf achten "Inactive" records rauszufiltern,
+  ;; aber danach ist das hier leer
+  (set/difference
+   (set (map :primaryAccession distrustful-ecoli-cefotaxime))
+   (set (map :primaryAccession ecoli-proteome)))
+
+  (defn go-term-map-stats
+    [go-term-map]
+    (->> (for [[type terms] go-term-map]
+           (let [freqs (vals (frequencies terms))]
+             [type {:count            (count terms)
+                    :mean-frequency   (int (math/mean freqs))
+                    :median-frequency (int (math/median freqs))
+                    :max-frequency (apply max freqs)}]))
+         (into {})))
+
+  (let [proteome-1 ecoli-proteome
+        proteome-2 pau-proteome
+        go-terms-1 (uniprot/go-terms-in-proteome proteome-1)
+        go-terms-2 (uniprot/go-terms-in-proteome proteome-2)]
+    {:proteome-1 (go-term-map-stats go-terms-1)
+     :proteome-2 (go-term-map-stats go-terms-2)})
+
   (oz/start-server!)
 
-  (oz/view! cross-viz)
-
-  (oz/view! viz)
-
-  (->> (map uniprot/go-terms-in-protein proteome)
-       (apply concat)
-       (group-by :type))
+  (oz/view! (cross-viz
+             cefotaxime-ecoli
+             amikacin-ecoli
+             {:title "Cefotaxime vs. Amikacin E.Coli"
+              :cross-plot-params
+              {:x-label "Cefotaxime Fold Change"
+               :y-label "Amikacin Fold Change"
+               :width   800
+               :height  600}}))
 
   (oz/export! [:div] "test.html")
 
@@ -260,35 +172,25 @@
      :slope
      :r_sq])
 
-  {:width 80,
-   :height 400,
+  {:width     80,
+   :height    400,
    :transform [{:density "effect_size_2",
-                :as ["value", "density"]}]
+                :as      ["value", "density"]}]
 
-   :mark "line",
+   :mark     "line",
    :encoding {:y {:field "value",
-                  :type "quantitative",
-                  :axis nil},
+                  :type  "quantitative",
+                  :axis  nil},
               :x {:field "density",
-                  :type "quantitative"
-                  :sort "-y"}}}
+                  :type  "quantitative"
+                  :sort  "-y"}}}
 
-  
-(def viz
-  (let [data (->> cefotaxime-ecoli
-                  (map (with-uniprot-id-fn
-                         (comp
-                          :primaryAccession
-                          (uniprot/proteome-lookup proteome))))
-                  #_(filter (go-term-filtering-fn proteome "GO:0009252"))
-                  (map (fn [m]
-                         (assoc m :url
-                                (some->> (:uniprot-id m)
-                                         (str "https://www.uniprot.org/uniprotkb/"))))))]
-    [:div
-     [:h3 "TPP Cefotaxime E.Coli"]
-     [:div {:style {:display        "flex"
-                    :flex-direction "row"}}
-      [:vega-lite (volcano-plot data)]]])))
+  (def viz
+    (let [data (decorate-data cefotaxime-ecoli)]
+      [:div
+       [:h3 "TPP Cefotaxime E.Coli"]
+       [:div {:style {:display        "flex"
+                      :flex-direction "row"}}
+        [:vega-lite (volcano/standard data)]]])))
 
 
