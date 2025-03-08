@@ -47,9 +47,7 @@
         conj
         [])))
 
-
-
-(let [data (map #(select-keys
+#_(let [data (map #(select-keys
                   %
                   [:protein_id
                    :norm_rel_fc_protein_2_5_transformed
@@ -68,7 +66,7 @@
                    data-to-write))
   data-to-write)
 
-(field-domain :protein_id data)
+#_(field-domain :protein_id data)
 
 (oz/start-server!)
 
@@ -131,7 +129,7 @@
    :width  400,
    :height 400})
 
-(oz/view! line-plot)
+#_(oz/view! line-plot)
 
 (def viz
   [:div
@@ -142,5 +140,6 @@
 
 (oz/view! viz)
 
-(oz/export! viz "test.html")
+#_(oz/export! viz "test.html")
+
 
