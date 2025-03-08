@@ -36,8 +36,11 @@
 (def ncbi-genome-dataset-report
   (ncbi.api/genome-dataset-report "GCA_000006765.1"))
 
-(def uniprot-taxonomy-entry
+(def uniprot-taxonomy-pao1
   (uniprot.api/taxonomy-entry "208964"))
+
+(def uniprot-taxonomy-ecoli
+  (uniprot.api/taxonomy-entry "83333"))
 
 (def uniprot-proteome
   (first (uniprot.api/proteomes-by-taxon-id "208964")))

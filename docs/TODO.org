@@ -1,0 +1,9 @@
+* Visualization
+** annotationsbasiertes Preprocessing
+** FDR Schieber
+** Integration in Website
+* Taxonomy Pipeline
+** Test
+* Structure Pipeline
+** Rewrite als Transducer
+** Test

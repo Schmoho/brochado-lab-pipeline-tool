@@ -4,26 +4,6 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]))
 
-(defn parse-genome-list
-  [list]
-  (->> list
-       (str/split-lines)
-       (map #(str/split % #"\t"))
-       (map (fn [[t-number organism-name]]
-              (->> (str/split organism-name #";" 2)
-                   (map str/trim)
-                   (concat [t-number]))))))
-
-(defn parse-organism-list
-  [list]
-  (str/split-lines)
-     (map (comp
-           (fn [[t-number kegg-code scientific-name lineage]]
-             [t-number kegg-code scientific-name (vec (str/split lineage #";"))])
-           #(str/split % #"\t"))))
-
-
-
 (defn- update-if-exists
   [m k f]
   (if (contains? m k)
@@ -41,13 +21,12 @@
       [(drop-last head)])))
 
 
-
 (defn parse-kegg-get-result
   [body]
   (log/debug "Parsing KEGG API response.")
   (let [responses (->> body
                        (str/split-lines)
-                       split-bulk-response)        
+                       split-bulk-response)
         prepped-responses
         (->> responses
              (map (fn [response]
@@ -96,10 +75,29 @@
                           (assoc :id (if-let [org (ffirst (:organism sane-response))]
                                        (str org ":" (first entry))
                                        (first entry))))))))]
-    (let []
-      (if (= 1 (count parsed-responses))
-        (first parsed-responses)
-        parsed-responses))))
+    (if (= 1 (count parsed-responses))
+      (first parsed-responses)
+      parsed-responses)))
+
+(defn parse-genome-list
+  [list]
+  (->> list
+       (str/split-lines)
+       (map #(str/split % #"\t"))
+       (map (fn [[t-number organism-name]]
+              (->> (str/split organism-name #";" 2)
+                   (map str/trim)
+                   (concat [t-number]))))))
+
+(defn parse-organism-list
+  [list]
+  (->> list
+       (str/split-lines)
+       (map (comp
+             (fn [[t-number kegg-code scientific-name lineage]]
+               [t-number kegg-code scientific-name (vec (str/split lineage #";"))])
+             #(str/split % #"\t")))))
+
 
 ;; doing this cleanly would distinguish on entry type etc.
 ;; but it does the job for now
