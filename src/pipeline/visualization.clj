@@ -1,32 +1,14 @@
 (ns pipeline.visualization
   (:require
    [data-cleaning :as clean]
+   [csv-utils :as csv]
    [oz.core :as oz]
-   [clojure.data.csv :as csv]
-   [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [biodb.uniprot.api :as api.uniprot]
+   [biodb.uniprot.core :as uniprot]))
 
-(defn csv-lines->maps
-  [csv-lines & {:keys [keywordize?] :or {keywordize? true}}]
-  (map zipmap
-       (->> (first csv-lines)
-            (map
-             (comp
-              (if keywordize?
-                keyword
-                identity)
-              #(str/replace % "." "_")))
-            repeat)
-       (rest csv-lines)))
-
-(defn field-domain
-  [field csv-data]
-  (set (map field csv-data)))
-
-(def data
-  (->> (io/reader "resources/tpp-raw-cefotaxime-ecoli.csv")
-       csv/read-csv
-       csv-lines->maps
+(def raw
+  (->> (csv/read-csv-data "resources/tpp-raw-cefotaxime-ecoli.csv")
        (transduce
         (comp
          (clean/filtering-insanity
@@ -36,52 +18,58 @@
         [])))
 
 (def processed
-  (->> (io/reader "resources/tpp-processed-cefotaxime-ecoli.csv")
-       csv/read-csv
-       csv-lines->maps
+  (->> (csv/read-csv-data "resources/tpp-processed-cefotaxime-ecoli.csv")
        (transduce
         (comp
-         #_(clean/filtering-insanity
-          {:protein_id #(str/starts-with? % "#")})
          clean/numerify)
         conj
         [])))
 
-#_(let [data (map #(select-keys
-                  %
-                  [:protein_id
-                   :norm_rel_fc_protein_2_5_transformed
-                   :norm_rel_fc_protein_10_transformed
-                   :norm_rel_fc_protein_50_transformed
-                   :norm_rel_fc_protein_250_transformed
-                   :temperature
-                   :pec50
-                   :slope
-                   :r_sq])
-                data)
-      data-to-write (concat [(map name (keys (first data)))]
-                            (map vals data))]
-  (with-open [writer (io/writer "out-file.csv")]
-    (csv/write-csv writer
-                   data-to-write))
-  data-to-write)
+(defonce proteome
+  (api.uniprot/uniprotkb-stream {:query "taxonomy_id:83333"}))
 
-#_(field-domain :protein_id data)
+(defn get-gene-name->protein-id-mapping
+  [raw-table]
+  (->> raw-table
+      (map (juxt :gene_name :protein_id))
+      distinct
+      (into {})))
 
-(oz/start-server!)
+(defn with-uniprot-id-fn
+  [proteome raw]
+  (let [gene-name->protein-id
+        (get-gene-name->protein-id-mapping raw)
+        proteome-lookup
+        (uniprot/proteome-lookup proteome)]
+    (fn [table-row]
+      (assoc table-row
+             :uniprot-id
+             (some->> table-row
+                      :clustername
+                      gene-name->protein-id
+                      proteome-lookup
+                      :primaryAccession)))))
 
-(def line-plot
+(defn go-term-filtering-fn
+  [proteome go-term]
+  (let [proteome-lookup
+        (uniprot/proteome-lookup proteome)]
+    (fn [table-row]
+      (some->> table-row
+               :uniprot-id
+               proteome-lookup
+               (uniprot/has-go-term? go-term)))))
+
+
+(defn volcano-plot
+  [data]
   {:params [{:name  "vertical_threshold",
              :value 0,
              :bind  {:input "range", :min -10, :max 10, :step 0.1}},
             {:name  "horizontal_threshold",
              :value 5,
              :bind  {:input "range", :min 0, :max 10, :step 0.1}}]
-   :layer  [{:data      {:values (->> processed
-                                      (map (fn [m]
-                                             (assoc m :url (str "https://www.uniprot.org/uniprotkb?query=" (:clustername m)))))
-                                      #_(map (fn [m]
-                                               (select-keys m [:slopeH1 :rssH0 :rssH1 :F_statistic]))))}
+   :layer  [{:data      {:values data}
              :params    [{:name   "effect_type",
                           :select {:type "point", :fields ["detected_effectH1"]},
                           :bind   "legend"}]
@@ -129,17 +117,42 @@
    :width  400,
    :height 400})
 
-#_(oz/view! line-plot)
-
 (def viz
-  [:div
-   [:h3 "TPP Cefotaxime E.Coli"]
-   [:div {:style {:display        "flex"
-                  :flex-direction "row"}}
-    [:vega-lite line-plot]]])
+  (let [data (->> processed
+                  (map (with-uniprot-id-fn proteome raw))
+                  (filter (go-term-filtering-fn proteome "GO:0009252"))
+                  (map (fn [m]
+                         (assoc m :url
+                                (some->> (:uniprot-id m)
+                                         (str "https://www.uniprot.org/uniprotkb/"))))))]
+    [:div
+     [:h3 "TPP Cefotaxime E.Coli"]
+     [:div {:style {:display        "flex"
+                    :flex-direction "row"}}
+      [:vega-lite (volcano-plot data)]]]))
 
-(oz/view! viz)
+#_(oz/view! viz)
 
-#_(oz/export! viz "test.html")
+#_(oz/start-server!)
 
+(comment
 
+  (->> (map uniprot/go-terms-in-protein proteome)
+       (apply concat)
+       (group-by :type))
+
+  (oz/export! [:div] "test.html")
+  
+  #(select-keys
+    %
+    [:protein_id
+     :norm_rel_fc_protein_2_5_transformed
+     :norm_rel_fc_protein_10_transformed
+     :norm_rel_fc_protein_50_transformed
+     :norm_rel_fc_protein_250_transformed
+     :temperature
+     :pec50
+     :slope
+     :r_sq])
+
+  (csv-utils/field-domain :protein_id raw))

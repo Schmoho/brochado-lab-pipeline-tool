@@ -13,13 +13,15 @@
 
 (defmethod write! java.lang.String
   [fileo content]
-  (.mkdirs (.getParentFile (io/file fileo)))
+  (when-let [p-dir (.getParentFile (io/file fileo))]
+    (.mkdirs p-dir))
   (spit fileo content)
   (io/file fileo))
 
 (defmethod write! :default
   [fileo content]
-  (.mkdirs (.getParentFile (io/file fileo)))
+  (when-let [p-dir (.getParentFile (io/file fileo))]
+    (.mkdirs p-dir))
   (with-open [wr (io/writer fileo)]
     (.write wr (with-out-str (pprint/pprint content))))
   (io/file fileo))

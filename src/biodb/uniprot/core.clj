@@ -285,6 +285,35 @@
                     second)))
       (filter (comp not-empty second)))
 
+(defn go-terms-in-protein
+  [protein]
+  (->> protein
+       :uniProtKBCrossReferences
+       (filter #(and (= "GO" (:database %))))
+       (map
+        (fn [go-term]
+          (let [term (->> (:properties go-term)
+                          (filter #(= "GoTerm" (:key %)))
+                          first
+                          :value)]
+            {:id (:id go-term)
+             :type (first (#(str/split term #":")))
+             :term (second (#(str/split term #":")))})))))
+
+(defn has-go-term?
+  [go-term protein]
+  (->> protein
+       :uniProtKBCrossReferences
+       (filter #(and (= "GO" (:database %))
+                     (= go-term (:id %))))
+       not-empty))
+
+(defn proteome-lookup
+  [proteome]
+  (->> proteome
+      (map (juxt :primaryAccession identity))
+      (into {})))
+
 ;; (def doi-getter
 ;;   (comp
 ;;    (partial map

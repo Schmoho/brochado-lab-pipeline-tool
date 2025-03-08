@@ -1,16 +1,14 @@
 (ns user
   (:require
-   [portal.api :as p]
-   [portal.viewer :as v]
-   [clojure.spec.alpha :as s]
-   [clojure.spec.test.alpha :as st]
-   [expound.alpha :as expound]
-   [clj-http.client :as http]
-   [neo4clj.client :as client]
    [biodb.ncbi.api :as ncbi.api]
    [biodb.uniprot.api :as uniprot.api]
    [cheshire.core :as json]
-   [biodb.uniprot.core :as uniprot]))
+   [clj-http.client :as http]
+   [clojure.java.io :as io]
+   [neo4clj.client :as client]
+   [portal.api :as p]
+   [portal.viewer :as v]
+   [utils :as utils]))
 
 ;; (def last-val (atom nil))
 ;; (def last-val-tap #(reset! last-val %))
@@ -21,6 +19,9 @@
 ;; (alter-var-root #'s/*explain-out* (constantly expound/printer))
 
 ;; (st/instrument)
+
+(def brochado-strains
+  (utils/read-file  (io/resource "brochado-strains.edn")))
 
 (def ncbi-tax-id "652611")
 

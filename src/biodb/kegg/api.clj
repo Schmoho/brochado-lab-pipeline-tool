@@ -4,8 +4,8 @@
    [cheshire.core :as json]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
-   [clojure.set :as set]
-   [camel-snake-kebab.core :as csk]))
+   [biodb.kegg.parser :as kegg.parser]
+   [utils :as utils]))
 
 (def kegg-api-base "https://rest.kegg.jp")
 
@@ -80,20 +80,21 @@
                (:children stuff))]))
       (into {})))
 
-(def ncbi-tax-id->kegg-organism
-  (get-ncbi-tax-id->kegg-organism-mapping))
+(map (comp count str/split-lines list) ["eco" "ecr" "pae" "pau" "stm" "seo"])
 
-(defn ncbi-taxon->kegg-organism
-  [search-taxon]
-  (let [uniprot-taxa     (concat
-                          (map (comp str :taxonId)
-                               (:lineage search-taxon))
-                          [(-> search-taxon :taxonId str)])]
-    (->> uniprot-taxa
-             (map (comp (juxt identity ncbi-tax-id->kegg-organism)))
-             reverse
-             (filter (comp some? second))
-             )))
+(->> (list "eco")
+     (kegg.parser/parse-genome-list)
+     (transduce
+      (comp
+       (map first)
+       (partition-all 10)
+       (map (partial str/join "+"))
+       (map get)
+       (map kegg.parser/parse-kegg-get-result))
+      conj
+      [])
+     (apply concat)
+     (utils/write! "kegg-eco.edn"))
 
 (defn get-all-genes!
   [organism]
@@ -123,6 +124,33 @@
 
 (comment
 
+  (def ncbi-tax-id->kegg-organism
+    (get-ncbi-tax-id->kegg-organism-mapping))
+
+  (defn ncbi-taxon->kegg-organism
+    [search-taxon]
+    (let [uniprot-taxa     (concat
+                            (map (comp str :taxonId)
+                                 (:lineage search-taxon))
+                            [(-> search-taxon :taxonId str)])]
+      (->> uniprot-taxa
+           (map (comp (juxt identity ncbi-tax-id->kegg-organism)))
+           reverse
+           (filter (comp some? second))
+           first)))
+
+  (->> user/brochado-strains
+       (filter :ncbi-taxonomy-id)
+       (map (juxt :ncbi-taxonomy-id :kegg-id)))
+  ;; => (["679895" "eco"]
+  ;;     ["585034" "ecr"]
+  ;;     ["208964" "pae"]
+  ;;     ["208963" "pau"]
+  ;;     ["99287" "stm"]
+  ;;     ["588858" "seo"])
+
+
+  
   (str/split-lines (list "br:08908"))
 
   (str/split-lines (find "brite" "taxonomy"))
