@@ -104,8 +104,12 @@
                (json/generate-string)
                (spit (format "resources/kegg/pathways/%s.json" organism))))))))
 
-(comment
+(def download-kegg-xform
+   (comp
+    (partition-all 10)
+    (map (comp kegg.parser/parse-kegg-get-result get (partial str/join "+")))))
 
+(comment
   (def ncbi-tax-id->kegg-organism
     (get-ncbi-tax-id->kegg-organism-mapping))
 
@@ -135,15 +139,14 @@
 
   (->> (list "eco")
        (kegg.parser/parse-genome-list)
+       (take 12)
        (transduce
-        (comp
-         (map first)
-         (partition-all 10)
-         (map (comp kegg.parser/parse-kegg-get-result get (partial str/join "+"))))
+        (comp (map first)
+              download-kegg-xform)
         conj
         [])
        (apply concat)
-       (utils/write! "kegg-eco.edn"))
+       #_(utils/write! "kegg-eco.edn"))
 
   (str/split-lines (list "br:08908"))
 

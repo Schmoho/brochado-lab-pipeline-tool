@@ -1,7 +1,6 @@
 (ns biodb.uniprot.api
   (:require
    [biodb.http :as http]
-   [biodb.uniprot.core :as uniprot]
    [camel-snake-kebab.core :as csk]
    [cheshire.core :as json]
    [clojure.string :as str]

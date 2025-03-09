@@ -84,6 +84,13 @@
   (keys (group-by accessor coll-of-maps)))
 
 
+(defn branching [& xforms]
+  (fn [rf]
+    (let [xrfs (mapv #(% rf) xforms)]
+      (fn
+        ([acc] (reduce #(%2 %1) acc xrfs))
+        ([acc x] (reduce #(%2 %1 x) acc xrfs))))))
+
 ;; (defn files-with-ending
 ;;   "Path is a string, ending needs to contain the dot."
 ;;   [path ending]
