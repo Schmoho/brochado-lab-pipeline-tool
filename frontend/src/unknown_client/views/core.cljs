@@ -14,6 +14,8 @@
    [unknown-client.views.structural-comparison :as structural-comparison]
    [unknown-client.views.taxonomic-comparison :as taxonomic-comparison]
    [unknown-client.views.taxonomic-comparison-results :as taxonomic-comparison-results]
+   [unknown-client.views.taxon :as taxon]
+   [unknown-client.views.ligand :as ligand]
    [unknown-client.views.common :refer [navbar-link link-to-page help-thingie checkbox]]))
 
 (defmethod routes/panels :home [] [home/home-panel])
@@ -25,22 +27,28 @@
 (defmethod routes/panels :structural-comparison [] [structural-comparison/structural-comparison-panel])
 (defmethod routes/header :structural-comparison [] [structural-comparison/structural-comparison-header])
 
+(defmethod routes/panels :taxon [] [taxon/taxons-panel])
+(defmethod routes/panels :taxon-entry [] [taxon/single-taxon-panel])
+(defmethod routes/panels :ligand [] [ligand/ligands-panel])
+(defmethod routes/panels :ligand-entry [] [ligand/single-ligand-panel])
+#_(defmethod routes/panels :protein-entry [] [protein/single-taxon-panel])
+
 (defmethod routes/panels :about [] [about/about-panel])
 
 (defn nav-bar []
-  (let [hover-tax?   (r/atom false)
-        hover-struc? (r/atom false)]
-    (fn []
-      [v
-       :class (styles/navbar)
-       :children
-       [[navbar-link "Home" :home]
-        [re-com/gap :src (at) :size "60px"]
-        [navbar-link "Taxonomic Comparison" :taxonomic-comparison]
-        [navbar-link "Results" :taxonomic-comparison-results]
-        [re-com/gap :src (at) :size "60px"]
-        [navbar-link  "Structural Comparison" :structural-comparison]
-        [navbar-link "Results" :structural-comparison-results]]])))
+  [v
+   :class (styles/navbar)
+   :children
+   [[navbar-link "Home" :home]
+    [re-com/gap :src (at) :size "60px"]
+    [navbar-link "Taxons" :taxon]
+    [navbar-link "Ligands" :ligand]
+    [re-com/gap :src (at) :size "60px"]
+    [navbar-link "Taxonomic Comparison" :taxonomic-comparison]
+    [navbar-link "Results" :taxonomic-comparison-results]
+    [re-com/gap :src (at) :size "60px"]
+    [navbar-link  "Structural Comparison" :structural-comparison]
+    [navbar-link "Results" :structural-comparison-results]]])
 
 (defn footer
   []

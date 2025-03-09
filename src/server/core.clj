@@ -34,6 +34,9 @@
                               :description "gives cool"
                               :version     "0.0.1"}}
              :handler (openapi/create-openapi-handler)}}]
+     ["/data/taxon"
+      {:get {:summary "Get taxon data."
+             :handler handler/get-taxons}}]
      ["/taxonomic-comparison"
       {:post {:summary    "Start taxonomic comparison pipeline."
               ;; :parameters {:body map?}

@@ -1,9 +1,5 @@
 (ns db.core
   (:require
-   [biodb.afdb :as afdb]
-   [biodb.pubchem :as pubchem]
-   [biodb.uniprot.api :as api.uniprot]
-   [biotools.obabel :as obabel]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [utils :as utils]))

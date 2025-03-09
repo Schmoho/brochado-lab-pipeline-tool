@@ -22,12 +22,14 @@
   (set (map field csv-data)))
 
 (defn write-csv-data!
-    [file csv-data]
-    (let [data-to-write (concat [(map name (keys (first csv-data)))]
-                                (map vals csv-data))]
-      (with-open [writer (io/writer file)]
-        (csv/write-csv writer
-                       data-to-write))))
+  [file csv-data]
+  (when-let [p-dir (.getParentFile (io/file file))]
+    (.mkdirs p-dir))
+  (let [data-to-write (concat [(map name (keys (first csv-data)))]
+                              (map vals csv-data))]
+    (with-open [writer (io/writer file)]
+      (csv/write-csv writer
+                     data-to-write))))
 
 (defn read-csv-data
   [file]

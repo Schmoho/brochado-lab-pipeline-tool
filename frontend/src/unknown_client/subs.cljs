@@ -49,3 +49,23 @@
                  :protein-ids          (-> protein :protein-ids str)
                  :gene-names           (-> protein :gene-names str)
                  :blast-still-running? (-> result :blast-still-running? str)})))))
+
+(re-frame/reg-sub
+ :data/taxons
+ (fn [db _]
+   (->> db :data :taxon vals vec)))
+
+(re-frame/reg-sub
+ :data/taxon
+ (fn [db [_ id]]
+   (-> db :data :taxon (get id))))
+
+(re-frame/reg-sub
+ :data/ligands
+ (fn [db _]
+   (->> db :data :ligand vals vec)))
+
+(re-frame/reg-sub
+ :data/ligand
+ (fn [db [_ id]]
+   (-> db :data :ligand (get id))))

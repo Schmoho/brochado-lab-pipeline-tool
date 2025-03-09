@@ -130,16 +130,16 @@
   (do
     (def cefotaxime-ecoli
       (->> (csv/read-csv-data "resources/tpp-cefotaxime-ecoli.csv")
-           (map clean/numerify)))
+           (mapv clean/numerify)))
     (def amikacin-ecoli
       (->> (csv/read-csv-data "resources/tpp-amikacin-ecoli.csv")
-           (map clean/numerify)))
+           (mapv clean/numerify)))
     (def cefotaxime-pseudo
       (->> (csv/read-csv-data "resources/tpp-cefotaxime-pae.csv")
-           (map clean/numerify)))
+           (mapv clean/numerify)))
     (def amikacin-pseudo
       (->> (csv/read-csv-data "resources/tpp-amikacin-pae.csv")
-           (map clean/numerify)))
+           (mapv clean/numerify)))
     (defonce uniprot-proteome-ecoli
       (api.uniprot/uniprotkb-stream {:query "taxonomy_id:83333"}))
     (defonce uniprot-proteome-pseudo
@@ -148,6 +148,11 @@
       (utils/read-file "kegg-83333.edn"))
     (def kegg-proteome-pseudo
       (utils/read-file "kegg-208963.edn")))
+
+  (->> uniprot-proteome-pseudo
+       (utils/write!
+        "data/raw/uniprot/proteome/208963.edn"))
+  
 
   (cross-data
    cefotaxime-ecoli
@@ -174,7 +179,7 @@
                :y-label "Amikacin Fold Change"
                :width   800
                :height  600}}))
-  
+
   (oz/view! (cross-viz
              cefotaxime-ecoli
              cefotaxime-pseudo

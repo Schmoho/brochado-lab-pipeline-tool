@@ -76,7 +76,7 @@
                                          set)))
     :timeout         10000
     :format          (ajax/transit-request-format)
-    :response-format (ajax/transit-response-format {:keyswords? true})
+    :response-format (ajax/transit-response-format {:keywords? true})
     :on-success      [::start-taxonomic-comparison-success]
     :on-failure      [::http-failure]}}))
 
@@ -90,7 +90,7 @@
     :uri             (str base-api "/taxonomic-comparison-results")
     :timeout         10000
     :format          (ajax/transit-request-format)
-    :response-format (ajax/transit-response-format {:keyswords? true})
+    :response-format (ajax/transit-response-format {:keywords? true})
     :on-success      [::get-taxonomic-comparison-results-success]
     :on-failure      [::http-failure]}}))
 
@@ -117,3 +117,29 @@
                                                             (:results response)))
    :navigate :taxonomic-comparison-results}))
 
+(re-frame/reg-event-fx
+ ::http-get
+ (fn-traced
+  [{:keys [db]} [_ path]]
+  {:db db
+   :http-xhrio
+   {:method          :get
+    :uri             (str base-api "/"
+                          (str/join "/" (map name path)))
+    :timeout         10000
+    :format          (ajax/transit-request-format)
+    :response-format (ajax/transit-response-format {:keywords? true})
+    :on-success      (into [::http-success path])
+    :on-failure      (into [::http-failure path])}}))
+
+(re-frame/reg-event-db
+ ::http-success
+ (fn-traced
+  [db [_ path response]]
+  (reduce
+   (fn [acc datum]
+     (assoc-in acc
+               (concat path [(:id datum)])
+               datum))
+   db
+   (:results response))))

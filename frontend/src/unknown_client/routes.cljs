@@ -16,10 +16,14 @@
 (def routes
   (atom
    ["/" {""                             :home
-         #_#_                           "taxon/" {#{[:taxons/id ""]
-                                                    [:taxons/id "/"]} :taxons
-                                                  [:taxons/id "/proteome/"]
-                                                  {[:proteomes/id ""] :proteomes}}
+         "taxon"                        :taxon
+         "taxon/"                       {#{[:taxons/id ""]
+                                           [:taxons/id "/"]} :taxon-entry}
+         "ligand"                        :ligand
+         "ligand/"                       {#{[:ligands/id ""]
+                                            [:ligands/id "/"]} :ligand-entry}
+         "protein/"                       {#{[:proteins/id ""]
+                                           [:proteins/id "/"]} :protein-entry}
          "about"                        :about
          "taxonomic-comparison"         :taxonomic-comparison
          "taxonomic-comparison-results" :taxonomic-comparison-results
@@ -64,4 +68,10 @@
    (case route
      :taxonomic-comparison-results (re-frame/dispatch
                                     [::events/get-taxonomic-comparison-results])
+     :taxon (re-frame/dispatch
+             [::events/http-get [:data :taxon]])
+     :ligand (re-frame/dispatch
+              [::events/http-get [:data :ligand]])
+     :protein (re-frame/dispatch
+              [::events/http-get [:data :protein]])
      nil)))

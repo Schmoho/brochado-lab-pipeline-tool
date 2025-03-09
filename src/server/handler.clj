@@ -5,7 +5,8 @@
             [clojure.pprint :as pprint]
             [clojure.edn :as edn]
             [clojure.string :as str]
-            [pipeline.taxonomy :as pipeline.taxonomy]))
+            [pipeline.taxonomy :as pipeline.taxonomy]
+            [utils :as utils]))
 
 (defn basic-id-handler
   [type id-accessor]
@@ -74,3 +75,38 @@
                                result))))]
     {:status 200
      :body   {:results results}}))
+
+
+(defn get-taxons
+  [request]
+  (tap> request)
+  (log/info "Getting taxon data.")
+  {:status 200
+   :body   {:results (->> (file-seq (io/file "data/raw/uniprot/taxonomy"))
+                          (filter #(.isFile %))
+                          (mapv (comp
+                                 #(assoc % :id (str (:taxonId %)))
+                                 utils/read-file)))}})
+
+(defn get-ligands
+  [request]
+  (tap> request)
+  (log/info "Getting ligand data.")
+  {:status 200
+   :body   {:results (->> (file-seq (io/file "data/raw/pubchem/compound"))
+                          (filter #(.isFile %))
+                          (mapv
+                           (comp
+                            (fn [data]
+                              (-> (assoc data :id (-> data :json :PC_Compounds first :id :id :cid str))
+                                  (assoc :json (get-in data [:json :PC_Compounds]))
+                                  (update :json
+                                          (comp #(dissoc % :bonds)
+                                                #(dissoc % :atoms)
+                                                #(dissoc % :stereo)
+                                                #(dissoc % :coords)
+                                                first))
+                                  (dissoc :sdf)))
+                            utils/read-file)))}})
+
+

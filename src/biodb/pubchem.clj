@@ -1,13 +1,39 @@
 (ns biodb.pubchem
   (:require
-   [biodb.http :as http]))
+   [biodb.http :as http]
+   [cheshire.core :as json]
+   [utils :as utils]))
 
 (def cid-prefix "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/")
+
+;; === Simple Wrappers ===
 
 (defn get-sdf-by-compound-id
   [cid]
   (-> (http/get (str cid-prefix cid "/SDF"))
       :body))
+
+;; === Convenience Wrappers ===
+
+(defn get-compound-data-by-id
+  [cid]
+  (let [sdf  (-> (http/get (str cid-prefix cid "/SDF"))
+                 :body)
+        json (-> (http/get (str cid-prefix cid "/JSON"))
+                 :body
+                 (json/parse-string true))
+        png  (-> (http/get (str cid-prefix cid "/PNG?record_type=2d") {:as :byte-array})
+                 :body)]
+    {:sdf  sdf
+     :json json
+     :png  png}))
+
+(comment
+
+  (-> (get-compound-data-by-id "5742673")
+      (update :png utils/encode-base64)
+      (->> (utils/write!
+            "data/raw/pubchem/compound/5742673.edn")))
 
 ;; === Search by name ===
 
@@ -57,20 +83,4 @@
 ;; => 5742673
 
 ;; (-> compound compound-entry->cid get-2d-sdf-by-compound-id)
-
-
-;; === Alter IO-Stuff === 
-
-
-;; (defn fetch-and-write-sdfs!
-;;   [nameo path]
-;;   (let [compounds     (get-compounds nameo)
-;;         cids          (->> compounds
-;;                            (map compound-entry->cid))
-;;         filename->sdf (zipmap (->> (cids->titles cids) (map #(str (:Title %) " - " (:CID %) ".sdf")))
-;;                               (map cid->2d-sdf cids))]
-;;     (doseq [[filename sdf] filename->sdf]
-;;       (spit (str path "/" filename) sdf))))
-
-#_(fetch-and-write-sdfs! "cefotaxim" "drugs")
-#_(fetch-and-write-sdfs! "amikacin" "drugs")
+  )

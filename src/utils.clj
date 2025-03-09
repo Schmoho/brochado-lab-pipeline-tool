@@ -5,7 +5,8 @@
    [clojure.java.shell :as sh]
    [clojure.pprint :as pprint]
    [clojure.string :as str]
-   [clojure.walk :as walk])
+   [clojure.walk :as walk]
+   [clojure.data.codec.base64 :as b64])
   (:import
    (org.apache.commons.io FilenameUtils)))
 
@@ -90,6 +91,12 @@
       (fn
         ([acc] (reduce #(%2 %1) acc xrfs))
         ([acc x] (reduce #(%2 %1 x) acc xrfs))))))
+
+(defn encode-base64 [bytes]
+  (String. (b64/encode bytes)))
+
+(defn decode-base64 [^String s]
+  (b64/decode (.getBytes s)))
 
 ;; (defn files-with-ending
 ;;   "Path is a string, ending needs to contain the dot."
