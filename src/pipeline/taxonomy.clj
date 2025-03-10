@@ -63,10 +63,9 @@
      [protein-set nil])))
 
 (def align-protein-set
-  (map
-   (comp
+  (comp
     clustalo/clustalo
-    (partial map formats.fasta/->fasta))))
+    (partial map formats.fasta/->fasta)))
 
 (def params
   {:params.uniprot/blast    {:use-blast?                       true

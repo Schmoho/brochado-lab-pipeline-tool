@@ -29,7 +29,8 @@
                  [camel-snake-kebab "0.4.3"]
                  [org.clojure/data.xml "0.0.8"]
                  [dk.ative/docjure "1.14.0"]
-
+                 [io.github.tonsky/fast-edn "1.1.2"]
+                 
                  [uk.ac.ebi.uniprot/japi "1.3.3"]
                  
                  [metasoarous/oz "1.6.0-alpha36"]

@@ -1,6 +1,6 @@
 (ns data-cleaning
   (:require
-   [clojure.edn :as edn]
+   [fast-edn.core :as edn]
    [clojure.math :as math]
    [csv-utils :as csv]
    [clojure.string :as str]))

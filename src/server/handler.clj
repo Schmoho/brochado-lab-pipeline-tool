@@ -3,7 +3,7 @@
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
             [clojure.pprint :as pprint]
-            [clojure.edn :as edn]
+            [fast-edn.core :as edn]
             [clojure.string :as str]
             [pipeline.taxonomy :as pipeline.taxonomy]
             [utils :as utils]))
@@ -66,8 +66,7 @@
                      (filter #(and (not= % (io/file "results"))
                                    (.isFile %)
                                    (str/ends-with? (.getName %) ".edn")))
-                     (mapv #(with-open [r (io/reader %)]
-                              (edn/read (java.io.PushbackReader. r))))
+                     (mapv #(edn/read-once (io/file %)))
                      (mapv (fn [result]
                              (if (@pipeline.taxonomy/running-blast-jobs
                                   (:pipeline/uuid result))

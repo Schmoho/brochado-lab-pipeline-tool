@@ -2,7 +2,7 @@
   (:gen-class)
   (:require
    [args :as args]
-   [clojure.edn :as edn]
+   [fast-edn.core :as edn]
    [clojure.java.io :as io]
    [clojure.tools.logging :as log]
    [graph.accrete.core :as accrete]

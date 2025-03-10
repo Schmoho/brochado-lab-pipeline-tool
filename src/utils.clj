@@ -1,9 +1,8 @@
 (ns utils
   (:require
-   [clojure.edn :as edn]
+   [fast-edn.core :as edn]
    [clojure.java.io :as io]
    [clojure.java.shell :as sh]
-   [clojure.pprint :as pprint]
    [clojure.string :as str]
    [clojure.walk :as walk]
    [clojure.data.codec.base64 :as b64])
@@ -24,7 +23,12 @@
   (when-let [p-dir (.getParentFile (io/file file))]
     (.mkdirs p-dir))
   (with-open [wr (io/writer file)]
-    (.write wr (with-out-str (prn content))))
+    (binding [*print-length* nil
+              *print-dup* nil
+              *print-level* nil
+              *print-readably* false
+              *out* wr]
+      (pr content)))
   (io/file file))
 
 (defn copy!
@@ -41,7 +45,7 @@
 
 (defmethod read-file "edn"
   [file]
-  (edn/read (java.io.PushbackReader. (io/reader file))))
+  (edn/read-once (io/file file)))
 
 (defmethod read-file :default
   [file]
@@ -83,8 +87,16 @@
   [accessor coll-of-maps]
   (keys (group-by accessor coll-of-maps)))
 
+(defn branching
+  [& xforms]
+  (mapcat
+   (fn branch [e]
+     (apply
+      concat
+      (for [xform (filter some? xforms)]
+        (transduce xform conj [] [e]))))))
 
-(defn branching [& xforms]
+#_(defn branching [& xforms]
   (fn [rf]
     (let [xrfs (mapv #(% rf) xforms)]
       (fn

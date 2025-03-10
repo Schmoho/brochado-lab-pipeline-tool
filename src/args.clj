@@ -1,6 +1,6 @@
 (ns args
   (:require
-   [clojure.edn :as edn]
+   [fast-edn.core :as edn]
    [clojure.string :as str]
    [clojure.tools.cli :refer [parse-opts]]))
 
