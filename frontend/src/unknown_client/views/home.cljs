@@ -28,7 +28,8 @@
              :on-mouse-out  (re-com/handler-fn (reset! hover? false))
              :on-click on-click}
        [:div {:class "card-header"} header]
-       [:div {:class "card-body"}
+       [:div {:class "card-body"
+              :style {:font-size "20px"}}
         [:h5 {:class "card-title"} title]
         body]])))
 
