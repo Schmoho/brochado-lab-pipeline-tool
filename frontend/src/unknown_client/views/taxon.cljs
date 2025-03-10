@@ -1,7 +1,9 @@
 (ns unknown-client.views.taxon
   (:require
+   ["gosling.js" :refer [GoslingComponent]]
    [clojure.string :as str]
    [unknown-client.subs :as subs]
+   [unknown-client.views.alignment-spec :as spec]
    [re-frame.core :as re-frame]
    [reagent.core :as r]
    [unknown-client.styles :as styles]
@@ -179,12 +181,12 @@
 (defn single-taxon-panel
   []
   [h
-   :width "80%"
-   :justify :between
-   :children
-   [[proteome-stats]
-    [protein-search]
-    [bug-fluff]]])
+     :width "80%"
+     :justify :between
+     :children
+     [[proteome-stats]
+      [protein-search]
+      [bug-fluff]]])
 
 (defn single-taxon-header []
   (let [params @(re-frame/subscribe [::subs/active-route-params])
@@ -195,3 +197,12 @@
      :level :level1
      :class (styles/header)]))
 
+(comment
+  [:> GoslingComponent
+    {:spec spec/spec
+     :margin 0
+     :padding 30
+     :border "none"
+     :id "my-gosling-component-id"
+     :className "my-gosling-component-style"
+     :theme "light"}])

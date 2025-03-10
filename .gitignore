@@ -12,3 +12,8 @@
 /results/
 /.portal/
 /data/
+/frontend/.shadow-cljs/
+/frontend/node_modules/
+/frontend/package-lock.json
+/frontend/dist/
+/frontend/public/

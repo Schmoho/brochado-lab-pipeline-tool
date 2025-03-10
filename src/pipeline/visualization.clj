@@ -232,3 +232,4 @@
    (set (map :primaryAccession uniprot-proteome-ecoli))))
 
 
+#_(cheshire.core/parse-string (slurp "bla.json") true)

@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="/vendor/css/re-com.css">
     <link href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic" rel="stylesheet" type="text/css">
     <link href="http://fonts.googleapis.com/css?family=Roboto+Condensed:400,300" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://esm.sh/higlass@1.13/dist/hglib.css"
+  />
     <title>unknown-client</title>
   </head>
   <body>
@@ -16,8 +18,9 @@
     </noscript>
     <div id="app"></div>
     <script src="/js/detect-element-resize.js"></script>	
-    <script src="/js/compiled/app.js"></script>
-    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>     
-    <script src="https://3Dmol.org/build/3Dmol.ui-min.js"></script>     
+    <script type="module" src="/public/js/imports.js"></script>
+    <script defer src="/js/main.js"></script>	
+    <!-- <script src="https://3Dmol.org/build/3Dmol-min.js"></script>      -->
+    <!-- <script src="https://3Dmol.org/build/3Dmol.ui-min.js"></script> -->     
   </body>
 </html>
