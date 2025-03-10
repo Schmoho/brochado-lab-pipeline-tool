@@ -36,6 +36,12 @@
      ["/data/ligand"
       {:get {:summary "Get ligand data."
              :handler handler/get-ligands}}]
+     ["/data/volcano/:id"
+      {:get {:summary "Get volcano data."
+             :handler handler/get-volcano}}]
+     ["/data/volcanos"
+      {:get {:summary "Get volcano data."
+             :handler handler/get-volcanos}}]
      ["/taxonomic-comparison"
       {:post {:summary    "Start taxonomic comparison pipeline."
               ;; :parameters {:body map?}

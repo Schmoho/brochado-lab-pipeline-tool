@@ -1,6 +1,5 @@
 (ns unknown-client.views.taxon
   (:require
-   ["gosling.js" :refer [GoslingComponent]]
    [clojure.string :as str]
    [unknown-client.subs :as subs]
    [unknown-client.views.alignment-spec :as spec]
@@ -198,6 +197,10 @@
      :class (styles/header)]))
 
 (comment
+
+  ["gosling.js" :refer [GoslingComponent]]
+
+  
   [:> GoslingComponent
     {:spec spec/spec
      :margin 0

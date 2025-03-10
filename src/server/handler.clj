@@ -121,4 +121,33 @@
                            utils/read-file))
                          (into {}))}})
 
+(defn get-volcanos
+  [request]
+  (tap> request)
+  (log/info "Getting volcano data.")
+  {:status 200
+   :body   {:ligand (->> (file-seq (io/file "data/input/volcano"))
+                         (filter #(.isFile %)))}})
+
+(defn get-volcano
+  [request]  
+  {:status 200
+   :body   {:ligand (->> (file-seq (io/file "data/raw/pubchem/compound"))
+                         (filter #(.isFile %))
+                         (mapv
+                          (comp
+                           (juxt :id identity)
+                           (fn [data]
+                             (-> (assoc data :id (-> data :json :PC_Compounds first :id :id :cid str))
+                                 (assoc :json (get-in data [:json :PC_Compounds]))
+                                 (update :json
+                                         (comp #(dissoc % :bonds)
+                                               #(dissoc % :atoms)
+                                               #(dissoc % :stereo)
+                                               #(dissoc % :coords)
+                                               first))
+                                 (dissoc :sdf)))
+                           utils/read-file))
+                         (into {}))}})
+
 
