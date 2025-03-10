@@ -82,31 +82,44 @@
   (tap> request)
   (log/info "Getting taxon data.")
   {:status 200
-   :body   {:results (->> (file-seq (io/file "data/raw/uniprot/taxonomy"))
-                          (filter #(.isFile %))
-                          (mapv (comp
-                                 #(assoc % :id (str (:taxonId %)))
-                                 utils/read-file)))}})
+   :body   {:taxon (->> (file-seq (io/file "data/raw/uniprot/taxonomy"))
+                        (filter #(.isFile %))
+                        (mapv (comp
+                               (juxt :id identity)
+                               #(assoc % :id (str (:taxonId %)))
+                               utils/read-file))
+                        (into {}))
+            :proteome (->> (file-seq (io/file "data/raw/uniprot/proteome"))
+                           (filter #(.isFile %))
+                           (mapv (comp
+                                  (juxt (comp
+                                         #(str/replace % ".edn" "")
+                                         #(.getName %))
+                                        utils/read-file)))
+                           (into {}))}})
+
 
 (defn get-ligands
   [request]
   (tap> request)
   (log/info "Getting ligand data.")
   {:status 200
-   :body   {:results (->> (file-seq (io/file "data/raw/pubchem/compound"))
-                          (filter #(.isFile %))
-                          (mapv
-                           (comp
-                            (fn [data]
-                              (-> (assoc data :id (-> data :json :PC_Compounds first :id :id :cid str))
-                                  (assoc :json (get-in data [:json :PC_Compounds]))
-                                  (update :json
-                                          (comp #(dissoc % :bonds)
-                                                #(dissoc % :atoms)
-                                                #(dissoc % :stereo)
-                                                #(dissoc % :coords)
-                                                first))
-                                  (dissoc :sdf)))
-                            utils/read-file)))}})
+   :body   {:ligand (->> (file-seq (io/file "data/raw/pubchem/compound"))
+                         (filter #(.isFile %))
+                         (mapv
+                          (comp
+                           (juxt :id identity)
+                           (fn [data]
+                             (-> (assoc data :id (-> data :json :PC_Compounds first :id :id :cid str))
+                                 (assoc :json (get-in data [:json :PC_Compounds]))
+                                 (update :json
+                                         (comp #(dissoc % :bonds)
+                                               #(dissoc % :atoms)
+                                               #(dissoc % :stereo)
+                                               #(dissoc % :coords)
+                                               first))
+                                 (dissoc :sdf)))
+                           utils/read-file))
+                         (into {}))}})
 
 

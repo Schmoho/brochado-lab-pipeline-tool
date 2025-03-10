@@ -3,6 +3,7 @@
    [bidi.bidi :as bidi]
    [pushy.core :as pushy]
    [re-frame.core :as re-frame]
+   [re-frame.db :as re-frame.db]
    [unknown-client.events :as events]))
 
 (defmulti panels identity)
@@ -19,15 +20,17 @@
          "taxon"                        :taxon
          "taxon/"                       {#{[:taxons/id ""]
                                            [:taxons/id "/"]} :taxon-entry}
-         "ligand"                        :ligand
-         "ligand/"                       {#{[:ligands/id ""]
-                                            [:ligands/id "/"]} :ligand-entry}
-         "protein/"                       {#{[:proteins/id ""]
+         "ligand"                       :ligand
+         "ligand/"                      {#{[:ligands/id ""]
+                                           [:ligands/id "/"]} :ligand-entry}
+         "protein/"                     {#{[:proteins/id ""]
                                            [:proteins/id "/"]} :protein-entry}
          "about"                        :about
          "taxonomic-comparison"         :taxonomic-comparison
          "taxonomic-comparison-results" :taxonomic-comparison-results
-         "structural-comparison"        :structural-comparison}]))
+         "structural-comparison"        :structural-comparison
+         "upload-data"                  :upload-data
+         "volcano-viewer"               :volcano}]))
 
 
 (defn parse
@@ -68,10 +71,14 @@
    (case route
      :taxonomic-comparison-results (re-frame/dispatch
                                     [::events/get-taxonomic-comparison-results])
-     :taxon (re-frame/dispatch
-             [::events/http-get [:data :taxon]])
-     :ligand (re-frame/dispatch
-              [::events/http-get [:data :ligand]])
-     :protein (re-frame/dispatch
-              [::events/http-get [:data :protein]])
+     :taxon (let [path [:data :taxon]]
+              (when-not ((@re-frame.db/app-db :already-executed-queries)
+                          path)
+                (re-frame/dispatch
+                 [::events/http-get path])))
+     :ligand (let [path [:data :ligand]]
+               (when-not ((@re-frame.db/app-db :already-executed-queries)
+                          path)
+                 (re-frame/dispatch
+                  [::events/http-get path])))
      nil)))

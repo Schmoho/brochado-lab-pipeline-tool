@@ -61,6 +61,11 @@
    (-> db :data :taxon (get id))))
 
 (re-frame/reg-sub
+ :data/proteome
+ (fn [db [_ id]]
+   (-> db :data :proteome (get id))))
+
+(re-frame/reg-sub
  :data/ligands
  (fn [db _]
    (->> db :data :ligand vals vec)))

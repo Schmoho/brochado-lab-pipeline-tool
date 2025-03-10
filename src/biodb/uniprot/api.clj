@@ -1,10 +1,12 @@
 (ns biodb.uniprot.api
   (:require
+   [utils :as utils]
    [biodb.http :as http]
    [camel-snake-kebab.core :as csk]
    [cheshire.core :as json]
    [clojure.string :as str]
-   [clojure.tools.logging :as log]))
+   [clojure.tools.logging :as log]
+   [clj-http.client :as clj-http.client]))
 
 (def uniprot-api-base "https://rest.uniprot.org")
 
@@ -41,7 +43,8 @@
         _         (log/debug "Query" url "with" query-params)
         proteomes (-> (http/get url {:query-params query-params})
                       (:body)
-                      (json/parse-string true)
+                      (json/parse-string)
+                      (utils/white-space-safe-keywordize-keys)
                       :results)]
     (mapv #(with-meta % proteome-meta) proteomes)))
 
@@ -66,7 +69,8 @@
         _                 (log/debug "Query" url "with" query-params)
         uniprotkb-entries (-> (http/get url {:query-params query-params})
                               (:body)
-                              (json/parse-string true)
+                              (json/parse-string)
+                              (utils/white-space-safe-keywordize-keys)
                               :results)]
     (mapv #(with-meta % uniprotkb-entry-meta) uniprotkb-entries)))
 
@@ -80,9 +84,10 @@
   (let [url               (format "%s/uniprotkb/stream" uniprot-api-base)
         _                 (log/debug "Query" url "with" query-params)
         uniprotkb-entries (-> (clj-http.client/get url {:query-params query-params})
-                             (:body)
-                             (json/parse-string true)
-                             :results)]
+                              (:body)
+                              (json/parse-string)
+                              (utils/white-space-safe-keywordize-keys)
+                              :results)]
     (mapv #(with-meta % uniprotkb-entry-meta) uniprotkb-entries)))
 
 #_(uniprotkb-stream {:query "proteome:UP000002438"})
@@ -121,7 +126,8 @@
         _       (log/debug "Query" url "with" query-params)
         entries (-> (http/get url {:query-params query-params})
                     (:body)
-                    (json/parse-string true)
+                    (json/parse-string)
+                    (utils/white-space-safe-keywordize-keys)
                     :results)]
     (mapv #(with-meta % uniref-meta) entries)))
 
@@ -141,9 +147,10 @@
            _           (log/debug "Query" url)
            http-result (clj-http.client/get url)
            databases   (-> http-result
-                         :body
-                         (json/parse-string true)
-                         :results)]
+                           :body
+                           (json/parse-string)
+                           (utils/white-space-safe-keywordize-keys)
+                           :results)]
        (mapv #(with-meta % database-meta) databases)))))
 
 
@@ -159,7 +166,8 @@
                       {:query (format "ancestor:%s" taxon-id)}})
         taxons      (-> http-result
                         :body
-                        (json/parse-string true)
+                        (json/parse-string)
+                        (utils/white-space-safe-keywordize-keys)
                         :results)]
     taxons))
 
@@ -175,7 +183,8 @@
                       {:query (format "proteome:%s" proteome-id)}})
         proteins    (-> http-result
                         :body
-                        (json/parse-string true)
+                        (json/parse-string)
+                        (utils/white-space-safe-keywordize-keys)
                         :results)]
     (mapv #(with-meta % uniprotkb-entry-meta) proteins)))
 
@@ -258,7 +267,7 @@
 ;; (defn get-inactive-record-via-parc!
 ;;   [{:keys [extraAttributes]}]
 ;;   (let [uniparc-record
-;;         (get-json
+;;         (http/get
 ;;          (str "https://rest.uniprot.org/uniparc/"
 ;;               (:uniParcId extraAttributes)))]
 ;;     uniparc-record))
@@ -272,7 +281,7 @@
 ;;        (filter #(str/includes? (:database %) "UniProtKB"))
 ;;        first
 ;;        :id
-;;        (#(get-json
+;;        (#(http/get
 ;;           (str "https://www.uniprot.org/uniprotkb/" % ".json")))))
 
 ;; (defn get-uniparc-results-for-invalid-uniprot-entries!

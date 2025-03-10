@@ -204,6 +204,20 @@
                   :citation))
    :references))
 
+(def dois+titles+journals
+  (comp
+   (partial map
+            (juxt
+             (comp first
+                   (partial map :id)
+                   (partial filter #(= "DOI" (:database %)))
+                   :citationCrossReferences
+                   :citation)
+             (comp :title :citation)
+             (comp :journal :citation)))
+   :references))
+
+
 (def protein-sequence (comp :value :sequence))
 
 (defn active-sites
@@ -215,8 +229,27 @@
          :features
          (filter #(#{"Active site"} (:type %))))))
 
-
-
+(defn clean-protein
+  [protein]
+  (-> protein
+      (dissoc :organism)
+      (dissoc :comments)
+      (dissoc :sequence)
+      (dissoc :extraAttributes)
+      (dissoc :entryAudit)
+      (update :uniProtKBCrossReferences
+              (partial filter #(#{"AlphaFoldDB"
+                                  "KEGG"
+                                  "BioCyc"
+                                  "UniPathway"
+                                  "GO"
+                                  "InterPro"} (:database %))))
+      (update :features
+              (partial filter #(#{"Binding site"
+                                  "Active site"
+                                  "Domain"} (:type %))))
+      (assoc :references
+             (dois+titles+journals protein))))
 
 
 

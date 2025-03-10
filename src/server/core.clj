@@ -1,25 +1,21 @@
 (ns server.core
   (:require
-   [server.spec]
-   [server.handler :as handler]
-   [reitit.ring :as ring]
+   [clojure.tools.logging :as log]
+   [muuntaja.core :as m]
    [reitit.coercion.spec]
-   [reitit.openapi :as openapi]
-   [reitit.swagger :as swagger]
-   [reitit.swagger-ui :as swagger-ui]
-   [reitit.ring.coercion :as coercion]
    [reitit.dev.pretty :as pretty]
-   [reitit.ring.middleware.muuntaja :as muuntaja]
+   [reitit.openapi :as openapi]
+   [reitit.ring :as ring]
+   [reitit.ring.coercion :as coercion]
    [reitit.ring.middleware.exception :as exception]
    [reitit.ring.middleware.multipart :as multipart]
+   [reitit.ring.middleware.muuntaja :as muuntaja]
    [reitit.ring.middleware.parameters :as parameters]
-                                        ; [reitit.ring.middleware.dev :as dev]
    [reitit.ring.spec :as spec]
-                                        ; [spec-tools.spell :as spell]
+   [reitit.swagger :as swagger]
+   [reitit.swagger-ui :as swagger-ui]
    [ring.adapter.jetty :as jetty]
-   [muuntaja.core :as m] 
-   [clojure.java.io :as io]
-   [clojure.tools.logging :as log]))
+   [server.handler :as handler]))
 
 (def app
   (ring/ring-handler
@@ -37,6 +33,9 @@
      ["/data/taxon"
       {:get {:summary "Get taxon data."
              :handler handler/get-taxons}}]
+     ["/data/ligand"
+      {:get {:summary "Get ligand data."
+             :handler handler/get-ligands}}]
      ["/taxonomic-comparison"
       {:post {:summary    "Start taxonomic comparison pipeline."
               ;; :parameters {:body map?}

@@ -95,12 +95,6 @@
     :on-failure      [::http-failure]}}))
 
 (re-frame/reg-event-fx
- ::http-failure
- (fn-traced
-  [{:keys [db]} [_ response]]
-  (js/alert response)))
-
-(re-frame/reg-event-fx
  ::start-taxonomic-comparison-success
  (fn-traced
   [{:keys [db]} [_ response]]
@@ -136,10 +130,11 @@
  ::http-success
  (fn-traced
   [db [_ path response]]
-  (reduce
-   (fn [acc datum]
-     (assoc-in acc
-               (concat path [(:id datum)])
-               datum))
-   db
-   (:results response))))
+  (-> (update db :data #(merge % response))
+      (update :already-executed-queries conj path))))
+
+(re-frame/reg-event-fx
+ ::http-failure
+ (fn-traced
+  [{:keys [db]} response]
+  (js/alert response)))

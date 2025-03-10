@@ -20,12 +20,12 @@
   (io/file fileo))
 
 (defmethod write! :default
-  [fileo content]
-  (when-let [p-dir (.getParentFile (io/file fileo))]
+  [file content]
+  (when-let [p-dir (.getParentFile (io/file file))]
     (.mkdirs p-dir))
-  (with-open [wr (io/writer fileo)]
-    (.write wr (with-out-str (pprint/pprint content))))
-  (io/file fileo))
+  (with-open [wr (io/writer file)]
+    (.write wr (with-out-str (prn content))))
+  (io/file file))
 
 (defn copy!
   [target-file file-to-copy]
@@ -41,7 +41,6 @@
 
 (defmethod read-file "edn"
   [file]
-  (tap> file)
   (edn/read (java.io.PushbackReader. (io/reader file))))
 
 (defmethod read-file :default
@@ -94,9 +93,6 @@
 
 (defn encode-base64 [bytes]
   (String. (b64/encode bytes)))
-
-(defn decode-base64 [^String s]
-  (b64/decode (.getBytes s)))
 
 ;; (defn files-with-ending
 ;;   "Path is a string, ending needs to contain the dot."

@@ -8,17 +8,14 @@
    [unknown-client.views.defs :as defs]
    [unknown-client.styles :as styles]
    [unknown-client.events :as events]
-   [unknown-client.routes :as routes]
-   [unknown-client.subs :as subs]
-   [unknown-client.views.common :refer [help-thingie checkbox]]))
+   [unknown-client.views.common :refer [checkbox]]))
 
 (defn taxonomic-comparison-header []
-  (let [name (re-frame/subscribe [::subs/name])]
-    [re-com/title
-     :src   (at)
-     :label (str "Taxonomic Sequence Comparison Pipeline" )
-     :level :level1
-     :class (styles/header)]))
+  [re-com/title
+   :src   (at)
+   :label "Taxonomic Sequence Comparison Pipeline"
+   :level :level1
+   :class (styles/header)])
 
 ;; (defn nav-bar []
 ;;   [v

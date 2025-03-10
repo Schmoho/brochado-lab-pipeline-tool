@@ -2,6 +2,7 @@
 
 (def default-db
   {:name "Unknown Client"
+   :already-executed-queries #{}
    :taxonomic-comparison
    {:form
     {:params.uniprot/taxonomy

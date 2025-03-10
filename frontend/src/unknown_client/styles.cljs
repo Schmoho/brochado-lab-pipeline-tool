@@ -2,6 +2,7 @@
   (:require-macros
    [garden.def :refer [defcssfn]])
   (:require
+   [garden.core :refer [css]]
    [spade.core   :refer [defglobal defclass]]
    [garden.units :refer [deg px]]
    [garden.color :refer [rgba]]))
@@ -25,11 +26,10 @@
 
 (defclass header
   []
-  {:color :white
-   :font-weight "500"
-   :height "100px"
-   :text-align "center"
-   :border "solid black 1px"
+  {:color            :white
+   :align-items      "center"
+   :font-weight      "800"
+   :text-align       "center"
    :background-color :#4db6ac})
 
 (defclass navbar
@@ -95,3 +95,11 @@
   []
   {:font-size   "150%"
    :font-weight "300"})
+
+
+(defclass card-hover
+  []
+  {:background-color "#f0f8ff"
+   :box-shadow       "0 4px 8px rgba(0, 0, 0, 0.2)"
+   :cursor           "pointer"
+   :transition       "background-color 0.3s ease, box-shadow 0.3s ease"})
