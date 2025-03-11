@@ -1,4 +1,4 @@
-(ns unknown-client.views.defs)
+(ns unknown-client.views.pipelines.defs)
 
 (def blast-dbs
   [{:id :uniprot-bacteria :label "Uniprot Bacteria"}

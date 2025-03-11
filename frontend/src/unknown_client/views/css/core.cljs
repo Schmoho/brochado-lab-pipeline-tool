@@ -1,11 +1,9 @@
-(ns unknown-client.styles
+(ns unknown-client.views.css.core
   (:require-macros
    [garden.def :refer [defcssfn]])
   (:require
-   [garden.core :refer [css]]
    [spade.core   :refer [defglobal defclass]]
-   [garden.units :refer [deg px]]
-   [garden.color :refer [rgba]]))
+   [garden.units :refer [px]]))
 
 (defcssfn linear-gradient
   ([c1 p1 c2 p2]
@@ -24,6 +22,7 @@
     :background-size     [[(px 100) (px 100)] [(px 100) (px 100)] [(px 20) (px 20)] [(px 20) (px 20)]]
     :background-position [[(px -2) (px -2)] [(px -2) (px -2)] [(px -1) (px -1)] [(px -1) (px -1)]]}])
 
+
 (defclass header
   []
   {:color            :white
@@ -35,16 +34,6 @@
 (defclass navbar
   []
   {#_#_:border  "solid black 1px"})
-
-(defclass content
-  []
-  {:color :green
-   :border  "solid black 1px"})
-
-;; (defclass level1
-;;   []
-;;   {:color :green
-;;    :border-color :black})
 
 (defclass footer
   []
@@ -58,7 +47,8 @@
   []
   {:padding "0px 5px"})
 
-(defclass inner-page-link
+
+(defclass rectangle-button
   []
   {:color         "white"
    :width         "100%"
@@ -68,38 +58,3 @@
    :border-radius "0px"
    :padding       "10px 10px"
    :margin        "5px 0px"})
-
-(defclass help-thingie
-  []
-  {:padding "0px 10px"})
-
-(defclass plus-button
-  []
-  {:padding "10px 10px"})
-
-(defclass checkbox-container
-  []
-  {:font-size        "22"
-   :font-weight      "300"
-   :border           "solid black 1px"
-   :padding          "10px 20px"})
-
-(defclass form-section
-  []
-  {:font-size   "22"
-   :font-weight "300"
-   
-   :padding     "15px 15px"})
-
-(defclass section-header
-  []
-  {:font-size   "150%"
-   :font-weight "300"})
-
-
-(defclass card-hover
-  []
-  {:background-color "#f0f8ff"
-   :box-shadow       "0 4px 8px rgba(0, 0, 0, 0.2)"
-   :cursor           "pointer"
-   :transition       "background-color 0.3s ease, box-shadow 0.3s ease"})

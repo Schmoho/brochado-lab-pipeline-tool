@@ -20,8 +20,8 @@
   [re-frisk "1.6.0"]
   [cider/cider-nrepl "0.44.0"]]
 
- :dev-http
- {8280 "dist"}
+ ;; :dev-http
+ ;; {8280 "dist"}
 
  :builds
  {:app

@@ -1,41 +1,23 @@
 (ns unknown-client.views.home
   (:require
    [re-frame.core :as re-frame]
-   [reagent.core :as r]
    [re-com.core :as re-com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
-   [unknown-client.events :as events]
-   [unknown-client.styles :as styles]
-   [unknown-client.subs :as subs]))
+   [unknown-client.events.routing :as routing-events]
+   [unknown-client.views.common.structure :refer [clickable-card]]
+   [unknown-client.routing :as routing]))
 
 (defn home-header []
-  (let [_ (re-frame/subscribe [::subs/name])]
-    [re-com/title
-     :src   (at)
-     :label "Dario's Super Dope Pipeline Thingy"
-     :level :level1
-     :class (styles/header)]))
-
-(defn card
-  [header title body & {:keys [on-click]}]
-  (let [hover?  (r/atom false)]
-    (fn []
-      [:div {:class (str "card bg-light mb-3 "
-                         (if @hover? (styles/card-hover) ""))
-             :style {:width "42rem"}
-             :on-mouse-over (re-com/handler-fn (reset! hover? true))
-             :on-mouse-out  (re-com/handler-fn (reset! hover? false))
-             :on-click on-click}
-       [:div {:class "card-header"} header]
-       [:div {:class "card-body"
-              :style {:font-size "20px"}}
-        [:h5 {:class "card-title"} title]
-        body]])))
+  [re-com/title
+   :src   (at)
+   :label "Dario's Super Dope Pipeline Thingy"
+   :level :level1
+   ])
 
 (defn volcano-card
   []
-  [card "Proteomics Hits Viewer"
+  [clickable-card "Proteomics Hits Viewer"
    "Look at volcanos!"
    [:<>
     [:p "It's amazeballs!"]
@@ -43,11 +25,11 @@
            :width "400px"
            :height "auto"}]]
    :on-click
-   #(re-frame/dispatch [::events/navigate :volcano])])
+   #(re-frame/dispatch [::routing-events/navigate :routing.data/volcano])])
 
 (defn msa-card
   []
-  [card "Multiple Sequence Alignments"
+  [clickable-card "Multiple Sequence Alignments"
    "Taxonomic Protein Comparison"
    [:<>
     [:p {:class "card-text"} (str "Use BLAST, UniRef or gene name-based search along a taxonomic tree "
@@ -57,11 +39,11 @@
            :width "400px"
            :height "auto"}]]
    :on-click
-   #(re-frame/dispatch [::events/navigate :taxonomic-comparison])])
+   #(re-frame/dispatch [::routing-events/navigate :routing.pipelines/msa])])
 
 (defn molecular-docking-card
   []
-  [card "Molecular Docking"
+  [clickable-card "Molecular Docking"
    "Comparative Docking"
    [:<>
     [:p "Prepare a set of homologous protein structures for comparative docking, run the docking on your on machine and upload the results to get a nice set of graphics."]
@@ -69,16 +51,16 @@
            :width "400px"
            :height "auto"}]]
    :on-click
-   #(re-frame/dispatch [::events/navigate :structural-comparison])])
+   #(re-frame/dispatch [::routing-events/navigate :routing.pipelines/docking])])
 
 (defn upload-data-card
   []
-  [card "Upload Core Data"
+  [clickable-card "Upload Core Data"
    "Feed the machine"
    [:<>
     [:p "Provision new taxon data, ligand data or more volcanos. "]]
    :on-click
-   #(re-frame/dispatch [::events/navigate :upload-data])])
+   #(re-frame/dispatch [::routing-events/navigate :routing.data/upload])])
 
 (defn home-panel
   []
@@ -95,3 +77,6 @@
      [[molecular-docking-card]
       [upload-data-card]]]]])
 
+
+(defmethod routing/panels :routing/home [] [home-panel])
+(defmethod routing/header :routing/home [] [home-header])

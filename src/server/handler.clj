@@ -40,7 +40,7 @@
     ["A0A0H2ZHP9" "A0A0H2ZHP9" "A0A0H2ZHP9" "A0A0H2ZHP9" "A0A0H2ZHP9"],
     :gene-names ["mrcB"]}})
 
-(defn start-taxonomic-comparison-handler
+(defn start-msa-handler
   [request]
   (tap> request)
   (let [uuid (random-uuid)
@@ -58,7 +58,7 @@
      :body   {:job-id uuid}}))
 
 
-(defn get-taxonomic-comparison-results-handler
+(defn get-msa-results-handler
   [request]
   (tap> request)
   (log/info "Getting taxonomic comparison results.")
@@ -151,3 +151,10 @@
                          (into {}))}})
 
 
+
+(defn upload-volcano
+  [request]
+  (tap> request)
+  (let [upload-form (-> request :body-params)]
+    {:status 200
+     :body   {:id nil}}))

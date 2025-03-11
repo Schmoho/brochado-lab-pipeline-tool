@@ -6,9 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     watch: {
-      // Exclude .cljs files
-      // so changes dont trigger multiple reloads
-      ignored: "**/*.cljs",
+	// Exclude .cljs files
+	// so changes dont trigger multiple reloads
+	ignored: "**/*.js",
+	usePolling: true,
+	hmr: false
     },
   },
 });

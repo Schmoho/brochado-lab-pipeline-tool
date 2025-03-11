@@ -1,4 +1,4 @@
-(ns unknown-client.views.alignment-spec)
+(ns unknown-client.views.results.alignment-spec)
 
 (def spec
   {:description

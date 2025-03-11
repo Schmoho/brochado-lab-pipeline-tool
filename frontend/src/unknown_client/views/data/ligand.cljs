@@ -1,8 +1,8 @@
-(ns unknown-client.views.ligand
+(ns unknown-client.views.data.ligand
   (:require
-   [unknown-client.subs :as subs]
+   [unknown-client.subs.routing :as routing-subs]
    [re-frame.core :as re-frame]
-   [unknown-client.styles :as styles]
+   [unknown-client.routing :as routing]
    [re-com.core :as re-com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]))
@@ -66,11 +66,11 @@
    :src   (at)
    :label "Ligand Library"
    :level :level1
-   :class (styles/header)])
+   ])
 
 (defn single-ligand-panel []
-  (let [params @(re-frame/subscribe [::subs/active-route-params])
-        results @(re-frame/subscribe [:data/ligand (:ligands/id params)])
+  (let [params @(re-frame/subscribe [::routing-subs/active-route-params])
+        results @(re-frame/subscribe [:data/ligand (:ligand/id params)])
         json-data (:json results)
         png       (:png results)
         img-src   (str "data:image/png;base64," png)]
@@ -90,10 +90,14 @@
       [json-details json-data]]]))
 
 (defn single-ligand-header []
-  (let [params @(re-frame/subscribe [::subs/active-route-params])
-        results @(re-frame/subscribe [:data/ligand (:ligands/id params)])]
+  (let [params @(re-frame/subscribe [::routing-subs/active-route-params])
+        results @(re-frame/subscribe [:data/ligand (:ligand/id params)])]
     [re-com/title
      :src   (at)
      :label (:name results)
-     :level :level1
-     :class (styles/header)]))
+     :level :level1]))
+
+(defmethod routing/panels :routing.data/ligand [] [ligands-panel])
+(defmethod routing/header :routing.data/ligand [] [ligands-header])
+(defmethod routing/panels :routing.data/ligand-entry [] [single-ligand-panel])
+(defmethod routing/header :routing.data/ligand-entry [] [single-ligand-header])

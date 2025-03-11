@@ -7,7 +7,7 @@
 ;;                   :params.uniprot.blast/database
 ;;                   :params.uniprot.blast/use-blast?]))
 
-;; (s/def :frontend/taxonomic-comparison-form
+;; (s/def :frontend/msa-form
 ;;   (s/keys :req [:params.uniprot/blast
 ;;                 :params.uniprot/uniref
 ;;                 :params.uniprot/taxonomy

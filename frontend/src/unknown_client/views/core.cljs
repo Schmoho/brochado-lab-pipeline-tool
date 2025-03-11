@@ -1,85 +1,77 @@
 (ns unknown-client.views.core
   (:require
-   [re-frame.core :as re-frame]
    [re-com.core :as re-com :refer [at v-box h-box]
-    :rename {v-box v
-             h-box h}]
-   [unknown-client.styles :as styles]
-   [unknown-client.routes :as routes]
-   [unknown-client.subs :as subs]
-   [unknown-client.views.about :as about]
-   [unknown-client.views.home :as home]
-   [unknown-client.views.volcano :as volcano]
-   [unknown-client.views.upload-data :as upload-data]
-   [unknown-client.views.structural-comparison :as structural-comparison]
-   [unknown-client.views.taxonomic-comparison :as taxonomic-comparison]
-   [unknown-client.views.taxonomic-comparison-results :as taxonomic-comparison-results]
-   [unknown-client.views.taxon :as taxon]
-   [unknown-client.views.ligand :as ligand]
-   [unknown-client.views.common :refer [navbar-link]]))
+    :rename {v-box v h-box h}]
+   [re-frame.core :as rf]
+   [reagent.core :as r]
+   [unknown-client.events.routing :as routing-events]
+   [unknown-client.routing :as routing]
+   [unknown-client.subs.routing :as routing-subs]
+   [unknown-client.views.css.core :as css]
+   [unknown-client.views.data.ligand]
+   [unknown-client.views.data.protein]
+   [unknown-client.views.data.taxon]
+   [unknown-client.views.data.upload]
+   [unknown-client.views.data.volcano]
+   [unknown-client.views.home]
+   [unknown-client.views.pipelines.docking]
+   [unknown-client.views.pipelines.msa]
+   [unknown-client.views.results.docking]
+   [unknown-client.views.results.msa]))
 
-(defmethod routes/panels :home [] [home/home-panel])
-(defmethod routes/header :home [] [home/home-header])
-(defmethod routes/panels :taxonomic-comparison [] [taxonomic-comparison/taxonomic-comparison-panel])
-(defmethod routes/header :taxonomic-comparison [] [taxonomic-comparison/taxonomic-comparison-header])
-(defmethod routes/panels :taxonomic-comparison-results [] [taxonomic-comparison-results/taxonomic-comparison-results-panel])
-(defmethod routes/header :taxonomic-comparison-results [] [taxonomic-comparison-results/taxonomic-comparison-results-header])
-(defmethod routes/panels :structural-comparison [] [structural-comparison/structural-comparison-panel])
-(defmethod routes/header :structural-comparison [] [structural-comparison/structural-comparison-header])
-(defmethod routes/panels :volcano [] [volcano/volcano-panel])
-(defmethod routes/header :volcano [] [volcano/volcano-header])
-(defmethod routes/panels :upload-data [] [upload-data/upload-data-panel])
-(defmethod routes/header :upload-data [] [upload-data/upload-data-header])
-
-(defmethod routes/panels :taxon [] [taxon/taxons-panel])
-(defmethod routes/header :taxon [] [taxon/taxons-header])
-(defmethod routes/panels :taxon-entry [] [taxon/single-taxon-panel])
-(defmethod routes/header :taxon-entry [] [taxon/single-taxon-header])
-(defmethod routes/panels :ligand [] [ligand/ligands-panel])
-(defmethod routes/header :ligand [] [ligand/ligands-header])
-(defmethod routes/panels :ligand-entry [] [ligand/single-ligand-panel])
-(defmethod routes/header :ligand-entry [] [ligand/single-ligand-header])
-#_(defmethod routes/panels :protein-entry [] [protein/single-taxon-panel])
-
-(defmethod routes/panels :about [] [about/about-panel])
-
+(defn navbar-link
+  [link-text route]
+  (let  [hover?  (r/atom false)]
+    (fn []
+      [re-com/button
+       :src       (at)
+       :label    link-text
+       :on-click #(rf/dispatch
+                   (if (coll? route)
+                     (into [::routing-events/navigate]
+                           route)
+                     [::routing-events/navigate route]))
+       :class    (css/rectangle-button)
+       :style    {:background-color (if @hover? "#0072bb" "#00796b")}
+       :attr     {:on-mouse-over (re-com/handler-fn (reset! hover? true))
+                  :on-mouse-out  (re-com/handler-fn (reset! hover? false))}])))
 (defn nav-bar []
   [v
-   :class (styles/navbar)
+   :class (css/navbar)
    :children
-   [[navbar-link "Home" :home]
+   [[navbar-link "Home" :routing/home]
     [re-com/gap :src (at) :size "40px"]
-    [navbar-link "Taxons" :taxon]
-    [navbar-link "Ligands" :ligand]
-    [navbar-link "Upload Core Data" :upload-data]
+    [navbar-link "Taxons" :routing.data/taxon]
+    [navbar-link "Ligands" :routing.data/ligand]
+    [navbar-link "Upload Core Data" :routing.data/upload]
     [re-com/gap :src (at) :size "40px"]
-    [navbar-link "Volcano Viewer" :taxonomic-comparison]
+    [navbar-link "Volcano Viewer" :routing.data/volcano]
     [re-com/gap :src (at) :size "40px"]
-    [navbar-link "Taxonomic Protein Comparison" :taxonomic-comparison]
-    [navbar-link "Results" :taxonomic-comparison-results]
+    [navbar-link "Taxonomic Protein Comparison" :routing.pipelines/msa]
+    [navbar-link "Results" :routing.results/msa]
     [re-com/gap :src (at) :size "40px"]
-    [navbar-link  "Comparative Docking" :structural-comparison]
-    [navbar-link "Results" :structural-comparison-results]]])
+    [navbar-link  "Comparative Docking" :routing.pipelines/docking]
+    [navbar-link "Results" :routing.results/docking]]])
 
 (defn footer
   []
   [h
-   :class (styles/footer)
+   :class (css/footer)
    :children
    [[re-com/hyperlink-href
-     :class (styles/footer-link)
+     :class (css/footer-link)
      :label "BLAST Documentation"
      :href "https://www.uniprot.org/help/blast-submission"]
     [re-com/hyperlink-href
-     :class (styles/footer-link)
+     :class (css/footer-link)
      :label "What is UniRef?"
      :href "https://www.uniprot.org/help/uniref"]
     [re-com/hyperlink-href
-     :class (styles/footer-link)
+     :class (css/footer-link)
      :label "Why BLAST against UniRef?"
      :href "https://www.uniprot.org/help/uniref_blast_use"]
     [re-com/hyperlink-href
-     :class (styles/footer-link)
+     :class (css/footer-link)
      :label "Find your protein on UniProt"
      :href "https://www.uniprot.org/help/find_your_protein"]]])
 
@@ -91,25 +83,24 @@
     :height "auto"}])
 
 (defn main-panel []
-  (let [active-panel (re-frame/subscribe [::subs/active-panel])]
+  (let [active-panel (rf/subscribe [::routing-subs/active-panel])]
     [v
-     :style {:border "1px solid black"}
      :width "100%"
      :align :stretch
      :gap      "1em"
      :children
      [[h
-       :class (styles/header)
+       :class (css/header)
        :justify :between
        :children
        [[brochado-logo]
-        (routes/header @active-panel)
+        (routing/header @active-panel)
         [re-com/gap :size "100px"]]]
       [h
        :gap "30px"
        :children
        [[nav-bar]
-        (routes/panels @active-panel)]]
+        (routing/panels @active-panel)]]
       #_[footer]]]))
 
 #_(.reload js/location)

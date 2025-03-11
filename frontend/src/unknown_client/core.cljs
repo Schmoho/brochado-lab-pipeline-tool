@@ -1,31 +1,36 @@
 (ns unknown-client.core
   (:require
-   [re-com.core :as re-com :refer [simple-v-table]]
    [reagent.core :as r]
    ["react-dom/client" :refer [createRoot]]
-   [goog.dom :as gdom]
-   [reagent.dom :as rdom]
    [re-frame.core :as re-frame]
-   [unknown-client.events :as events]
-   [unknown-client.routes :as routes]
+   [unknown-client.subs.data]
+   [unknown-client.subs.forms.core]
+   [unknown-client.subs.forms.docking]
+   [unknown-client.subs.forms.msa]
+   [unknown-client.subs.routing]
+   [unknown-client.events.db :as db-events]
+   [unknown-client.events.routing]
+   [unknown-client.routing :as routing]
    [unknown-client.views.core :as views]
-   [unknown-client.config :as config]
-   [unknown-client.fasta :refer [f]]))
+   [unknown-client.config :as config]))
 
-(defn dev-setup []
+(defn dev-setup
+  []
   (when config/debug?
     (println "dev mode")))
 
-(defonce root (createRoot (.getElementById js/document "app")))
+(defonce root
+  (createRoot (.getElementById js/document "app")))
 
-
-(defn ^:dev/after-load mount-root []
+(defn ^:dev/after-load mount-root
+  []
   (.render root (r/as-element
                  [views/main-panel])))
 
-(defn init []
-  (routes/start!)
-  (re-frame/dispatch-sync [::events/initialize-db])
+(defn init
+  []
+  (routing/start!)
+  (re-frame/dispatch-sync [::db-events/initialize-db])
   (dev-setup)
   (mount-root))
 

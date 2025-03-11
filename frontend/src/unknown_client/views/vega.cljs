@@ -3,25 +3,19 @@
    [reagent.core :as r]
    ["vega-embed" :default vegaEmbed]))
 
-(def spec
-  (clj->js
-    {:data {:values [{:a 1 :b 2} {:a 2 :b 3}]}
-     :mark "bar"
-     :encoding {:x {:field "a" :type "quantitative"}
-                :y {:field "b" :type "quantitative"}}}))
-
-(defn vega-chart [spec]
+(defn vega-chart
+  [id spec]
   (r/create-class
-    {:component-did-mount
-     (fn [_]
+   {:component-did-mount
+    (fn [_]
        ;; Call vegaEmbed on the element with id "vis" using our spec.
-       (-> (vegaEmbed "#vis" spec)
-           (.then (fn [result]
-                    (js/console.log (.-view result))))))
-     :reagent-render
-     (fn []
+      (-> (vegaEmbed (str "#" id) (clj->js spec))
+          (.then (fn [result]
+                   (js/console.log (.-view result))))))
+    :reagent-render
+    (fn []
        ;; The target div for the visualization.
-       [:div {:id "vis"}])}))
+      [:div {:id id}])}))
 
 
 ;; (defn- value->css [v]

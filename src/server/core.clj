@@ -30,6 +30,11 @@
                               :description "gives cool"
                               :version     "0.0.1"}}
              :handler (openapi/create-openapi-handler)}}]
+     ["/data/upload/volcano"
+      {:post {:summary    "Add a volcano dataset"
+              ;; :parameters {:body map?}
+              #_#_:responses  {200 {:body :uniprot/basic-response}}
+              :handler    handler/upload-volcano}}]
      ["/data/taxon"
       {:get {:summary "Get taxon data."
              :handler handler/get-taxons}}]
@@ -42,16 +47,16 @@
      ["/data/volcanos"
       {:get {:summary "Get volcano data."
              :handler handler/get-volcanos}}]
-     ["/taxonomic-comparison"
+     ["/msa"
       {:post {:summary    "Start taxonomic comparison pipeline."
               ;; :parameters {:body map?}
               #_#_:responses  {200 {:body :uniprot/basic-response}}
-              :handler    handler/start-taxonomic-comparison-handler}}]
-     ["/taxonomic-comparison-results"
-      {:get {:summary    "Get taxonomic comparison results."
+              :handler    handler/start-msa-handler}}]
+     ["/msa-results"
+      {:get {:summary    "Get MSA results."
               ;; :parameters {:body map?}
               #_#_:responses  {200 {:body :uniprot/basic-response}}
-             :handler    handler/get-taxonomic-comparison-results-handler}}]]
+             :handler    handler/get-msa-results-handler}}]]
     {;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
      :validate  spec/validate ;; enable spec validation for route data
      ;;:reitit.spec/wrap spell/closed ;; strict top-level validation
