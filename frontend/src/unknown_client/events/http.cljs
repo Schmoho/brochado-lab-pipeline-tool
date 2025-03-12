@@ -20,14 +20,14 @@
     :timeout         10000
     :format          (ajax/transit-request-format)
     :response-format (ajax/transit-response-format {:keywords? true})
-    :on-success      (into [::http-success path])
+    :on-success      (into [::http-get-success path])
     :on-failure      (into [::http-failure path])}}))
 
 (rf/reg-event-db
- ::http-success
+ ::http-get-success
  (fn-traced
   [db [_ path response]]
-  (-> (update db :data #(merge % response))
+  (-> (update-in db (butlast path) #(merge % response))
       (update :already-executed-queries conj path))))
 
 (rf/reg-event-fx
@@ -43,7 +43,7 @@
   {:db db
    :http-xhrio
    {:method          :post
-    :uri             (str base-api "/msa")
+    :uri             (str base-api "/pipelines/msa")
     :params          (-> db :msa :form
                          (update-in [:params.uniprot/protein :protein-ids]
                                     #(-> %
@@ -68,7 +68,7 @@
   {:db db
    :http-xhrio
    {:method          :get
-    :uri             (str base-api "/msa-results")
+    :uri             (str base-api "/results/msa")
     :timeout         10000
     :format          (ajax/transit-request-format)
     :response-format (ajax/transit-response-format {:keywords? true})
@@ -80,14 +80,37 @@
  (fn-traced
   [{:keys [db]} [_ response]]
   {:db       db
-   :navigate :msa-results}))
+   :navigate :routing.results/msa}))
 
 (rf/reg-event-fx
  ::get-msa-results-success
  (fn-traced
   [{:keys [db]} [_ response]]
-  {:db       (assoc-in db [:msa :results] (zipmap
-                                                            (map :pipeline/uuid
-                                                                 (:results response))
-                                                            (:results response)))
-   :navigate :msa-results}))
+  {:db       (assoc-in db [:results :msa] (zipmap
+                                           (map :pipeline/uuid
+                                                (:results response))
+                                           (:results response)))
+   :navigate :routing.results/msa}))
+
+
+(rf/reg-event-fx
+ ::post-volcano
+ (fn-traced
+  [{:keys [db]} _]
+  {:db db
+   :http-xhrio
+   {:method          :post
+    :uri             (str base-api "/data/upload/volcano")
+    :params          (-> db :forms :upload/volcano)
+    :timeout         10000
+    :format          (ajax/transit-request-format)
+    :response-format (ajax/transit-response-format {:keywords? true})
+    :on-success      [::post-volcano-success]
+    :on-failure      [::http-failure]}}))
+
+
+(rf/reg-event-db
+ ::post-volcano-success
+ (fn-traced
+  [db [_ response]]
+  (-> db (update-in [:data :input] #(merge % response)))))

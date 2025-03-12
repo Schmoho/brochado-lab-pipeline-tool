@@ -47,8 +47,7 @@
   []
   {:padding "0px 5px"})
 
-
-(defclass rectangle-button
+(defclass navbar-button
   []
   {:color         "white"
    :width         "100%"

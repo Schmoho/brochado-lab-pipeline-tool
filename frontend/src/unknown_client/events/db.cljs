@@ -5,17 +5,16 @@
 
 (def default-db
   {:already-executed-queries #{}
-   :msa
-   {:form
+   :forms
+   {:msa
     {:params.uniprot/taxonomy
      {:use-taxonomic-search? true}
      :params.uniprot/uniref
      {:use-uniref? true
       :cluster-types #{:uniref-100 :uniref-90}}
      :params.uniprot/blast
-     {:use-blast? false}}}
-   :docking
-   {:form {}}})
+     {:use-blast? false}}
+    :docking {}}})
 
 ;; @re-frame.db/app-db
 

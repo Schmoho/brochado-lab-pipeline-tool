@@ -28,3 +28,13 @@
    :border           "solid black 1px"
    :padding          "10px 20px"})
 
+(defclass rectangle-button
+  []
+  {:color         "white"
+   :width         "100%"
+   :font-size     "24"
+   :font-weight   "400"
+   :border        "none"
+   :border-radius "0px"
+   :padding       "10px 10px"
+   :margin        "5px 0px"})

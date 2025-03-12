@@ -46,10 +46,9 @@
   (let [uuid (random-uuid)
         form (-> request :body-params (assoc :pipeline/uuid uuid))]
     (log/info "Run job with UUID" uuid)
-    (.mkdirs (io/file (format "results/%s" uuid)))
     (log/info "Write params.")
-    (with-open [wr (clojure.java.io/writer (format "results/%s/params.edn" (str uuid)))]
-      (.write wr (with-out-str (clojure.pprint/pprint form))))
+    (utils/write!
+     (format "data/results/msa/%s/params.edn" (str uuid)))
     (future (try
               (pipeline.taxonomy/pipeline form)
               (catch Throwable t
@@ -60,10 +59,9 @@
 
 (defn get-msa-results-handler
   [request]
-  (tap> request)
   (log/info "Getting taxonomic comparison results.")
-  (let [results (->> (file-seq (io/file "results"))
-                     (filter #(and (not= % (io/file "results"))
+  (let [results (->> (file-seq (io/file "data/results/msa"))
+                     (filter #(and (not= % (io/file "data/results/msa"))
                                    (.isFile %)
                                    (str/ends-with? (.getName %) ".edn")))
                      (mapv #(edn/read-once (io/file %)))
@@ -156,5 +154,6 @@
   [request]
   (tap> request)
   (let [upload-form (-> request :body-params)]
+    
     {:status 200
      :body   {:id nil}}))

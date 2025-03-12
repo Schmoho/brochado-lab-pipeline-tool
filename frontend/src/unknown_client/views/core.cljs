@@ -31,7 +31,7 @@
                      (into [::routing-events/navigate]
                            route)
                      [::routing-events/navigate route]))
-       :class    (css/rectangle-button)
+       :class    (css/navbar-button)
        :style    {:background-color (if @hover? "#0072bb" "#00796b")}
        :attr     {:on-mouse-over (re-com/handler-fn (reset! hover? true))
                   :on-mouse-out  (re-com/handler-fn (reset! hover? false))}])))

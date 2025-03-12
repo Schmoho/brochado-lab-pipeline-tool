@@ -7,8 +7,7 @@
              h-box h}]
    [unknown-client.views.pipelines.defs :as defs]
    [unknown-client.routing :as routing]
-   [unknown-client.views.css.core :as css]
-   [unknown-client.views.css.forms :as css.forms]
+   [unknown-client.views.css.forms :as css]
    [unknown-client.events.forms :as form-events]
    [unknown-client.views.common.forms :refer [checkbox]]))
 
@@ -22,9 +21,9 @@
   []
   (let [form @(re-frame/subscribe [:msa/form])]
     [v
-     :class (css.forms/form-section)
+     :class (css/form-section)
      :children
-     [[:h1 {:class (css.forms/section-header)} "Taxonomic Search"]
+     [[:h1 {:class (css/section-header)} "Taxonomic Search"]
       [v
        :children
        [[checkbox
@@ -67,9 +66,9 @@
   []
   (let [form @(re-frame/subscribe [:msa/form])]
     [v
-     :class (css.forms/form-section)
+     :class (css/form-section)
      :children
-     [[:h1 {:class (css.forms/section-header)} "BLAST"]
+     [[:h1 {:class (css/section-header)} "BLAST"]
       [h
        :children
        [[checkbox
@@ -110,9 +109,9 @@
   []
   (let [form @(re-frame/subscribe [:msa/form])]
     [v
-     :class (css.forms/form-section)
+     :class (css/form-section)
      :children
-     [[:h1 {:class (css.forms/section-header)} "UniRef Search"]
+     [[:h1 {:class (css/section-header)} "UniRef Search"]
       [h
        :children
        [[checkbox
@@ -154,9 +153,9 @@
   (let [form @(re-frame/subscribe [:msa/form])]
     []
     [v
-     :class (css.forms/form-section)
+     :class (css/form-section)
      :children
-     [[:h1 {:class (css.forms/section-header)} "Inputs"]
+     [[:h1 {:class (css/section-header)} "Inputs"]
       [h
        :children
        [[v

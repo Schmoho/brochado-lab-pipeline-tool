@@ -30,33 +30,42 @@
                               :description "gives cool"
                               :version     "0.0.1"}}
              :handler (openapi/create-openapi-handler)}}]
-     ["/data/upload/volcano"
-      {:post {:summary    "Add a volcano dataset"
+     ["/data"
+      ["/upload"
+       ["/volcano"
+        {:post {:summary       "Add a volcano dataset"
               ;; :parameters {:body map?}
-              #_#_:responses  {200 {:body :uniprot/basic-response}}
-              :handler    handler/upload-volcano}}]
-     ["/data/taxon"
-      {:get {:summary "Get taxon data."
-             :handler handler/get-taxons}}]
-     ["/data/ligand"
-      {:get {:summary "Get ligand data."
-             :handler handler/get-ligands}}]
-     ["/data/volcano/:id"
-      {:get {:summary "Get volcano data."
-             :handler handler/get-volcano}}]
-     ["/data/volcanos"
-      {:get {:summary "Get volcano data."
-             :handler handler/get-volcanos}}]
-     ["/msa"
-      {:post {:summary    "Start taxonomic comparison pipeline."
+                #_#_:responses {200 {:body :uniprot/basic-response}}
+                :handler       handler/upload-volcano}}]]
+      ["/raw"
+       ["/taxon"
+        {:get {:summary "Get taxon data."
+               :handler handler/get-taxons}}]
+       ["/ligand"
+        {:get {:summary "Get ligand data."
+               :handler handler/get-ligands}}]]
+
+      ["/input"
+       ["/volcano"
+        {:get {:summary "Get volcano data."
+               :handler handler/get-volcanos}}
+        ["/:id"
+         {:get {:summary "Get volcano data."
+                :handler handler/get-volcano}}]]]
+
+      ["/results"
+       ["/msa"
+        {:get {:summary       "Get MSA results."
               ;; :parameters {:body map?}
-              #_#_:responses  {200 {:body :uniprot/basic-response}}
-              :handler    handler/start-msa-handler}}]
-     ["/msa-results"
-      {:get {:summary    "Get MSA results."
+               #_#_:responses {200 {:body :uniprot/basic-response}}
+               :handler       handler/get-msa-results-handler}}]]]
+
+     ["/pipelines"
+      ["/msa"
+       {:post {:summary       "Start taxonomic comparison pipeline."
               ;; :parameters {:body map?}
-              #_#_:responses  {200 {:body :uniprot/basic-response}}
-             :handler    handler/get-msa-results-handler}}]]
+               #_#_:responses {200 {:body :uniprot/basic-response}}
+               :handler       handler/start-msa-handler}}]]]
     {;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
      :validate  spec/validate ;; enable spec validation for route data
      ;;:reitit.spec/wrap spell/closed ;; strict top-level validation

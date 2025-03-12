@@ -1,38 +1,22 @@
 (ns unknown-client.views.data.upload
   (:require
    [clojure.string :as str]
-   [re-com.core :as re-com :refer [at v-box h-box]
+   [goog.labs.format.csv :as csv]
+   [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v h-box h}]
-   [re-frame.core :as re-frame]
+   [re-frame.core :as rf]
    [reagent.core :as r]
+   [unknown-client.events.forms :as form-events]
    [unknown-client.routing :as routing]
-   [unknown-client.utils :refer [cool-select-keys]]
    [unknown-client.views.common.forms :as common.forms]
-   [unknown-client.views.common.structure :refer [card]]))
+   [unknown-client.views.common.structure :refer [card]]
+   [unknown-client.views.common.widgets :as widgets]))
 
 (defn upload-data-header []
-  [re-com/title
+  [com/title
    :src   (at)
    :label "Upload Core Data"
    :level :level1])
-
-(defn taxon-chooser
-  []
-  (let [taxons (re-frame/subscribe [:data/taxons])
-        selection-model (r/atom nil)]
-    [re-com/single-dropdown
-     :choices
-     (conj (map #(cool-select-keys
-                   %
-                   [[:id :taxonId]
-                    [:label :scientificName]])
-                @taxons)
-           {:id nil :label "-"})
-     :model selection-model
-     :on-change #(reset! selection-model %)
-     :placeholder "For which taxon?"]))
-
-
 
 (defn volcano-info
   []
@@ -46,7 +30,7 @@
                   "fdr"
                   "gene_name (optional)"
                   "protein_id (optional)"])]
-   [re-com/hyperlink-href :src (at)
+   [com/hyperlink-href :src (at)
     :label  "Link to docs."
     :href   ""
     :target "_blank"]])
@@ -61,11 +45,11 @@
      [:<>
       [:p.info-heading "Organism ID"]
       [:p "You need to put in a Uniprot or NCBI Taxonomy ID. Note they are the same."]
-      [re-com/hyperlink-href :src (at)
+      [com/hyperlink-href :src (at)
        :label  "Link to docs."
        :href   ""
        :target "_blank"]]]
-    [re-com/input-text
+    [com/input-text
      :model nil
      :on-change (fn [_])]]])
 
@@ -79,11 +63,11 @@
      [:<>
       [:p.info-heading "Pubchem ID"]
          [:p "You need to put in a Pubchem Compound ID. Please note Pubchem distinguishes 'substances' and 'compounds'. We are going for compounds."]
-         [re-com/hyperlink-href :src (at)
+         [com/hyperlink-href :src (at)
           :label  "Link to docs."
           :href   ""
           :target "_blank"]]]
-    [re-com/input-text
+    [com/input-text
      :model nil
      :on-change (fn [_])]]])
 
@@ -92,17 +76,35 @@
   [card
    "Upload volcano data"
    ""
-   [:<>
-    [common.forms/info-label
-     "Required: Volcano File"
-     [volcano-info]]
-    [common.forms/file-upload]
-    [common.forms/info-label
-     "Optional: Taxon"
-     [:<>]]
-    [taxon-chooser]]])
+   [v
+    :children
+    [[common.forms/info-label
+      "Required: Name"
+      [:div ""]]
+     [common.forms/input-text
+      :on-change #(rf/dispatch [::form-events/set-form-data :upload/volcano :name %])
+      :placeholder "Insert a dataset name"]
+     [com/gap :size "10px"]
+     [common.forms/info-label
+      "Required: Volcano File"
+      [volcano-info]]
+     [common.forms/csv-upload
+      :on-load #(rf/dispatch [::form-events/set-form-data :upload/volcano :file %])]
+     [common.forms/info-label
+      "Optional: Taxon"
+      [:<>]]
+     [h
+      :children
+      [[widgets/taxon-chooser
+        :on-change
+        #(rf/dispatch [::form-events/set-form-data :upload/volcano :metadata :taxon %])]
+       [com/gap :size "80px"]
+       [common.forms/action-button
+        :label "Save"
+        :on-click #(rf/dispatch [::form-events/set-form-data :upload/volcano :metadata :taxon %])]]]]]])
 
-(defn upload-data-panel []
+(defn upload-data-panel
+  []
   [v
    :gap "20px"
    :children

@@ -73,12 +73,12 @@
      :routing.results/msa-results
      (re-frame/dispatch [::http-events/get-msa-results])
      :routing.data/taxon
-     (get-data [:data :taxon])
+     (get-data [:data :raw :taxon])
      :routing.data/ligand
-     (get-data [:data :ligand])
+     (get-data [:data :raw :ligand])
      :routing.pipelines/docking
      (do
-       (get-data [:data :ligand])
-       (get-data [:data :taxon]))
+       (get-data [:data :raw :ligand])
+       (get-data [:data :raw :taxon]))
      nil)))
 

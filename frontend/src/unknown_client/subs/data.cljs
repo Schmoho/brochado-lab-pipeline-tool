@@ -3,43 +3,51 @@
    [re-frame.core :as rf]))
 
 (rf/reg-sub
- :data/taxons
+ :data/raw
  (fn [db _]
-   (->> db :data :taxon vals vec)))
+   (->> db :data :raw)))
+
+(rf/reg-sub
+ :data/taxons
+ :<- [:data/raw]
+ (fn [raw]
+   (->> raw :taxon vals vec)))
 
 (rf/reg-sub
  :data/taxon
- (fn [db [_ id]]
-   (-> db :data :taxon (get id))))
-
-(rf/reg-sub
- :data/proteomes
- (fn [db [_ id]]
-   (-> db :data :proteome)))
+ :<- [:data/raw]
+ (fn [raw [_ id]]
+   (-> raw :taxon (get id))))
 
 (rf/reg-sub
  :data/proteome
- (fn [db [_ id]]
-   (-> db :data :proteome (get id))))
+ :<- [:data/raw]
+ (fn [raw [_ id]]
+   (-> raw :proteome (get id))))
 
 (rf/reg-sub
  :data/ligands
- (fn [db _]
-   (->> db :data :ligand vals vec)))
+ :<- [:data/raw]
+ (fn [raw]
+   (->> raw :ligand vals vec)))
 
 (rf/reg-sub
  :data/ligand
- (fn [db [_ id]]
-   (-> db :data :ligand (get id))))
+ :<- [:data/raw]
+ (fn [raw [_ id]]
+   (-> raw :ligand (get id))))
 
-
+(rf/reg-sub
+ :data/results
+ (fn [db _]
+   (->> db :data :results)))
 
 (rf/reg-sub
  :msa/results
- (fn [db _]
-   (->> db
+ :<- [:data/results]
+ (fn [results]
+   (->> results
         :msa
-        :results
         (mapv (fn [[uuid {:keys [params.uniprot/taxonomy
                                  params.uniprot/uniref
                                  params.uniprot/blast

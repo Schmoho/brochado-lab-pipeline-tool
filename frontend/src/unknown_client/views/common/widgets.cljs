@@ -1,8 +1,10 @@
 (ns unknown-client.views.common.widgets
     (:require
      [re-com.core :as com :refer [at v-box h-box]
-    :rename {v-box v
-             h-box h}]))
+      :rename {v-box v h-box h}]
+     [re-frame.core :as rf]
+     [reagent.core :as r]
+     [unknown-client.utils :refer [cool-select-keys]]))
 
 (defn lineage-item [idx item]
   ^{:key idx}
@@ -91,3 +93,21 @@
           :label (str id " - " gene-name " - " protein-name)
           :href (str "/protein/" id)])
        #_#_:on-change (re-frame/dispatch)]]]))
+
+(defn taxon-chooser
+  [& {:keys [on-change]}]
+  (let [taxons (rf/subscribe [:data/taxons])
+        selection-model (r/atom nil)]
+    [com/single-dropdown
+     :choices
+     (conj (map #(cool-select-keys
+                  %
+                  [[:id :taxonId]
+                   [:label :scientificName]])
+                @taxons)
+           {:id nil :label "-"})
+     :model selection-model
+     :on-change #(do
+                  (reset! selection-model %)
+                  (on-change %))
+     :placeholder "For which taxon?"]))
