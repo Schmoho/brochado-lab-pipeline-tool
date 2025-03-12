@@ -1,7 +1,7 @@
 (ns unknown-client.views.data.taxon
   (:require
    [clojure.string :as str]
-   [re-com.core :as re-com :refer [at v-box h-box]
+   [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v h-box h}]
    [re-frame.core :as re-frame]
    [unknown-client.routing :as routing]
@@ -12,14 +12,14 @@
   (let [results (re-frame/subscribe [:data/taxons])]
     (fn []
       (if (empty? @results)
-        [re-com/throbber :size :regular]
+        [com/throbber :size :regular]
         [v
          :width "1550px"
          :max-width "1550px"
          :children
          [[h
            :children
-           [[re-com/simple-v-table
+           [[com/simple-v-table
              :src                       (at)
              :model                     results
              :max-width "1000px"
@@ -41,7 +41,7 @@
              :row-height                35]]]]]))))
 
 (defn taxons-header []
-  [re-com/title
+  [com/title
    :src   (at)
    :label "Taxon Library"
    :level :level1])
@@ -57,17 +57,17 @@
         statistics]
     [v
      :children
-     [[re-com/title :label "Proteome Statistics" :level :level2]
-      [re-com/label :label (str "Reviewed Proteins: " reviewedProteinCount)]
-      [re-com/label :label (str "Unreviewed Proteins: " unreviewedProteinCount)]
-      [re-com/label :label (str "Proteome Count: " proteomeCount)]
-      [re-com/v-box
-       :children [[re-com/title :label "Strains" :level :level2]
+     [[com/title :label "Proteome Statistics" :level :level2]
+      [com/label :label (str "Reviewed Proteins: " reviewedProteinCount)]
+      [com/label :label (str "Unreviewed Proteins: " unreviewedProteinCount)]
+      [com/label :label (str "Proteome Count: " proteomeCount)]
+      [com/v-box
+       :children [[com/title :label "Strains" :level :level2]
                   (map (fn [{:keys [name synonyms]}]
-                         [re-com/h-box
+                         [com/h-box
                           :gap "10px"
-                          :children [[re-com/label :label (str name)]
-                                     [re-com/label :label (str "( " (str/join ", " synonyms) " )")]]])
+                          :children [[com/label :label (str name)]
+                                     [com/label :label (str "( " (str/join ", " synonyms) " )")]]])
                        strains)]]]]))
 
 (defn bug-fluff
@@ -78,8 +78,8 @@
    [[:img {:src   "https://phil.cdc.gov//PHIL_Images/10043/10043_lores.jpg"
            :width "200px"
            :max-width "200px"}]
-    [re-com/gap :size "10px"]
-    [re-com/v-box
+    [com/gap :size "10px"]
+    [com/v-box
      :children
      [[widgets/lineage-widget lineage]]]]])
 
@@ -100,7 +100,7 @@
 (defn single-taxon-header []
   (let [params @(re-frame/subscribe [::routing-subs/active-route-params])
         taxon  @(re-frame/subscribe [:data/taxon (:taxon/id params)])]
-    [re-com/title
+    [com/title
      :src   (at)
      :label (:scientificName taxon)
      :level :level1]))

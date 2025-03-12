@@ -1,6 +1,7 @@
 (ns server.core
   (:require
    [clojure.tools.logging :as log]
+   [cognitect.transit :as transit]
    [muuntaja.core :as m]
    [reitit.coercion.spec]
    [reitit.dev.pretty :as pretty]
@@ -15,7 +16,9 @@
    [reitit.swagger :as swagger]
    [reitit.swagger-ui :as swagger-ui]
    [ring.adapter.jetty :as jetty]
-   [server.handler :as handler]))
+   [server.handler :as handler]
+   [server.spec :as s])
+  (:import java.time.Instant))
 
 (def app
   (ring/ring-handler
@@ -34,7 +37,7 @@
       ["/upload"
        ["/volcano"
         {:post {:summary       "Add a volcano dataset"
-              ;; :parameters {:body map?}
+                ;; :parameters    {:body :data.input/volcano}
                 #_#_:responses {200 {:body :uniprot/basic-response}}
                 :handler       handler/upload-volcano}}]]
       ["/raw"
@@ -49,21 +52,19 @@
        ["/volcano"
         {:get {:summary "Get volcano data."
                :handler handler/get-volcanos}}
-        ["/:id"
-         {:get {:summary "Get volcano data."
-                :handler handler/get-volcano}}]]]
+        #_["/:id"
+           {:get {:summary "Get volcano data."
+                  :handler handler/get-volcano}}]]]
 
       ["/results"
        ["/msa"
-        {:get {:summary       "Get MSA results."
-              ;; :parameters {:body map?}
-               #_#_:responses {200 {:body :uniprot/basic-response}}
-               :handler       handler/get-msa-results-handler}}]]]
+        {:get {:summary "Get MSA results."
+               :handler handler/get-msa-results-handler}}]]]
 
      ["/pipelines"
       ["/msa"
        {:post {:summary       "Start taxonomic comparison pipeline."
-              ;; :parameters {:body map?}
+               ;; :parameters {:body map?}
                #_#_:responses {200 {:body :uniprot/basic-response}}
                :handler       handler/start-msa-handler}}]]]
     {;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
@@ -72,6 +73,10 @@
      :exception pretty/exception
      :data      {:coercion   reitit.coercion.spec/coercion
                  :muuntaja   m/instance
+                 #_(m/create
+                    (assoc-in m/default-options
+                              [:formats "application/transit+json" :encoder-opts :handlers]
+                              {Instant (transit/write-handler "inst" #(.toString %))}))
                  :middleware [;; swagger feature
                               swagger/swagger-feature
                               ;; query-params & form-params

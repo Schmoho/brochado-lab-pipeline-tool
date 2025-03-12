@@ -15,7 +15,8 @@
 (def routes
   (atom
    ["/" {""           :routing/home
-         "data/"      {"taxon"          :routing.data/taxon
+         "data/"      {"overview"       :routing.data/overview
+                       "taxon"          :routing.data/taxon
                        "taxon/"         {#{[:taxon/id ""] [:taxon/id "/"]} :routing.data/taxon-entry}
                        "ligand"         :routing.data/ligand
                        "ligand/"        {#{[:ligand/id ""] [:ligand/id "/"]} :routing.data/ligand-entry}
@@ -72,10 +73,17 @@
    (case route
      :routing.results/msa-results
      (re-frame/dispatch [::http-events/get-msa-results])
+     :routing.data/overview
+     (do
+       (get-data [:data :input :volcano])
+       (get-data [:data :raw :ligand])
+       (get-data [:data :raw :taxon]))
      :routing.data/taxon
      (get-data [:data :raw :taxon])
      :routing.data/ligand
      (get-data [:data :raw :ligand])
+     :routing.data/upload
+     (get-data [:data :raw :taxon])
      :routing.pipelines/docking
      (do
        (get-data [:data :raw :ligand])

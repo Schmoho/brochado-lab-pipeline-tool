@@ -9,6 +9,7 @@
    [unknown-client.subs.routing :as routing-subs]
    [unknown-client.views.css.core :as css]
    [unknown-client.views.data.ligand]
+    unknown-client.views.data.data-overview
    [unknown-client.views.data.protein]
    [unknown-client.views.data.taxon]
    [unknown-client.views.data.upload]

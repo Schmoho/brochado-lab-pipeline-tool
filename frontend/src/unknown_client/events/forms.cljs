@@ -8,23 +8,20 @@
 (rf/reg-event-db
  ::set-form-data
  (fn-traced [db [_ form & keys]]
-            (prn (concat [:form form]
-                         (butlast keys)))
-            (prn (last keys))
-            (assoc-in db (concat [:form form]
+            (assoc-in db (concat [:forms form]
                                  (butlast keys))
                       (last keys))))
 
 (rf/reg-event-db
  ::update-form-data
  (fn-traced [db [_ form & keys]]
-            (update-in db (concat [:form form]
+            (update-in db (concat [:forms form]
                                  (butlast keys))
                        (last keys))))
 
 (rf/reg-event-db
  ::toggle-form-bool
  (fn-traced [db [_ form & keys]]
-            (update-in db (concat [:form form]
+            (update-in db (concat [:forms form]
                                   keys)
                        not)))

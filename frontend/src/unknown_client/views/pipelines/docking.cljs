@@ -88,7 +88,7 @@
                                          (mapv #(cool-select-keys
                                                  %
                                                  [[:label :scientificName]
-                                                  [:id [:taxonId str]]])))
+                                                  [:id :id]])))
             ligand-choices          (->> @ligands
                                          (mapv #(cool-select-keys
                                                  %

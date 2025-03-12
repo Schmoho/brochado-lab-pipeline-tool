@@ -13,7 +13,7 @@
    :class "btn btn-outline-secondary"
    :children [#_[com/label :label (:rank item)]
               [com/hyperlink-href :label (:scientificName item)
-               :href (str "https://www.uniprot.org/taxonomy/" (:taxonId item))]]])
+               :href (str "https://www.uniprot.org/taxonomy/" (:id item))]]])
 
 
 (defn lineage-connector []
@@ -96,18 +96,18 @@
 
 (defn taxon-chooser
   [& {:keys [on-change]}]
-  (let [taxons (rf/subscribe [:data/taxons])
+  (let [taxons          (rf/subscribe [:data/taxons])
         selection-model (r/atom nil)]
     [com/single-dropdown
      :choices
      (conj (map #(cool-select-keys
                   %
-                  [[:id :taxonId]
+                  [[:id :id]
                    [:label :scientificName]])
                 @taxons)
            {:id nil :label "-"})
      :model selection-model
      :on-change #(do
-                  (reset! selection-model %)
-                  (on-change %))
+                   (reset! selection-model %)
+                   (on-change %))
      :placeholder "For which taxon?"]))

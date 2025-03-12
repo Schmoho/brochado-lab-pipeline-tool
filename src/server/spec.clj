@@ -24,7 +24,7 @@
 (s/def :uniprot/protein-id some?)
 (s/def :uniprot/protein-request (s/keys :req-un [:uniprot/protein-id]))
 
-
+(s/def :data.input/volcano some?)
 #_[reitit.ring.middleware.multipart :as multipart]
 #_(s/def ::file multipart/temp-file-part)
 #_(s/def ::file-params (s/keys :req-un [::file]))

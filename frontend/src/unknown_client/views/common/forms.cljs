@@ -109,6 +109,7 @@
   [on-change-fn]
   (let [file-state (r/atom nil)]
     (fn []
+      (prn @file-state)
       [:div
        [:div {:class "input-group mb-3"}
         [:div {:class "custom-file"}
@@ -122,7 +123,7 @@
                       (on-change-fn files)))}]
          [:label {:for   "inputGroupFile01"
                   :class "custom-file-label"}
-          (if @file-state (.-name @file-state) "Choose file")]]]])))
+          (if @file-state (.-name (aget @file-state 0)) "Choose file")]]]])))
 
 (defn parse-csv-with-header
   [csv-text & {:keys [numeric-fields]}]
@@ -160,10 +161,14 @@
 (defn input-text
   [& {:keys [on-change placeholder]}]
   (let [model (r/atom nil)]
-    [com/input-text
-     :model model
-     :on-change on-change
-     :placeholder placeholder]))
+    (fn []
+      (prn @model)
+      [com/input-text
+       :model model
+       :on-change #(do
+                     (reset! model %)
+                     (on-change %))
+       :placeholder placeholder])))
 
 (defn action-button
   [& {:keys [label on-click]}]

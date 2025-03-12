@@ -26,7 +26,7 @@
     (binding [*print-length* nil
               *print-dup* nil
               *print-level* nil
-              *print-readably* false
+              *print-readably* true
               *out* wr]
       (pr content)))
   (io/file file))

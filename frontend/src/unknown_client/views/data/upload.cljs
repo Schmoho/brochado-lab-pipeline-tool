@@ -1,12 +1,11 @@
 (ns unknown-client.views.data.upload
   (:require
    [clojure.string :as str]
-   [goog.labs.format.csv :as csv]
    [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v h-box h}]
    [re-frame.core :as rf]
-   [reagent.core :as r]
    [unknown-client.events.forms :as form-events]
+   [unknown-client.events.http :as http-events]
    [unknown-client.routing :as routing]
    [unknown-client.views.common.forms :as common.forms]
    [unknown-client.views.common.structure :refer [card]]
@@ -82,7 +81,7 @@
       "Required: Name"
       [:div ""]]
      [common.forms/input-text
-      :on-change #(rf/dispatch [::form-events/set-form-data :upload/volcano :name %])
+      :on-change #(rf/dispatch [::form-events/set-form-data :upload/volcano :meta :name %])
       :placeholder "Insert a dataset name"]
      [com/gap :size "10px"]
      [common.forms/info-label
@@ -97,11 +96,11 @@
       :children
       [[widgets/taxon-chooser
         :on-change
-        #(rf/dispatch [::form-events/set-form-data :upload/volcano :metadata :taxon %])]
+        #(rf/dispatch [::form-events/set-form-data :upload/volcano :meta :taxon %])]
        [com/gap :size "80px"]
        [common.forms/action-button
         :label "Save"
-        :on-click #(rf/dispatch [::form-events/set-form-data :upload/volcano :metadata :taxon %])]]]]]])
+        :on-click #(rf/dispatch [::http-events/post-volcano])]]]]]])
 
 (defn upload-data-panel
   []

@@ -2,11 +2,12 @@
   (:require [graph.accrete.core :as accrete]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
-            [clojure.pprint :as pprint]
+            [csv-utils :as csv-utils]
             [fast-edn.core :as edn]
             [clojure.string :as str]
             [pipeline.taxonomy :as pipeline.taxonomy]
-            [utils :as utils]))
+            [utils :as utils])
+  (:import (java.time Instant)))
 
 (defn basic-id-handler
   [type id-accessor]
@@ -119,41 +120,50 @@
                            utils/read-file))
                          (into {}))}})
 
+;; (defn get-volcanos
+;;   [request]
+;;   (tap> request)
+;;   (log/info "Getting volcano data.")
+;;   {:status 200
+;;    :body   {:ligand (->> (file-seq (io/file "data/input/volcano"))
+;;                          (filter #(.isFile %)))}})
+
 (defn get-volcanos
   [request]
-  (tap> request)
-  (log/info "Getting volcano data.")
-  {:status 200
-   :body   {:ligand (->> (file-seq (io/file "data/input/volcano"))
-                         (filter #(.isFile %)))}})
-
-(defn get-volcano
-  [request]  
-  {:status 200
-   :body   {:ligand (->> (file-seq (io/file "data/raw/pubchem/compound"))
-                         (filter #(.isFile %))
-                         (mapv
-                          (comp
-                           (juxt :id identity)
-                           (fn [data]
-                             (-> (assoc data :id (-> data :json :PC_Compounds first :id :id :cid str))
-                                 (assoc :json (get-in data [:json :PC_Compounds]))
-                                 (update :json
-                                         (comp #(dissoc % :bonds)
-                                               #(dissoc % :atoms)
-                                               #(dissoc % :stereo)
-                                               #(dissoc % :coords)
-                                               first))
-                                 (dissoc :sdf)))
-                           utils/read-file))
-                         (into {}))}})
-
+  (let [volcano-dir (io/file "data/input/volcano/")
+        data (->> (file-seq volcano-dir)
+                  (filter #(and (not= % volcano-dir)
+                                (.isFile %)))
+                  (mapv
+                   (fn [file]
+                     (let [id (.getName (.getParentFile file))
+                           file-extension (utils/extension (.getName file))
+                            ;; I am expecting schematic names here like "table.csv"
+                            ;; and "meta.edn"
+                           file-content-key (keyword (str/replace (.getName file)
+                                                                  (str "." file-extension)
+                                                                  ""))]
+                       {id {file-content-key (if (= "csv" file-extension)
+                                               (csv-utils/read-csv-data file)
+                                               (utils/read-file file))}})))
+                  (apply merge-with merge))]
+    (tap> data)
+    {:status 200
+     :body   {:volcano (or data [])}}))
 
 
 (defn upload-volcano
   [request]
   (tap> request)
-  (let [upload-form (-> request :body-params)]
-    
+  (log/info "Writing volcano.")
+  (let [id          (random-uuid)
+        upload-form (-> request
+                        :body-params
+                        (update :meta assoc :id id)
+                        #_(update :meta assoc :timestamp (Instant/now)))]
+    (utils/write! (format "data/input/volcano/%s/meta.edn" id)
+                  (-> upload-form :meta))
+    (csv-utils/write-csv-data! (format "data/input/volcano/%s/table.csv" id)
+                               (-> upload-form :file))
     {:status 200
-     :body   {:id nil}}))
+     :body   {id (:meta upload-form)}}))

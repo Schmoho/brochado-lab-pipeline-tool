@@ -44,7 +44,7 @@
    :http-xhrio
    {:method          :post
     :uri             (str base-api "/pipelines/msa")
-    :params          (-> db :msa :form
+    :params          (-> db :forms :msa
                          (update-in [:params.uniprot/protein :protein-ids]
                                     #(-> %
                                          (str/replace #"[,;]" " ")
@@ -113,4 +113,4 @@
  ::post-volcano-success
  (fn-traced
   [db [_ response]]
-  (-> db (update-in [:data :input] #(merge % response)))))
+  (-> db (update-in [:data :input :volcano] #(merge % response)))))

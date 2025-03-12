@@ -38,6 +38,17 @@
    (-> raw :ligand (get id))))
 
 (rf/reg-sub
+ :data/input
+ (fn [db _]
+   (->> db :data :input)))
+
+(rf/reg-sub
+ :data/volcanos
+ :<- [:data/input]
+ (fn [input]
+   (->> input :volcano vals vec)))
+
+(rf/reg-sub
  :data/results
  (fn [db _]
    (->> db :data :results)))
