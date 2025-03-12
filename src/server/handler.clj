@@ -1,45 +1,13 @@
 (ns server.handler
-  (:require [graph.accrete.core :as accrete]
-            [clojure.tools.logging :as log]
-            [clojure.java.io :as io]
-            [csv-utils :as csv-utils]
-            [fast-edn.core :as edn]
-            [clojure.string :as str]
-            [pipeline.taxonomy :as pipeline.taxonomy]
-            [utils :as utils])
-  (:import (java.time Instant)))
-
-(defn basic-id-handler
-  [type id-accessor]
-  (fn 
-    [request]
-    (let [id          (or (-> request :parameters :query id-accessor)
-                          (-> request :parameters :body id-accessor))
-          submission  {:id                       id
-                       :requested-accretion-type type}
-          expectation (promise)]
-      (accrete/register-expectation! type id expectation)
-      (log/debug "Submitting" submission)
-      (accrete/submit! submission)
-      {:status 200
-       :body   (select-keys
-                (deref expectation 10000
-                       {:message "Timeout while waiting for confirmation."
-                        :type    :confirmation-timeout})
-                [:type :id])})))
-
-(def uniprot-taxon-id-handler (basic-id-handler :uniprot/taxon :taxon-id))
-(def uniprot-protein-id-handler (basic-id-handler :uniprot/protein :protein-id))
-
-(def form
-  {:params.uniprot/taxonomy {:use-taxonomic-search? true},
-   :params.uniprot/uniref
-   {:use-uniref? true, :cluster-types #{:uniref-100 :uniref-90}},
-   :params.uniprot/blast {:use-blast? false},
-   :params.uniprot/protein
-   {:protein-ids
-    ["A0A0H2ZHP9" "A0A0H2ZHP9" "A0A0H2ZHP9" "A0A0H2ZHP9" "A0A0H2ZHP9"],
-    :gene-names ["mrcB"]}})
+  (:require
+   [clojure.java.io :as io]
+   [clojure.string :as str]
+   [clojure.tools.logging :as log]
+   [csv-utils :as csv-utils]
+   [data-cleaning :as clean]
+   [fast-edn.core :as edn]
+   [pipeline.taxonomy :as pipeline.taxonomy]
+   [utils :as utils]))
 
 (defn start-msa-handler
   [request]
@@ -73,7 +41,6 @@
                                result))))]
     {:status 200
      :body   {:results results}}))
-
 
 (defn get-taxons
   [request]
@@ -120,14 +87,6 @@
                            utils/read-file))
                          (into {}))}})
 
-;; (defn get-volcanos
-;;   [request]
-;;   (tap> request)
-;;   (log/info "Getting volcano data.")
-;;   {:status 200
-;;    :body   {:ligand (->> (file-seq (io/file "data/input/volcano"))
-;;                          (filter #(.isFile %)))}})
-
 (defn get-volcanos
   [request]
   (let [volcano-dir (io/file "data/input/volcano/")
@@ -144,19 +103,19 @@
                                                                   (str "." file-extension)
                                                                   ""))]
                        {id {file-content-key (if (= "csv" file-extension)
-                                               (csv-utils/read-csv-data file)
+                                               (->> (csv-utils/read-csv-data file)
+                                                    (mapv clean/numerify))
                                                (utils/read-file file))}})))
                   (apply merge-with merge))]
     (tap> data)
     {:status 200
      :body   {:volcano (or data [])}}))
 
-
 (defn upload-volcano
   [request]
   (tap> request)
   (log/info "Writing volcano.")
-  (let [id          (random-uuid)
+  (let [id          (str (random-uuid))
         upload-form (-> request
                         :body-params
                         (update :meta assoc :id id)
@@ -167,3 +126,29 @@
                                (-> upload-form :file))
     {:status 200
      :body   {id (:meta upload-form)}}))
+
+(comment
+
+  (require '[graph.accrete.core :as accrete])
+
+  (defn basic-id-handler
+    [type id-accessor]
+    (fn
+      [request]
+      (let [id          (or (-> request :parameters :query id-accessor)
+                            (-> request :parameters :body id-accessor))
+            submission  {:id                       id
+                         :requested-accretion-type type}
+            expectation (promise)]
+        (accrete/register-expectation! type id expectation)
+        (log/debug "Submitting" submission)
+        (accrete/submit! submission)
+        {:status 200
+         :body   (select-keys
+                  (deref expectation 10000
+                         {:message "Timeout while waiting for confirmation."
+                          :type    :confirmation-timeout})
+                  [:type :id])})))
+
+  (def uniprot-taxon-id-handler (basic-id-handler :uniprot/taxon :taxon-id))
+  (def uniprot-protein-id-handler (basic-id-handler :uniprot/protein :protein-id)))

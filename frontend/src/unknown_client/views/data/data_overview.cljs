@@ -1,13 +1,11 @@
 (ns unknown-client.views.data.data-overview
   (:require
-   [clojure.string :as str]
    [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v h-box h}]
-   [re-frame.core :as re-frame]
+   [re-frame.core :as rf]
    [unknown-client.routing :as routing]
-   [unknown-client.subs.routing :as routing-subs]
-   [unknown-client.views.common.widgets :as widgets]))
-
+   [unknown-client.events.routing :as routing-events]
+   [unknown-client.events.forms :as form-events]))
 
 (defn overview-header []
   [com/title
@@ -44,31 +42,40 @@
          :row-height                35]]]]]))
 
 (defn overview-panel []
-  (let [volcanos (re-frame/subscribe [:data/volcanos])
-        taxons (re-frame/subscribe [:data/taxons])
-        ligands (re-frame/subscribe [:data/ligands])]
+  (let [volcanos (rf/subscribe [:data/volcanos-list])
+        taxons   (rf/subscribe [:data/taxons])
+        ligands  (rf/subscribe [:data/ligands])]
     (fn []
       [v
        :children
        [[table volcanos
          :columns
-         [{:id :name
+         [{:id           :name
            :row-label-fn
            (fn [row]
-             [:a {:href (str "volcano/" (-> row :meta :id))}
+             [com/hyperlink
+              :label
               (or (-> row :meta :name not-empty)
-                  (-> row :meta :id))])
+                  (-> row :meta :id))
+              :on-click
+              #(do
+                 (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1 (-> row :meta :id)])
+                 (rf/dispatch [::routing-events/navigate :routing/volcano-viewer]))])
            :header-label "Dataset Name"}
-          {:id :scientificName
-           :header-label "Name"}]]
+          {:id           :taxon
+           :header-label "Taxon"
+           :row-label-fn
+           (fn [row]
+             [:a {:href (str "taxon/" (-> row :meta :taxon))}
+              (-> row :meta :taxon)])}]]
         [table taxons
          :columns
-         [{:id :id
+         [{:id           :id
            :row-label-fn (fn [row]
                            [:a {:href (str "taxon/" (:id row))}
                             (:id row)])
            :header-label "Taxon ID"}
-          {:id :scientificName
+          {:id           :scientificName
            :header-label "Name"}]]
         [table ligands
          :columns
@@ -92,7 +99,7 @@
 ;;                      :header-label (name (:id %)))
 ;;                    columns)
 ;;               columns))
-;; (colfn @(re-frame/subscribe [:data/taxons])
+;; (colfn @(rf/subscribe [:data/taxons])
 ;;        :columns [{:id :id}
 ;;                  {:id :scientificName}])
 

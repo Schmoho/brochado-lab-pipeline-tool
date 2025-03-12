@@ -5,6 +5,7 @@
    [re-frame.core :as re-frame]
    [unknown-client.subs.data]
    [unknown-client.subs.forms.core]
+   [unknown-client.subs.forms.volcano-viewer]
    [unknown-client.subs.forms.docking]
    [unknown-client.subs.forms.msa]
    [unknown-client.subs.routing]

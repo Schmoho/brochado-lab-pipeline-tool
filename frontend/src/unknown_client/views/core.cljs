@@ -13,12 +13,12 @@
    [unknown-client.views.data.protein]
    [unknown-client.views.data.taxon]
    [unknown-client.views.data.upload]
-   [unknown-client.views.data.volcano]
    [unknown-client.views.home]
    [unknown-client.views.pipelines.docking]
    [unknown-client.views.pipelines.msa]
    [unknown-client.views.results.docking]
-   [unknown-client.views.results.msa]))
+   [unknown-client.views.results.msa]
+   [unknown-client.views.volcano-viewer]))
 
 (defn navbar-link
   [link-text route]

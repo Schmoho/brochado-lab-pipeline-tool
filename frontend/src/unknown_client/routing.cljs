@@ -22,9 +22,11 @@
                        "ligand/"        {#{[:ligand/id ""] [:ligand/id "/"]} :routing.data/ligand-entry}
                        "protein/"       {#{[:protein/id ""] [:protein/id "/"]} :routing.data/protein-entry}
                        "upload"         :routing.data/upload
-                       "volcano-viewer" :routing.data/volcano}
+                       "volcano/"        {#{[:volcano/id ""] [:volcano/id "/"]} :routing.data/volcano}}
          "pipelines/" {"msa"     :routing.pipelines/msa
                        "docking" :routing.pipelines/docking}
+         "volcano-viewer" {"" :routing/volcano-viewer
+                           "/" :routing/volcano-viewer}
          "results/"   {"msa-results"     :routing.results/msa-results
                        "docking-results" :routing.results/docking-results}}]))
 
@@ -84,6 +86,8 @@
      (get-data [:data :raw :ligand])
      :routing.data/upload
      (get-data [:data :raw :taxon])
+     :routing/volcano-viewer
+     (get-data [:data :input :volcano])
      :routing.pipelines/docking
      (do
        (get-data [:data :raw :ligand])
