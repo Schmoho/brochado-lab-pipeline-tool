@@ -4,6 +4,7 @@
       :rename {v-box v h-box h}]
      [re-frame.core :as rf]
      [reagent.core :as r]
+     [reagent.dom :as rdom]
      [unknown-client.utils :refer [cool-select-keys]]))
 
 (defn lineage-item [idx item]
@@ -111,3 +112,27 @@
                    (reset! selection-model %)
                    (on-change %))
      :placeholder "For which taxon?"]))
+
+(defn pdb-viewer
+  [& {:keys [pdb style config on-load]}]
+  (r/create-class
+   {:component-did-mount
+    (fn [this]
+      (let [el     (rdom/dom-node this)
+            viewer (.createViewer js/$3Dmol el (clj->js config))]
+        (doto viewer
+          (.addModel pdb "pdb")
+          (.setStyle (clj->js {}) (clj->js style))
+          (.zoomTo)
+          (.render)
+          (.zoom 1.2 1000))
+        (when on-load
+          (on-load viewer))))
+    :reagent-render
+    (fn []
+      [:div {:class "mol-container"
+             :style {:width    "60%"
+                     :height   "400px"
+                     :position "relative"
+                     :border "solid grey 1px"}}
+       "Loading viewer..."])}))

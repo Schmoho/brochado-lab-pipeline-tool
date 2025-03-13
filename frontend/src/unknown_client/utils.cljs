@@ -14,6 +14,11 @@
        (into {})))
 
 
+(defn rand-str
+  []
+  (apply str (repeatedly 20 #(rand-nth "abcdefghijklmnopqrstuvwxyz"))))
+
+
 
 ;; (def all-global-keys (js->clj (js/Object.getOwnPropertyNames js/window)))
 
@@ -25,8 +30,3 @@
 ;; (vec (for [prop props]
 ;;    (let [val (aget js/$3Dmol prop)]
 ;;      [prop (type val)])))
-
-
-(defn rand-str
-  []
-  (apply str (repeatedly 20 #(rand-nth "abcdefghijklmnopqrstuvwxyz"))))

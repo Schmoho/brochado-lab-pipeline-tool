@@ -1,5 +1,6 @@
 (ns server.handler
   (:require
+   [biodb.afdb :as afdb]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
@@ -7,8 +8,10 @@
    [data-cleaning :as clean]
    [fast-edn.core :as edn]
    [pipeline.taxonomy :as pipeline.taxonomy]
-   [utils :as utils]))
+   [utils :as utils]
+   [db.api :as db]))
 
+;; TODO: das ganze Zeug hier sollte über DB API laufen!
 (defn start-msa-handler
   [request]
   (tap> request)
@@ -26,6 +29,7 @@
      :body   {:job-id uuid}}))
 
 
+;; TODO: das ganze Zeug hier sollte über DB API laufen!
 (defn get-msa-results-handler
   [request]
   (log/info "Getting taxonomic comparison results.")
@@ -42,6 +46,7 @@
     {:status 200
      :body   {:results results}}))
 
+;; TODO: das ganze Zeug hier sollte über DB API laufen!
 (defn get-taxons
   [request]
   (tap> request)
@@ -63,7 +68,7 @@
                                         utils/read-file)))
                            (into {}))}})
 
-
+;; TODO: das ganze Zeug hier sollte über DB API laufen!
 (defn get-ligands
   [request]
   (tap> request)
@@ -87,6 +92,7 @@
                            utils/read-file))
                          (into {}))}})
 
+;; TODO: das ganze Zeug hier sollte über DB API laufen!
 (defn get-volcanos
   [request]
   (let [volcano-dir (io/file "data/input/volcano/")
@@ -111,6 +117,7 @@
     {:status 200
      :body   {:volcano (or data [])}}))
 
+;; TODO: das ganze Zeug hier sollte über DB API laufen!
 (defn upload-volcano
   [request]
   (tap> request)
@@ -126,6 +133,24 @@
                                (-> upload-form :file))
     {:status 200
      :body   {id (:meta upload-form)}}))
+
+(defn get-structure
+  [request]
+  (let [id (-> request :path-params :id)]
+    (tap> request)
+    (log/debug "Get structure for " id)
+    (let [structure (db/pdb-by-id id)]
+      (tap> request)
+      {:status 200
+       :body {:pdb structure}})))
+
+(defn get-structures
+  [request]
+  (let [ids (-> request :parameters :query :ids)]
+    (tap> request)
+    (log/debug "Get structures for " ids)
+    {:status 200
+     :body {:pdb (map db/pdb-by-id ids)}}))
 
 (comment
 

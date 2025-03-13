@@ -34,6 +34,18 @@
     pdb-file
     (:pdb (acquire-structures-by-id! protein-id))))
 
+#_(let [structure-from-file-system
+          (->> (utils/ffile-seq "data/raw/afdb/pdb")
+               (filter #(str/includes? (.getName %) id)))
+          structure
+          (if (and (not-empty structure-from-file-system)
+                   (= 1 (count structure-from-file-system))
+                   false)
+            (utils/read-file (first structure-from-file-system))
+            (first (afdb/get-pdb id)))]
+      {:status 200
+       :body {:pdb structure}})
+
 (defn pdbqt-by-id
   [protein-id params-hash]
   (tap> [protein-id params-hash])

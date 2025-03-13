@@ -1,7 +1,6 @@
 (ns server.core
   (:require
    [clojure.tools.logging :as log]
-   [cognitect.transit :as transit]
    [muuntaja.core :as m]
    [reitit.coercion.spec]
    [reitit.dev.pretty :as pretty]
@@ -16,9 +15,7 @@
    [reitit.swagger :as swagger]
    [reitit.swagger-ui :as swagger-ui]
    [ring.adapter.jetty :as jetty]
-   [server.handler :as handler]
-   [server.spec :as s])
-  (:import java.time.Instant))
+   [server.handler :as handler]))
 
 (def app
   (ring/ring-handler
@@ -46,7 +43,14 @@
                :handler handler/get-taxons}}]
        ["/ligand"
         {:get {:summary "Get ligand data."
-               :handler handler/get-ligands}}]]
+               :handler handler/get-ligands}}]
+
+       ["/structure/:id"
+        {:get {:summary "Get PDB for a UniProt ID."
+               :handler handler/get-structure}}]
+       #_["/structures"
+        {:get {:summary "Get PDBs for UniProt IDs."
+               :handler handler/get-structures}}]]
 
       ["/input"
        ["/volcano"

@@ -127,3 +127,8 @@
 ;;               (and inside? (.startsWith line end-marker)) result
 ;;               inside?                                     (recur remaining-lines inside? (conj result line))
 ;;               :else                                       (recur remaining-lines inside? result))))))
+
+(defn ffile-seq
+  [file]
+  (->> (file-seq (io/file file))
+       (filter #(.isFile %))))

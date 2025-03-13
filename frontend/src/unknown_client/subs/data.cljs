@@ -38,6 +38,12 @@
    (get ligands id)))
 
 (rf/reg-sub
+ :data/structures
+ :<- [:data/raw]
+ (fn [raw]
+   (->> raw :structure)))
+
+(rf/reg-sub
  :data/input
  (fn [db _]
    (->> db :data :input)))
