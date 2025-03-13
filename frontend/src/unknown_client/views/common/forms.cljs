@@ -159,16 +159,16 @@
 
 
 (defn input-text
-  [& {:keys [on-change placeholder]}]
+  [& {:keys [on-change placeholder attr]}]
   (let [model (r/atom nil)]
     (fn []
-      (prn @model)
       [com/input-text
        :model model
        :on-change #(do
                      (reset! model %)
-                     (on-change %))
-       :placeholder placeholder])))
+                     (when on-change (on-change %)))
+       :placeholder placeholder
+       :attr attr])))
 
 (defn action-button
   [& {:keys [label on-click]}]
@@ -183,3 +183,14 @@
        :style    {:background-color (if @hover? "#0072bb" "#4d90fe")}
        :attr     {:on-mouse-over (com/handler-fn (reset! hover? true))
                   :on-mouse-out  (com/handler-fn (reset! hover? false))}])))
+
+(defn dropdown
+  [& {:keys [choices on-change placeholder model]}]
+  (let [model (or model (r/atom nil))]
+    [com/single-dropdown
+     :model model
+     :choices choices
+     :on-change #(do
+                   (reset! model %)
+                   (on-change %))
+     :placeholder placeholder]))

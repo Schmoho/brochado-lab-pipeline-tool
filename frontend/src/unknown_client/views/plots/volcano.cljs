@@ -12,7 +12,11 @@
                 :bind  {:input "range", :min 0, :max 1, :step 0.01}}
                {:name   "grid",
                 :select "interval",
-                :bind   "scales"}]
+                :bind   "scales"}
+               {:name   "pick",
+                :select {:type "point" :on "click"}}
+               {:name   "boing",
+                :bind {:element "#test"}}]
    :encoding  {:x       {:field "effect_size",
                          :type  "quantitative",
                          :title "Effect Size"},
@@ -20,16 +24,54 @@
                          :type  "quantitative",
                          :title "Log2(F-statistic + 1)"}
                :size {:value 60}
-               :color   {:field "effect_type",
-                         :type  "nominal"
-                         :title "Effect type"}
+               :color   {:condition {:param "pick"
+                                     :field "effect_type",
+                                     :type  "nominal"
+                                     :title "Effect type"}
+                         :value "grey"}
                :opacity {:condition [{:test "(datum.fdr <= p_fdr_threshold)",
                                       :value 1}
                                      #_{:param "p_effect_type", :value 1}]
                          :value 0.2}
                :tooltip [{:field "gene_name", :title "Gene Name" :type "nominal"}
                          {:field "effect_size", :title "Fold Change" :type "quantitative"}]
-               :href    {:field "url", :type "nominal"}}
+               #_#_:href    {:field "url", :type "nominal"}}
+   :mark      {:type "point" :filled "true"}
+   :width     600,
+   :height    400})
+
+(defn single-brush
+  [data]
+  {:$schema "https://vega.github.io/schema/vega-lite/v5.json"
+   :data      {:values data}
+   :params    [{:name   "p_effect_type",
+                :select {:type "point", :fields ["effect_type"]},
+                :bind   "legend"}
+               {:name  "p_fdr_threshold",
+                :value 0.10,
+                :bind  {:input "range", :min 0, :max 1, :step 0.01}}
+               {:name   "brush",
+                :select "point"}]
+   :encoding  {:x       {:field "effect_size",
+                         :type  "quantitative",
+                         :title "Effect Size"},
+               :y       {:field "log_transformed_f_statistic",
+                         :type  "quantitative",
+                         :title "Log2(F-statistic + 1)"}
+               :size {:value 60}
+               #_#_:color   {:field "effect_type",
+                         :type  "nominal"
+                             :title "Effect type"}
+               :color {:condition {:param "brush"
+                                   :value "green"}
+                       :value "blue"}
+               :opacity {:condition [{:test "(datum.fdr <= p_fdr_threshold)",
+                                      :value 1}
+                                     #_{:param "p_effect_type", :value 1}]
+                         :value 0.2}
+               :tooltip [{:field "gene_name", :title "Gene Name" :type "nominal"}
+                         {:field "effect_size", :title "Fold Change" :type "quantitative"}]
+               #_#_:href    {:field "url", :type "nominal"}}
    :mark      {:type "point" :filled "true"}
    :width     600,
    :height    400})

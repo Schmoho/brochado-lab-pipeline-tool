@@ -1,20 +1,19 @@
 (ns unknown-client.views.vega
   (:require
+   [unknown-client.utils :as utils]
    [reagent.core :as r]
    ["vega-embed" :default vegaEmbed]))
 
 (defn vega-chart
-  [id spec]
+  [& {:keys [id spec on-change]}]
   (r/create-class
    {:component-did-mount
     (fn [_]
-       ;; Call vegaEmbed on the element with id "vis" using our spec.
       (-> (vegaEmbed (str "#" id) (clj->js spec))
-          (.then (fn [result]
-                   (js/console.log (.-view result))))))
+          (.then #(when on-change
+                    (on-change (.-view %))))))
     :reagent-render
     (fn []
-       ;; The target div for the visualization.
       [:div {:id id}])}))
 
 

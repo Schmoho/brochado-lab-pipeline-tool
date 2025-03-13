@@ -2,6 +2,9 @@
   (:require
    [unknown-client.routing :as routing]
    [unknown-client.events.forms :as form-events]
+   [unknown-client.events.vega :as vega-events]
+   [unknown-client.views.common.forms :as forms]
+   [unknown-client.views.common.structure :as structure]
    [unknown-client.views.plots.volcano :as volcano-plots]
    [unknown-client.views.vega :as vega]
    [clojure.set :as set]
@@ -136,50 +139,28 @@
    :level :level1])
 
 
-(defn dropdown
-  [& {:keys [choices on-change placeholder model]}]
-  (let [model (or model (r/atom nil))]
-    [com/single-dropdown
-     :model model
-     :choices choices
-     :on-change #(do
-                   (reset! model %)
-                   (on-change %))
-     :placeholder placeholder]))
-
-(defn collapsible-accordion
-  [body-1 body-2]
-  [:div {:class "accordion", :id "accordionExample"}
-   ;; First card
-   [:div {:class "card"}
-    [:div {:class "card-header", :id "headingOne"}
-     [:h5 {:class "mb-0"}
-      [:button {:class           "btn btn-link"
-                :type            "button"
-                :data-toggle     "collapse"
-                :data-target     "#collapseOne"
-                :aria-expanded   "true"
-                :aria-controls   "collapseOne"}
-       "Collapsible Group Item #1"]]]
-    [:div {:id "collapseOne", :class "collapse show", :aria-labelledby "headingOne", :data-parent "#accordionExample"}
-     [:div {:class "card-body"}
-      body-1]]]
-
-   ;; Second card
-   [:div {:class "card"}
-    [:div {:class "card-header", :id "headingTwo"}
-     [:h5 {:class "mb-0"}
-      [:button {:class           "btn btn-link collapsed"
-                :type            "button"
-                :data-toggle     "collapse"
-                :data-target     "#collapseTwo"
-                :aria-expanded   "false"
-                :aria-controls   "collapseTwo"}
-       "Collapsible Group Item #2"]]]
-    [:div {:id "collapseTwo", :class "collapse", :aria-labelledby "headingTwo", :data-parent "#accordionExample"}
-     [:div {:class "card-body"}
-      body-2]]]])
-
+(defn data-set-chooser
+  [volcano-form volcanos]
+  [h
+   :src      (at)
+   :children [[forms/dropdown
+               :model (:volcano-1 volcano-form)
+               :placeholder "Choose a data set"
+               :choices
+               (map (fn [v] {:id    (-> v :meta :id)
+                             :label (-> v :meta :name)})
+                    (vals volcanos))
+               :on-change
+               #(rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1 %])]
+              [com/gap :size "1"]
+              [forms/dropdown
+               :placeholder "Choose a data set"
+               :choices
+               (map (fn [v] {:id    (-> v :meta :id)
+                             :label (-> v :meta :name)})
+                    (vals volcanos))
+               :on-change
+               #(rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-2 %])]]])
 
 (defn volcano-panel
   []
@@ -190,33 +171,59 @@
             volcano-2 (get @volcanos (:volcano-2 @volcano-form))]
         [v
          :children
-         [[h
-           :src      (at)
-           :children [[dropdown
-                       :model (:volcano-1 @volcano-form)
-                       :placeholder "Choose a data set"
-                       :choices
-                       (map (fn [v] {:id    (-> v :meta :id)
-                                     :label (-> v :meta :name)})
-                            (vals @volcanos))
-                       :on-change
-                       #(rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1 %])]
-                      [dropdown
-                       :placeholder "Choose a data set"
-                       :choices
-                       (map (fn [v] {:id    (-> v :meta :id)
-                                     :label (-> v :meta :name)})
-                            (vals @volcanos))
-                       :on-change
-                       #(rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-2 %])]]]
-          [collapsible-accordion
+         [[data-set-chooser @volcano-form @volcanos]
+          [structure/collapsible-accordion
            (when-let [table (:table volcano-1)]
-             [vega/vega-chart "v1" (volcano-plots/single-pan table)])
+             ["Plot 1"
+              [h
+               :children
+               [[forms/input-text
+                 :attr {:id "test"}]
+                [vega/vega-chart
+                 :spec (volcano-plots/single-pan table)
+                 :id "v1"
+                 #_:on-change
+                 #_(rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1-view %])
+                 :on-change
+                 #(do
+                    (rf/dispatch [::vega-events/register-signal-listener
+                                  %
+                                  {:signal-name
+                                   "boing"
+                                   :listener-fn
+                                   (fn [signal-name signal-value]
+                                     (.log js/console signal-name (js->clj signal-value))
+                                     #_(rf/dispatch [::vega-events/selection
+                                                   (-> (js->clj signal-value)
+                                                       (get "vlPoint")
+                                                       (get "or")
+                                                       (->> (map (fn [a] (get a "_vgsid_")))))]))}])
+                    (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1-view %]))]
+                #_[:p (str (mapv @selected #_(fn [selection] (nth table selection)) @selected))]]]])
            (when-let [table (:table volcano-1)]
-            [vega/vega-chart "v1" (volcano-plots/single-pan table)])]
+             ["Plot 2"
+              [h
+               :children
+               [[vega/vega-chart
+                 :spec (volcano-plots/single-brush table)
+                 :id "v2"
+                 :on-change
+                 #(do
+                    (rf/dispatch [::vega-events/register-signal-listener
+                                  %
+                                  {:signal-name
+                                   "brush"
+                                   :listener-fn
+                                   (fn [signal-name signal-value]
+                                     (js/console.log "Brush selection updated:"
+                                                     (-> (js->clj signal-value)
+                                                         (get "vlPoint")
+                                                         (get "or")
+                                                         (->> (map (fn [a] (get a "_vgsid_")))))))}])
+                    (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-2-view %]))]]]])]
 
           #_(when-let [table (:table volcano-1)]
-            [vega/vega-chart "v1" (volcano-plots/single-pan table)])]]))))
+              [vega/vega-chart "v1" (volcano-plots/single-pan table)])]]))))
 
 (defmethod routing/panels :routing/volcano-viewer [] [volcano-panel])
 (defmethod routing/header :routing/volcano-viewer [] [volcano-header])

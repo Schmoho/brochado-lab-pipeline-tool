@@ -26,3 +26,7 @@
 ;;    (let [val (aget js/$3Dmol prop)]
 ;;      [prop (type val)])))
 
+
+(defn rand-str
+  []
+  (apply str (repeatedly 20 #(rand-nth "abcdefghijklmnopqrstuvwxyz"))))
