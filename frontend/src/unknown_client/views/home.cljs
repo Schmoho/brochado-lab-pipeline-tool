@@ -13,7 +13,7 @@
   [clickable-card "Proteomics Hits Viewer"
    "Look at volcanos!"
    [:<>
-    [:p "It's amazeballs!"]
+    [:p "Use the interactive viewer to search for interesting hits in an omics data set."]
     [:img {:src "https://c.pxhere.com/photos/7e/7c/mount_fuji_volcano_japan_sky_sunset_painting-989657.jpg!d"
            :width "400px"
            :height "auto"}]]

@@ -25,9 +25,50 @@
                          :title "Log2(F-statistic + 1)"}
                :size {:value 60}
                :color   {:condition {:param "pick"
-                                     :field "effect_type",
-                                     :type  "nominal"
-                                     :title "Effect type"}
+                                      :field "effect_type",
+                                      :type  "nominal"
+                                      :title "Effect type"}
+                         :value "grey"}
+               :opacity {:condition [{:test "(datum.fdr <= p_fdr_threshold)",
+                                      :value 1}
+                                     #_{:param "p_effect_type", :value 1}]
+                         :value 0.2}
+               :tooltip [{:field "gene_name", :title "Gene Name" :type "nominal"}
+                         {:field "effect_size", :title "Fold Change" :type "quantitative"}]
+               #_#_:href    {:field "url", :type "nominal"}}
+   :mark      {:type "point" :filled "true"}
+   :width     600,
+   :height    400})
+
+
+(defn single-pan-searchable
+  [data]
+  {:$schema "https://vega.github.io/schema/vega-lite/v5.json"
+   :data      {:values data}
+   :params    [{:name   "p_effect_type",
+                :select {:type "point", :fields ["effect_type"]},
+                :bind   "legend"}
+               {:name  "p_fdr_threshold",
+                :value 0.10,
+                :bind  {:input "range", :min 0, :max 1, :step 0.01}}
+               {:name   "grid",
+                :select "interval",
+                :bind   "scales"}
+               {:name   "pick",
+                :select {:type "point" :on "click"}}
+               {:name   "boing",
+                :bind {:element "#test"}}]
+   :encoding  {:x       {:field "effect_size",
+                         :type  "quantitative",
+                         :title "Effect Size"},
+               :y       {:field "log_transformed_f_statistic",
+                         :type  "quantitative",
+                         :title "Log2(F-statistic + 1)"}
+               :size {:value 60}
+               :color   {:condition {:test "datum.gene_name === boing",
+                                      :field "effect_type",
+                                      :type  "nominal"
+                                      :title "Effect type"}
                          :value "grey"}
                :opacity {:condition [{:test "(datum.fdr <= p_fdr_threshold)",
                                       :value 1}
@@ -43,42 +84,72 @@
 (defn single-brush
   [data]
   {:$schema "https://vega.github.io/schema/vega-lite/v5.json"
-   :data      {:values data}
-   :params    [{:name   "p_effect_type",
-                :select {:type "point", :fields ["effect_type"]},
-                :bind   "legend"}
-               {:name  "p_fdr_threshold",
-                :value 0.10,
-                :bind  {:input "range", :min 0, :max 1, :step 0.01}}
-               {:name   "brush",
-                :select "point"}]
-   :encoding  {:x       {:field "effect_size",
-                         :type  "quantitative",
-                         :title "Effect Size"},
-               :y       {:field "log_transformed_f_statistic",
-                         :type  "quantitative",
-                         :title "Log2(F-statistic + 1)"}
-               :size {:value 60}
-               #_#_:color   {:field "effect_type",
-                         :type  "nominal"
-                             :title "Effect type"}
-               :color {:condition {:param "brush"
-                                   :value "green"}
-                       :value "blue"}
-               :opacity {:condition [{:test "(datum.fdr <= p_fdr_threshold)",
-                                      :value 1}
-                                     #_{:param "p_effect_type", :value 1}]
-                         :value 0.2}
-               :tooltip [{:field "gene_name", :title "Gene Name" :type "nominal"}
-                         {:field "effect_size", :title "Fold Change" :type "quantitative"}]
-               #_#_:href    {:field "url", :type "nominal"}}
-   :mark      {:type "point" :filled "true"}
-   :width     600,
-   :height    400})
+   :data    {:values data}
+   :params  [{:name  "p_fdr_threshold",
+              :value 0.10,
+              :bind  {:input "range", :min 0, :max 1, :step 0.01}}]
+   :layer   [{:mark   {:type "point" :filled "true"}
+              :params [{:name   "p_effect_type",
+                        :select {:type "point", :fields ["effect_type"]},
+                        :bind   "legend"}
 
+                       {:name   "brush",
+                        :select "interval"
+                        :empty  false}
+                       #_{:name   "brush",
+                          :select "point"}]
+              :encoding {:x         {:field "effect_size",
+                                     :type  "quantitative",
+                                     :title "Effect Size"},
+                         :y         {:field "log_transformed_f_statistic",
+                                     :type  "quantitative",
+                                     :title "Log2(F-statistic + 1)"}
+                         :size      {:value 60}
+                         #_#_:color {:field "effect_type",
+                                     :type  "nominal"
+                                     :title "Effect type"}
+                         :color     {:condition {:param "brush"
+                                                 :value "green"
+                                                 :empty false}
+                                     :value     "blue"}
 
-#_(defn cross-highlighting
-  [data-set-1 data-set-2]
+                         :opacity  {:condition [{:test  "(datum.fdr <= p_fdr_threshold)",
+                                                 :value 1}
+                                                #_{:param "p_effect_type", :value 1}]
+                                    :value     0.2}
+                         :tooltip  [{:field "gene_name", :title "Gene Name" :type "nominal"}
+                                    {:field "effect_size", :title "Fold Change" :type "quantitative"}]
+                         #_#_:href {:field "url", :type "nominal"}}}
+             {:mark     {:type "text"}
+              :encoding {:text    {:field "gene_name"}
+                         :opacity {:condition [{:param "brush"
+                                                :value 1
+                                                :empty false}
+                                               #_{:param "p_effect_type", :value 1}]
+                                   :value     0}
+                         :x       {:field "effect_size",
+                                   :type  "quantitative",
+                                   :title "Effect Size"},
+                         :y       {:field "log_transformed_f_statistic",
+                                   :type  "quantitative",
+                                   :title "Log2(F-statistic + 1)"}}}]
+   :width  600,
+   :height 400})
+
+#_:text #_{:condition
+                        {:test "datum['category'] === 'A'"
+                         :field "gene_name",
+                         :type "nominal"},
+                        :value "Not A"}
+               #_{#_#_:condition
+                  {:test "brush"
+                   :field "gene_name"
+                   :type "nominal"}
+                :field "gene_name"
+                :type "nominal"}
+
+(defn cross-highlighting
+  [data]
   {:$schema "https://vega.github.io/schema/vega-lite/v5.json"
    :data    {:values data}
    :hconcat [{:width  700,
@@ -140,10 +211,8 @@
 
 
 (defn two-volcanoes-cross-plot
-  [cross-data {:keys [x-label
-                      y-label
-                      width
-                      height]}]
+  [cross-data
+   {:keys [width height x-label y-label]}]
   {:$schema "https://vega.github.io/schema/vega-lite/v5.json"
    :data     {:values cross-data}
    :params   [{:name  "p_fdr_threshold",
@@ -191,7 +260,7 @@
                                      :value 1},
                            #_:tooltip #_[{:field "gene_name_1", :title "Gene Name 1", :type "nominal"}
                                          {:field "gene_name_2", :title "Gene Name 2", :type "nominal"}]
-                           :href    {:field "url", :type "nominal"}}}
+                           #_#_:href    {:field "url", :type "nominal"}}}
                {:width    80,
                 :height height,
                 :transform [{:filter "datum.fdr_1 <= p_fdr_threshold && datum.fdr_2 <= p_fdr_threshold"}]
