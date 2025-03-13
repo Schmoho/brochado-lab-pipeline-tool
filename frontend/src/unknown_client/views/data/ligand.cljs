@@ -5,7 +5,8 @@
    [unknown-client.routing :as routing]
    [re-com.core :as re-com :refer [at v-box h-box]
     :rename {v-box v
-             h-box h}]))
+             h-box h}]
+   [unknown-client.views.common.structure :as structure]))
 
 (defn render-prop [prop]
   (let [urn         (:urn prop)
@@ -61,12 +62,7 @@
            :vertical-align "middle"}]
          :row-height                35]]]]])  )
 
-(defn ligands-header []
-  [re-com/title
-   :src   (at)
-   :label "Ligand Library"
-   :level :level1
-   ])
+
 
 (defn single-ligand-panel []
   (let [params @(re-frame/subscribe [::routing-subs/active-route-params])
@@ -98,6 +94,7 @@
      :level :level1]))
 
 (defmethod routing/panels :routing.data/ligand [] [ligands-panel])
-(defmethod routing/header :routing.data/ligand [] [ligands-header])
+(defmethod routing/header :routing.data/ligand []
+  [structure/header :label "Ligands Library"])
 (defmethod routing/panels :routing.data/ligand-entry [] [single-ligand-panel])
 (defmethod routing/header :routing.data/ligand-entry [] [single-ligand-header])

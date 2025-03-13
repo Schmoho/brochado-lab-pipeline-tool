@@ -9,13 +9,8 @@
    [unknown-client.routing :as routing]
    [unknown-client.views.css.forms :as css]
    [unknown-client.events.forms :as form-events]
-   [unknown-client.views.common.forms :refer [checkbox]]))
-
-(defn msa-header []
-  [re-com/title
-   :src   (at)
-   :label "Taxonomic Sequence Comparison Pipeline"
-   :level :level1])
+   [unknown-client.views.common.forms :refer [checkbox] :as common.forms]
+   [unknown-client.views.common.structure :as structure]))
 
 (defn tree-search-form
   []
@@ -23,8 +18,7 @@
     [v
      :class (css/form-section)
      :children
-     [[:h1 {:class (css/section-header)} "Taxonomic Search"]
-      [v
+     [[v
        :children
        [[checkbox
          {:label      "Search for homologous proteins along the Uniprot Taxonomy tree"
@@ -88,8 +82,7 @@
     [v
      :class (css/form-section)
      :children
-     [[:h1 {:class (css/section-header)} "BLAST"]
-      [h
+     [[h
        :children
        [[checkbox
          {:label      "Use BLAST against the Uniprot database"
@@ -131,8 +124,7 @@
     [v
      :class (css/form-section)
      :children
-     [[:h1 {:class (css/section-header)} "UniRef Search"]
-      [h
+     [[h
        :children
        [[checkbox
          {:label      "Use UniRef Cluster search"
@@ -171,65 +163,51 @@
 (defn inputs
   []
   (let [form @(re-frame/subscribe [:forms/msa])]
-    [v
-     :class (css/form-section)
+    [h
      :children
-     [[:h1 {:class (css/section-header)} "Inputs"]
-      [h
+     [[v
+       :style {:padding "0px 50px"}
        :children
-       [[v
-         :style {:padding "0px 50px"}
-         :children
-         [[h :src (at)
-           :gap      "4px"
-           :children [[:span.field-label "Protein IDs"]
-                      [re-com/info-button
-                       :src (at)
-                       :info [v :src (at)
-                              :children [[:p.info-heading "Input Protein IDs"]
-                                         [re-com/hyperlink-href :src (at)
-                                          :label  "Link to docs."
-                                          :href   ""
-                                          :target "_blank"]]]]]]
-          [re-com/input-textarea
-           :model (-> form :params.uniprot/protein :protein-ids)
-           :on-change #(re-frame/dispatch [::form-events/set-form-data
-                                           :msa
-                                           :params.uniprot/protein
-                                           :protein-ids
-                                           %])]]]
-        ]]]]))
+       [[h :src (at)
+         :gap      "4px"
+         :children [[:span.field-label "Protein IDs"]
+                    [re-com/info-button
+                     :src (at)
+                     :info [v :src (at)
+                            :children [[:p.info-heading "Input Protein IDs"]
+                                       [re-com/hyperlink-href :src (at)
+                                        :label  "Link to docs."
+                                        :href   ""
+                                        :target "_blank"]]]]]]
+        [re-com/input-textarea
+         :model (-> form :params.uniprot/protein :protein-ids)
+         :on-change #(re-frame/dispatch [::form-events/set-form-data
+                                         :msa
+                                         :params.uniprot/protein
+                                         :protein-ids
+                                         %])]]]]]))
         
 
 "Search by taxonomy uses these gene names in tandem with the taxon implied by the protein ID."
 "Uniprot. Here be a screenshot that shows you where to get them."
 
-(defn start-button
-  []
-  (let [hover? (r/atom false)]
-    (fn []
-      [re-com/button
-       :src       (at)
-       :label    "START PIPELINE"
-       :class    (css/rectangle-button)
-       :style    {:background-color "#0072bb"}
-       :on-click #(re-frame/dispatch [::form-events/start-msa!])
-       :style    {:background-color (if @hover? "#0072bb" "#4d90fe")}
-       :attr     {:on-mouse-over (re-com/handler-fn (reset! hover? true))
-                  :on-mouse-out  (re-com/handler-fn (reset! hover? false))}])))
-
 (defn msa-form
   []
-  [v
-   :children
-   [[inputs]
-    [tree-search-form]
-    [blast-form]
-    [uniref-form]
-    [start-button]]])
+  [structure/collapsible-accordion-2
+   ["1. Choose taxons and proteins" [inputs]]
+   ["2. Configure taxonomic tree search"     [tree-search-form]]
+   ["3. Configure BLAST search"     [blast-form]]
+   ["4. Configure UniRef search"     [uniref-form]]
+   ["5. Set domains of interest"]
+   [[common.forms/action-button
+     :label "START PIPELINE"
+     :on-click #(re-frame/dispatch [::form-events/start-msa!])]]])
 
 (defn msa-panel []
   [msa-form])
 
 (defmethod routing/panels :routing.pipelines/msa [] [msa-panel])
-(defmethod routing/header :routing.pipelines/msa [] [msa-header])
+(defmethod routing/header :routing.pipelines/msa []
+  [structure/header
+   :label
+   "Taxonomic Sequence Comparison Pipeline"])

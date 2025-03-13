@@ -6,6 +6,7 @@
    [re-frame.core :as re-frame]
    [unknown-client.routing :as routing]
    [unknown-client.subs.routing :as routing-subs]
+   [unknown-client.views.common.structure :as structure]
    [unknown-client.views.common.widgets :as widgets]))
 
 (defn taxons-panel []
@@ -39,12 +40,6 @@
                :width          300
                :vertical-align "middle"}]
              :row-height                35]]]]]))))
-
-(defn taxons-header []
-  [com/title
-   :src   (at)
-   :label "Taxon Library"
-   :level :level1])
 
 
 (defn proteome-stats
@@ -100,12 +95,11 @@
 (defn single-taxon-header []
   (let [params @(re-frame/subscribe [::routing-subs/active-route-params])
         taxon  @(re-frame/subscribe [:data/taxon (:taxon/id params)])]
-    [com/title
-     :src   (at)
-     :label (:scientificName taxon)
-     :level :level1]))
+    [structure/header
+     :label (:scientificName taxon)]))
 
 (defmethod routing/panels :routing.data/taxon [] [taxons-panel])
-(defmethod routing/header :routing.data/taxon [] [taxons-header])
+(defmethod routing/header :routing.data/taxon []
+  [structure/header :label "Taxon Library"])
 (defmethod routing/panels :routing.data/taxon-entry [] [single-taxon-panel])
 (defmethod routing/header :routing.data/taxon-entry [] [single-taxon-header])

@@ -1,32 +1,41 @@
 (ns unknown-client.views.results.docking
   (:require
+   [clojure.string :as str]
    [re-com.core :as re-com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
-   [unknown-client.routing :as routing]))
-
-(defn docking-results-header []
-  [re-com/title
-   :src   (at)
-   :label "Structural Comparison Results"
-   :level :level1
-   ])
+   [re-frame.core :as rf]
+   [unknown-client.routing :as routing]
+   [unknown-client.views.common.structure :as structure]
+   [unknown-client.views.common.widgets :as widgets]))
 
 (defn docking-results-panel []
-  [:div
-   {:id "bla"
-    :class "viewer_3Dmoljs"
-    :style {:height "600px"
-            :width "600px"
-            :position  "relative"}
-                ;; :width "600px"
-                ;; :height "600px"
-    :data-pdb "7LQ6"
-    :data-backgroundcolor "0xffffff"
-    :data-style "cartoon"
-    :data-ui true}])
+  (let [results (rf/subscribe [:results/docking])]
+    (fn []
+      [v
+       :width "1550px"
+       :max-width "1550px"
+       :children
+       [[widgets/table
+         results
+         :columns
+         [{:id             :id
+           :header-label   "Job ID"}
+          {:id             :protein-ids
+           :header-label   "Protein IDs"
+           :row-label-fn   (comp
+                            #(str/join ", " %)
+                            :protein-ids)}
+          {:id             :protein-names
+           :header-label   "Protein Names"
+           :row-label-fn   (comp
+                            #(str/join ", " %)
+                            :gene-names)}
+          {:id             :docking-still-running?
+           :header-label   "Done?"
+           :row-label-fn   #(if (:docking-still-running? %)
+                              [re-com/throbber :size :small]
+                              [:i {:style {:width "40px"} :class "zmdi zmdi-check zmdi-hc-2x"}])}]]]])))
 
-(defmethod routing/panels :docking-results [] [docking-results-panel])
-(defmethod routing/header :docking-results [] [docking-results-header])
-
-#_(js->clj js/$3Dmol)
+(defmethod routing/panels :routing.results/docking [] [docking-results-panel])
+(defmethod routing/header :routing.results/docking [] [structure/header :label "Structural Comparison Results"])

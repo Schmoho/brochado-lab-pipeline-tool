@@ -14,6 +14,12 @@
    (->> raw :taxon)))
 
 (rf/reg-sub
+ :data/taxons-map
+ :<- [:data/raw]
+ (fn [raw]
+   (->> raw :taxon)))
+
+(rf/reg-sub
  :data/taxons
  :<- [:data/raw]
  (fn [raw]
@@ -21,7 +27,7 @@
 
 (rf/reg-sub
  :data/taxon
- :<- [:data/taxons]
+ :<- [:data/taxons-map]
  (fn [taxons [_ id]]
    (get taxons id)))
 
@@ -78,7 +84,7 @@
    (->> db :data :results)))
 
 (rf/reg-sub
- :msa/results
+ :results/msa
  :<- [:data/results]
  (fn [results]
    (->> results
@@ -92,3 +98,14 @@
                  :protein-ids          (-> protein :protein-ids)
                  :gene-names           (-> protein :gene-names)
                  :blast-still-running? (-> result :blast-still-running?)})))))
+
+(rf/reg-sub
+ :results/docking
+ :<- [:data/results]
+ (fn [results]
+   (->> results
+        :docking
+        (mapv (fn [results]
+                {:id                     (str uuid)
+                 :protein-ids            (-> results :protein-ids)
+                 :docking-still-running? (-> results :docking-still-running?)})))))

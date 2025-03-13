@@ -22,20 +22,30 @@
 
 (defn navbar-link
   [link-text route]
-  (let  [hover?  (r/atom false)]
+  (let  [hover?  (r/atom false)
+         at-rest-color "#00796b"
+         hover-color "#0072bb"
+         active-color "#4db6ac"]
     (fn []
-      [re-com/button
-       :src       (at)
-       :label    link-text
-       :on-click #(rf/dispatch
-                   (if (coll? route)
-                     (into [::routing-events/navigate]
-                           route)
-                     [::routing-events/navigate route]))
-       :class    (css/navbar-button)
-       :style    {:background-color (if @hover? "#0072bb" "#00796b")}
-       :attr     {:on-mouse-over (re-com/handler-fn (reset! hover? true))
-                  :on-mouse-out  (re-com/handler-fn (reset! hover? false))}])))
+      (let [active? (= route @(rf/subscribe [::routing-subs/active-panel]))]
+        [re-com/button
+         :src       (at)
+         :label    link-text
+         :on-click #(rf/dispatch
+                     (if (coll? route)
+                       (into [::routing-events/navigate]
+                             route)
+                       [::routing-events/navigate route]))
+         :class    (css/navbar-button)
+         :style    {:background-color (if @hover?
+                                        (if active?
+                                          active-color
+                                          hover-color)
+                                        (if active?
+                                          active-color
+                                          at-rest-color))}
+         :attr     {:on-mouse-over (re-com/handler-fn (reset! hover? true))
+                    :on-mouse-out  (re-com/handler-fn (reset! hover? false))}]))))
 (defn nav-bar []
   [v
    :class (css/navbar)

@@ -6,24 +6,17 @@
    [unknown-client.routing :as routing]
    [unknown-client.events.routing :as routing-events]
    [unknown-client.events.forms :as form-events]
+   [unknown-client.views.common.structure :as structure]
    [unknown-client.views.common.widgets :as widgets]))
-
-(defn overview-header []
-  [com/title
-   :src   (at)
-   :label "Data Overview"
-   :level :level1])
-
-
 
 (defn overview-panel []
   (let [volcanos (rf/subscribe [:data/volcanos-list])
         taxons   (rf/subscribe [:data/taxons])
         ligands  (rf/subscribe [:data/ligands])]
     (fn []
-      [v
-       :children
-       [[widgets/table volcanos
+      [structure/collapsible-accordion-2
+       ["Volcanos"
+        [widgets/table volcanos
          :columns
          [{:id           :name
            :row-label-fn
@@ -42,7 +35,8 @@
            :row-label-fn
            (fn [row]
              [:a {:href (str "taxon/" (-> row :meta :taxon))}
-              (-> row :meta :taxon)])}]]
+              (-> row :meta :taxon)])}]]]
+       ["Taxons"
         [widgets/table taxons
          :columns
          [{:id           :id
@@ -51,7 +45,8 @@
                             (:id row)])
            :header-label "Taxon ID"}
           {:id           :scientificName
-           :header-label "Name"}]]
+           :header-label "Name"}]]]
+       ["Ligands"
         [widgets/table ligands
          :columns
          [{:id :id
@@ -62,21 +57,7 @@
           {:id :name
            :header-label "Name"}]]]])))
 
-;; (defn colfn
-;;   [data & {:keys [columns]}]
-;;   (map (fn [defaults input]
-;;                 (merge defaults input))
-;;               (map #(assoc
-;;                      {:width 300
-;;                       :align "center"
-;;                       :vertical-align "middle"}
-;;                      :row-label-fn (:id %)
-;;                      :header-label (name (:id %)))
-;;                    columns)
-;;               columns))
-;; (colfn @(rf/subscribe [:data/taxons])
-;;        :columns [{:id :id}
-;;                  {:id :scientificName}])
-
 (defmethod routing/panels :routing.data/overview [] [overview-panel])
-(defmethod routing/header :routing.data/overview [] [overview-header])
+(defmethod routing/header :routing.data/overview []
+  [structure/header
+   :label "Data Overview"])

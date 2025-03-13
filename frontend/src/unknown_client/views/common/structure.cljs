@@ -44,14 +44,14 @@
   (let [id            (or id (utils/rand-str))
         heading-id    id
         aria-controls (str id "-aria")]
-    [:div {:class "card"}
+    [:div {:class "card bg-light"}
      [:div {:class         "card-header",
             :id            heading-id
             :data-toggle   "collapse"
             :data-target   (str "#" aria-controls)
             :aria-expanded expanded?
             :aria-controls aria-controls}
-      [:h5 {:class "mb-0"}
+      [:h6 {:class "mb-0"}
        heading]]
      [:div {:id              aria-controls
             :class           "collapse show",
@@ -64,7 +64,11 @@
   [& cards]
   (let [accordion-id (utils/rand-str)]
     (->> (for [card cards :when (some? card)]
-           ^{:key (first card)} [collapsible-card (first card) (second card) :data-parent (str "#" accordion-id)])
+           ^{:key (first card)} [collapsible-card
+                                 (first card)
+                                 (second card)
+                                 :data-parent
+                                 (str "#" accordion-id)])
          (into [:div {:class "accordion",
                       :id accordion-id
                       :style {:width "1200px"}}]))))
@@ -73,7 +77,17 @@
   [& cards]
   (let [accordion-id (utils/rand-str)]
     (->> (for [card cards :when (some? card)]
-           ^{:key (first card)} [collapsible-card (first card) (second card)])
+           ^{:key (first card)} [collapsible-card
+                                 (first card)
+                                 (second card)])
          (into [:div {:class "accordion",
                       :id accordion-id
                       :style {:width "1200px"}}]))))
+
+(defn header
+  [& {:keys [label]}]
+  [re-com/title
+   :src   (at)
+   :label label
+   :level :level1
+   :style {:color "white"}])

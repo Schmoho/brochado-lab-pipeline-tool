@@ -5,15 +5,8 @@
     :rename {v-box v
              h-box h}]
    [unknown-client.events.routing :as routing-events]
-   [unknown-client.views.common.structure :refer [clickable-card]]
+   [unknown-client.views.common.structure :refer [clickable-card] :as structure]
    [unknown-client.routing :as routing]))
-
-(defn home-header []
-  [re-com/title
-   :src   (at)
-   :label "Dario's Super Dope Pipeline Thingy"
-   :level :level1
-   ])
 
 (defn volcano-card
   []
@@ -79,4 +72,5 @@
 
 
 (defmethod routing/panels :routing/home [] [home-panel])
-(defmethod routing/header :routing/home [] [home-header])
+(defmethod routing/header :routing/home []
+  [structure/header :label "Dario's Super Dope Pipeline Thingy"])

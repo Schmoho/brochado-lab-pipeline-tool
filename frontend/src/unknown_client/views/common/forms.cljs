@@ -179,7 +179,8 @@
        :label    label
        :class    (css/rectangle-button)
        :style    {:background-color "#0072bb"}
-       :on-click on-click
+       :on-click #(when on-click
+                    (on-click %))
        :style    {:background-color (if @hover? "#0072bb" "#4d90fe")}
        :attr     {:on-mouse-over (com/handler-fn (reset! hover? true))
                   :on-mouse-out  (com/handler-fn (reset! hover? false))}])))

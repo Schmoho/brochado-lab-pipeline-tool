@@ -3,24 +3,17 @@
    ["gosling.js" :refer [GoslingComponent]]
    [clojure.string :as str]
    [unknown-client.views.results.alignment-spec :as spec]
-   [re-frame.core :as re-frame]
+   [re-frame.core :as rf]
    [re-com.core :as re-com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
    [unknown-client.routing :as routing]
+   [unknown-client.views.common.structure :as structure]
    [unknown-client.views.common.widgets :as widgets]))
-
-
-(defn msa-results-header []
-  [re-com/title
-   :src   (at)
-   :label "Taxonomic Sequence Comparison Pipeline"
-   :level :level1])
-
 
 (defn msa-results-panel
   []
-  (let [results (re-frame/subscribe [:msa/results])]
+  (let [results (rf/subscribe [:results/msa])]
     (fn []
       [v
        :width "1550px"
@@ -57,7 +50,8 @@
 
 
 (defmethod routing/panels :routing.results/msa [] [msa-results-panel])
-(defmethod routing/header :routing.results/msa [] [msa-results-header])
+(defmethod routing/header :routing.results/msa []
+  [structure/header :label "Taxonomic Sequence Comparison Pipeline"])
 
 (comment
 

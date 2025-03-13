@@ -6,6 +6,7 @@
     :rename {v-box v
              h-box h}]
    [unknown-client.routing :as routing]
+   [unknown-client.views.common.forms :as forms]
    [unknown-client.views.common.structure :as structure]
    [unknown-client.views.common.widgets :as widgets]
    [unknown-client.views.css.forms :as css]
@@ -13,13 +14,6 @@
    [unknown-client.events.forms :as form-events]
    [unknown-client.events.http :as http-events]
    [unknown-client.utils :refer [cool-select-keys]]))
-
-(defn docking-header
-  []
-  [com/title
-   :src   (at)
-   :label "Comparative Docking Pipeline"
-   :level :level1])
 
 (defn get-structures-button
   [selected-proteins]
@@ -194,16 +188,18 @@
   [v
    :children
    [[:h4 {:style {:color "darkred"}} "Dummy button for illustration"]
-    [com/button
-     :label "Download"]]])
+    [:div [forms/action-button
+           :label "Download"]]]])
+
 
 (defn part-5
   [proteins]
   [v
    :children
    [[:h4 {:style {:color "darkred"}} "Dummy data for illustration"]
-    [com/button
-     :label "Upload"]
+    [:div
+     [forms/action-button
+      :label "Upload"]]
     [h
      :children
      [[vega/vega-chart
@@ -244,7 +240,8 @@
 
 
 (defmethod routing/panels :routing.pipelines/docking [] [docking-panel])
-(defmethod routing/header :routing.pipelines/docking [] [docking-header])
+(defmethod routing/header :routing.pipelines/docking []
+  [structure/header :label "Comparative Docking Pipeline"])
 
 
 

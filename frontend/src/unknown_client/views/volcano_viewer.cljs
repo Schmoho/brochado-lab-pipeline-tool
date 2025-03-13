@@ -11,8 +11,7 @@
    [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
-   [re-frame.core :as rf]
-   [reagent.core :as r]))
+   [re-frame.core :as rf]))
 
 (defn database-lookup-xform
   [db-name & {:keys [just-take-first?]
@@ -132,12 +131,6 @@
                               (:protein_id %)))
            :else %))))
 
-(defn volcano-header []
-  [com/title
-   :src   (at)
-   :label "Proteomics Hits Viewer"
-   :level :level1])
-
 
 (defn data-set-chooser
   [volcano-form volcanos]
@@ -226,8 +219,8 @@
               [vega/vega-chart "v1" (volcano-plots/single-pan table)])]]))))
 
 (defmethod routing/panels :routing/volcano-viewer [] [volcano-panel])
-(defmethod routing/header :routing/volcano-viewer [] [volcano-header])
-
+(defmethod routing/header :routing/volcano-viewer []
+  [structure/header :label "Proteomics Hits Viewer"])
 
 #_(defn cross-viz
   [data-set-1

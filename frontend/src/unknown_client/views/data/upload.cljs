@@ -8,14 +8,9 @@
    [unknown-client.events.http :as http-events]
    [unknown-client.routing :as routing]
    [unknown-client.views.common.forms :as common.forms]
-   [unknown-client.views.common.structure :refer [card]]
+   [unknown-client.views.common.structure :refer [card]
+    :as structure]
    [unknown-client.views.common.widgets :as widgets]))
-
-(defn upload-data-header []
-  [com/title
-   :src   (at)
-   :label "Upload Core Data"
-   :level :level1])
 
 (defn volcano-info
   []
@@ -113,4 +108,5 @@
 
 
 (defmethod routing/panels :routing.data/upload [] [upload-data-panel])
-(defmethod routing/header :routing.data/upload [] [upload-data-header])
+(defmethod routing/header :routing.data/upload []
+  [structure/header :label "Upload Core Data"])
