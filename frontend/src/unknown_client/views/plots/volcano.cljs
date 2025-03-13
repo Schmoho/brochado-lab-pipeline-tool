@@ -139,7 +139,7 @@
               :encoding {:text {:signal "selectedGenes && selectedGenes.length > 0 ? 'Selected Genes: ' + selectedGenes.map(d => d.gene_name).join(', ') : 'No genes selected'"}}}]})
 
 
-#_(defn two-volcanoes-cross-plot
+(defn two-volcanoes-cross-plot
   [cross-data {:keys [x-label
                       y-label
                       width

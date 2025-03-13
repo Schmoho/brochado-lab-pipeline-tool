@@ -52,8 +52,8 @@
    :children
    [[navbar-link "Home" :routing/home]
     [re-com/gap :src (at) :size "40px"]
-    [navbar-link "Overview Core Data" :routing.data/overview]
-    [navbar-link "Upload Core Data" :routing.data/upload]
+    [navbar-link "Data Overview" :routing.data/overview]
+    [navbar-link "Upload Data" :routing.data/upload]
     [re-com/gap :src (at) :size "40px"]
     [navbar-link "Volcano Viewer" :routing/volcano-viewer]
     [re-com/gap :src (at) :size "40px"]

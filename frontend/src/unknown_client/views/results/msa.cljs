@@ -51,7 +51,7 @@
 
 (defmethod routing/panels :routing.results/msa [] [msa-results-panel])
 (defmethod routing/header :routing.results/msa []
-  [structure/header :label "Taxonomic Sequence Comparison Pipeline"])
+  [structure/header :label "Sequence Comparison Results"])
 
 (comment
 

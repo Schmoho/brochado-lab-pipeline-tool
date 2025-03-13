@@ -5,7 +5,7 @@
    ["vega-embed" :default vegaEmbed]))
 
 (defn vega-chart
-  [& {:keys [id spec on-change]}]
+  [& {:keys [width height id spec on-change]}]
   (r/create-class
    {:component-did-mount
     (fn [_]
@@ -14,7 +14,9 @@
                     (on-change (.-view %))))))
     :reagent-render
     (fn []
-      [:div {:id id}])}))
+      [:div {:id id
+             :style {:width width
+                     :height height}}])}))
 
 
 ;; (defn- value->css [v]

@@ -166,61 +166,78 @@
          :children
          [[data-set-chooser @volcano-form @volcanos]
           [structure/collapsible-accordion
-           (when-let [table (:table volcano-1)]
-             ["Plot 1"
-              [h
-               :children
-               [[forms/input-text
-                 :attr {:id "test"}]
-                [vega/vega-chart
-                 :spec (volcano-plots/single-pan table)
-                 :id "v1"
-                 #_:on-change
-                 #_(rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1-view %])
-                 :on-change
-                 #(do
-                    (rf/dispatch [::vega-events/register-signal-listener
-                                  %
-                                  {:signal-name
-                                   "boing"
-                                   :listener-fn
-                                   (fn [signal-name signal-value]
-                                     (.log js/console signal-name (js->clj signal-value))
-                                     #_(rf/dispatch [::vega-events/selection
-                                                   (-> (js->clj signal-value)
-                                                       (get "vlPoint")
-                                                       (get "or")
-                                                       (->> (map (fn [a] (get a "_vgsid_")))))]))}])
-                    (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1-view %]))]
-                #_[:p (str (mapv @selected #_(fn [selection] (nth table selection)) @selected))]]]])
-           (when-let [table (:table volcano-1)]
-             ["Plot 2"
-              [h
-               :children
-               [[vega/vega-chart
-                 :spec (volcano-plots/single-brush table)
-                 :id "v2"
-                 :on-change
-                 #(do
-                    (rf/dispatch [::vega-events/register-signal-listener
-                                  %
-                                  {:signal-name
-                                   "brush"
-                                   :listener-fn
-                                   (fn [signal-name signal-value]
-                                     (js/console.log "Brush selection updated:"
-                                                     (-> (js->clj signal-value)
-                                                         (get "vlPoint")
-                                                         (get "or")
-                                                         (->> (map (fn [a] (get a "_vgsid_")))))))}])
-                    (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-2-view %]))]]]])]
-
-          #_(when-let [table (:table volcano-1)]
-              [vega/vega-chart "v1" (volcano-plots/single-pan table)])]]))))
+           #_(when-let [table (:table volcano-1)]
+               ["Plot 1"
+                [h
+                 :children
+                 [[forms/input-text
+                   :attr {:id "test"}]
+                  [vega/vega-chart
+                   :spec (volcano-plots/single-pan table)
+                   :id "v1"
+                   #_:on-change
+                   #_(rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1-view %])
+                   :on-change
+                   #(do
+                      (rf/dispatch [::vega-events/register-signal-listener
+                                    %
+                                    {:signal-name
+                                     "boing"
+                                     :listener-fn
+                                     (fn [signal-name signal-value]
+                                       (.log js/console signal-name (js->clj signal-value))
+                                       #_(rf/dispatch [::vega-events/selection
+                                                       (-> (js->clj signal-value)
+                                                           (get "vlPoint")
+                                                           (get "or")
+                                                           (->> (map (fn [a] (get a "_vgsid_")))))]))}])
+                      (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1-view %]))]
+                  #_[:p (str (mapv @selected #_(fn [selection] (nth table selection)) @selected))]]]])
+           #_(when-let [table (:table volcano-1)]
+               ["Plot 2"
+                [h
+                 :children
+                 [[vega/vega-chart
+                   :spec (volcano-plots/single-brush table)
+                   :id "v2"
+                   :on-change
+                   #(do
+                      (rf/dispatch [::vega-events/register-signal-listener
+                                    %
+                                    {:signal-name
+                                     "brush"
+                                     :listener-fn
+                                     (fn [signal-name signal-value]
+                                       (js/console.log "Brush selection updated:"
+                                                       (-> (js->clj signal-value)
+                                                           (get "vlPoint")
+                                                           (get "or")
+                                                           (->> (map (fn [a] (get a "_vgsid_")))))))}])
+                      (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-2-view %]))]]]])]
+          (let [table-1 (:table volcano-1)
+                table-2 (:table volcano-2)]
+            (when (and table-1 table-2)
+              [:div
+               {:style {:width "800px"
+                        :height "800px"}}
+               [vega/vega-chart
+                :width "100%"
+                :height "auto"
+                :spec
+                (volcano-plots/two-volcanoes-cross-plot
+                 (cross-data table-1
+                             table-2)
+                 {:title "Cefotaxime vs. Amikacin E.Coli"
+                  :cross-plot-params
+                  {:x-label "Cefotaxime Fold Change"
+                   :y-label "Amikacin Fold Change"
+                   :width   1200
+                   :height  1200}})
+                :id "v3"]]))]]))))
 
 (defmethod routing/panels :routing/volcano-viewer [] [volcano-panel])
 (defmethod routing/header :routing/volcano-viewer []
-  [structure/header :label "Proteomics Hits Viewer"])
+  [structure/header :label "Volcano Viewer"])
 
 #_(defn cross-viz
   [data-set-1

@@ -145,9 +145,9 @@
     (defonce uniprot-proteome-pseudo
       (api.uniprot/uniprotkb-stream {:query "taxonomy_id:208963"}))
     (def kegg-proteome-ecoli
-      (utils/read-file "kegg-83333.edn"))
+      (utils/read-file "docs/kegg-83333.edn"))
     (def kegg-proteome-pseudo
-      (utils/read-file "kegg-208963.edn")))
+      (utils/read-file "docs/kegg-208963.edn")))
 
   (->> uniprot-proteome-pseudo
        (map uniprot/clean-protein)

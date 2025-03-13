@@ -38,4 +38,5 @@
                               [:i {:style {:width "40px"} :class "zmdi zmdi-check zmdi-hc-2x"}])}]]]])))
 
 (defmethod routing/panels :routing.results/docking [] [docking-results-panel])
-(defmethod routing/header :routing.results/docking [] [structure/header :label "Structural Comparison Results"])
+(defmethod routing/header :routing.results/docking []
+  [structure/header :label "Comparative Docking Results"])

@@ -109,4 +109,4 @@
 
 (defmethod routing/panels :routing.data/upload [] [upload-data-panel])
 (defmethod routing/header :routing.data/upload []
-  [structure/header :label "Upload Core Data"])
+  [structure/header :label "Upload Data"])

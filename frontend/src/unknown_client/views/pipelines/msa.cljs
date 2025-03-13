@@ -210,4 +210,4 @@
 (defmethod routing/header :routing.pipelines/msa []
   [structure/header
    :label
-   "Taxonomic Sequence Comparison Pipeline"])
+   "Sequence Comparison Pipeline"])
