@@ -1,6 +1,7 @@
 (ns unknown-client.subs.forms.docking
   (:require
-   [re-frame.core :as rf]))
+   [re-frame.core :as rf]
+   [unknown-client.subs.data]))
 
 (rf/reg-sub
  :forms/docking
@@ -9,7 +10,26 @@
    (:docking forms)))
 
 (rf/reg-sub
- :docking/taxon-model
+ :forms.docking/taxon-model
  :<- [:forms/docking]
  (fn [form]
-   (vec (:taxon-model form))))
+   (set (:taxon-model form))))
+
+(rf/reg-sub
+ :forms.docking/taxon-model-resolved
+ :<- [:forms.docking/taxon-model]
+ :<- [:data/taxons-map]
+ (fn [[model taxons]]
+   (map #(get taxons %) model)))
+
+(rf/reg-sub
+ :forms.docking/ligand-model
+ :<- [:forms/docking]
+ (fn [form]
+   (set (:ligand-model form))))
+
+(rf/reg-sub
+ :forms.docking/selected-proteins-model
+ :<- [:forms/docking]
+ (fn [form]
+   (set (:selected-proteins-model form))))

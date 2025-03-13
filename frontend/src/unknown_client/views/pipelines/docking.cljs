@@ -6,6 +6,7 @@
     :rename {v-box v
              h-box h}]
    [unknown-client.routing :as routing]
+   [unknown-client.views.common.structure :as structure]
    [unknown-client.views.common.widgets :as widgets]
    [unknown-client.views.css.forms :as css]
    [unknown-client.events.forms :as form-events]
@@ -18,47 +19,6 @@
    :src   (at)
    :label "Comparative Docking Pipeline"
    :level :level1])
-
-
-(defn protein-search-suggestions
-  [proteome]
-  (fn [s]
-    (let [fragment (re-pattern (str "(?i)" (or s "")))]
-      (->> proteome
-           (keep (fn [protein]
-                   (let [gene-name    (or (-> protein :genes first :geneName :value)
-                                          (-> protein :genes first :orderedLocusNames :value)
-                                          "-")
-                         protein-name (or (-> protein :proteinDescription :recommendedName :fullName :value)
-                                          (-> protein :proteinDescription :submissionNames first :fullName :value)
-                                          "-")
-                         protein-id   (or (-> protein :primaryAccession)
-                                          "-")]
-                     (when (or (re-find fragment gene-name)
-                               (re-find fragment protein-name)
-                               (re-find fragment protein-id))
-                       {:id protein-id :protein-name protein-name :gene-name gene-name}))))
-           (take 16)
-           (into [])))))
-
-(defn protein-searcher
-  [taxon-id]
-  (let [proteome @(rf/subscribe [:data/proteome taxon-id])]
-    [re-com/typeahead
-     :src (at)
-     :data-source (protein-search-suggestions proteome)
-     :suggestion-to-string #(:protein-name %)
-     :render-suggestion
-     (fn [{:keys [protein-name gene-name id]}]
-       [re-com/hyperlink-href
-        :label (str id " - " gene-name " - " protein-name)
-        :href (str "/protein/" id)])
-     :on-change
-     #(rf/dispatch
-       [::form-events/set-form-data
-        :docking
-        :selected-proteins-model
-        %])]))
 
 (defn get-structures-button
   []
@@ -74,119 +34,161 @@
        :attr     {:on-mouse-over (re-com/handler-fn (reset! hover? true))
                   :on-mouse-out  (re-com/handler-fn (reset! hover? false))}])))
 
+(defn taxon-choice
+  [& {:keys [taxons on-change model]}]
+  (let [taxon-choices
+            (->> taxons
+                 (mapv #(cool-select-keys
+                         %
+                         [[:label :scientificName]
+                          [:id :id]])))]
+        (if (empty? taxons)
+          [v
+           :justify :center
+           :children
+           [[re-com/throbber
+             :size :large
+             :style {:width "410px"}]]]
+          [re-com/multi-select :src (at)
+           :choices       taxon-choices
+           :model model
+           :on-change     #(when on-change
+                             (on-change %))
+           :width         "450px"
+           :left-label    "Available taxons"
+           :right-label   "Selected taxons"
+           :placeholder   "Select some taxons."
+           :required? true
+           :filter-box? false])))
 
+(defn ligand-choice
+  [& {:keys [ligands on-change model]}]
+  (let [ligand-choices
+        (->> ligands
+             (mapv #(cool-select-keys
+                     %
+                     [[:label :name]
+                      [:id [:json :id :id :cid]]])))]
+    [re-com/multi-select :src (at)
+     :choices       ligand-choices
+     :model         model
+     :on-change     #(when on-change
+                       (on-change %))
+     :width         "450px"
+     :left-label    "Available ligands"
+     :right-label   "Selected ligands"
+     :placeholder   "Select at least one ligand."
+     :required? true
+     :filter-box? false]))
+
+(defn part-1
+  []
+  [v
+   :width "200px"
+   :children
+   [[h
+     :src      (at)
+     :children
+     [[taxon-choice
+       :taxons
+       @(rf/subscribe [:data/taxons])
+       :model
+       (rf/subscribe [:forms.docking/taxon-model])
+       :on-change
+       #(rf/dispatch
+         [::form-events/set-form-data
+          :docking
+          :taxon-model
+          %])]
+      [re-com/gap :size "50px"]
+      [ligand-choice
+       :ligands
+       @(rf/subscribe [:data/ligands])
+       :model
+       (rf/subscribe [:forms.docking/ligand-model])
+       :on-change
+       #(rf/dispatch
+         [::form-events/set-form-data
+          :docking
+          :ligand-model
+          %])]]]]])
+
+(defn part-2
+  [taxons]
+  (let [proteome-searchers
+        (->> taxons
+             (mapv
+              (fn [taxon]
+                [:div
+                 [:p (:scientificName taxon)]
+                 [widgets/protein-search
+                  :proteome
+                  @(rf/subscribe [:data/proteome (:id taxon)])
+                  :model
+                  (rf/subscribe [:forms.docking/selected-proteins-model
+                                 (:id taxon)])
+                  :on-change
+                  #(rf/dispatch [::form-events/set-form-data
+                                 :docking
+                                 :selected-proteins-model
+                                 (:id taxon)
+                                 %])]])))]
+    [v
+     :children
+     [[h
+       :height "300px"
+       :children
+       (into [] proteome-searchers)]
+      (when (every?
+             #(not-empty %)
+             (map (fn [taxon]
+                    @(rf/subscribe [:forms.docking/selected-proteins-model
+                                  (:id taxon)]))
+                  taxons))
+            [v
+             :children
+             [[get-structures-button]]])]]))
+
+(defn part-3
+  [structures]
+  (when-let [pdb (:pdb (get structures "A0A0H2ZHP9"))]
+          [widgets/pdb-viewer
+           :pdb pdb
+           :style {:cartoon {:colorfunc
+                             (fn [atom]
+                               (if (< 85 (.-b atom))
+                                 "blue"
+                                 "yellow"))}}
+           :config {:backgroundColor "white"}
+           :on-load #(rf/dispatch [::form-events/set-form-data
+                                   :docking
+                                   :protein-viewer
+                                   %])]))
+
+(defn part-4
+  [proteins]
+  [:div "hi"])
+
+(defn part-5
+  [proteins]
+  [:div "hi"])
 
 (defn docking-panel
   []
-  (let [form                  (rf/subscribe [:forms/docking])
-        ligands               (rf/subscribe [:data/ligands])
-        taxons                (rf/subscribe [:data/taxons])
-        taxon-model           (rf/subscribe [:docking/taxon-model])
-        internal-taxon-model  (r/atom #{})
-        internal-ligand-model (r/atom #{})
-        structures            (rf/subscribe [:data/structures])]
+  (let [structures  (rf/subscribe [:data/structures])
+        taxon-model-resolved (rf/subscribe [:forms.docking/taxon-model-resolved])]
     (fn []
-
-      (let [ligand-model            (-> @form :ligand-model)
-            taxon-choices           (->> @taxons
-                                         (mapv #(cool-select-keys
-                                                 %
-                                                 [[:label :scientificName]
-                                                  [:id :id]])))
-            ligand-choices          (->> @ligands
-                                         (mapv #(cool-select-keys
-                                                 %
-                                                 [[:label :name]
-                                                  [:id [:json :id :id :cid]]])))
-            proteome-searchers
-            (->> @taxon-model
-                 (mapv
-                  (comp
-                   (fn [[taxon-id taxon-name]]
-                     [:div
-                      [:p taxon-name]
-                      [protein-searcher taxon-id]])
-                   (fn [taxon-id]
-                     [taxon-id (:scientificName @(rf/subscribe [:data/taxon taxon-id]))]))))
-            selected-proteins-model (-> @form :selected-proteins-model)]
-        [v
-         :children
-         [[h
-           :src      (at)
-           :children
-           [(if (empty? taxon-choices)
-              [v
-               :justify :center
-               :children
-               [[re-com/throbber
-                 :size :large
-                 :style {:width "410px"}]]]
-              [re-com/multi-select :src (at)
-               :choices       taxon-choices
-               :model         internal-taxon-model
-               :on-change     #(do
-                                 (reset! internal-taxon-model %)
-                                 (rf/dispatch
-                                  [::form-events/set-form-data
-                                   :docking
-                                   :taxon-model
-                                   %]))
-               :width         "450px"
-               :left-label    "Available taxons"
-               :right-label   "Selected taxons"
-               :placeholder   "Select some taxons."
-               :required? true
-               :filter-box? false])
-            [re-com/gap :size "50px"]
-            [re-com/multi-select :src (at)
-             :choices       ligand-choices
-             :model         ligand-model
-             :on-change     #(do
-                               (reset! internal-taxon-model %)
-                               (rf/dispatch
-                                [::form-events/set-form-data
-                                 :docking
-                                 :ligand-model
-                                 %]))
-             :width         "450px"
-             :left-label    "Available ligands"
-             :right-label   "Selected ligands"
-             :placeholder   "Select at least one ligand."
-             :required? true
-             :filter-box? false]]]
-          [v
-           :children
-           (into [] proteome-searchers)]
-          #_(when (some? selected-proteins-model)
-              [v
-               :children
-               [[get-structures-button]
-                [:div
-                 {:id                   "bla"
-                  :class                "viewer_3Dmoljs"
-                  :style                {:height   "400px"
-                                         :width    "400px"
-                                         :position "relative"}
-                ;; :width "600px"
-                ;; :height "600px"
-                  :data-pdb             "2POR"
-                  :data-backgroundcolor "0xffffff"
-                  :data-style           "stick"
-                  :data-ui              true}]]])
-          (when-let [pdb (:pdb (get @structures "A0A0H2ZHP9"))]
-            [widgets/pdb-viewer
-             :pdb pdb
-             :style {:cartoon {:color "spectrum"}}
-             :config {:backgroundColor "white"}
-             :on-load #(rf/dispatch [::form-events/set-form-data
-                                     :docking
-                                     :protein-viewer
-                                     %])])]]))))
+      [structure/collapsible-accordion-2
+       ["1. Choose taxons and ligands" [part-1]]
+       ["2. Choose proteins and binding sites" [part-2 @taxon-model-resolved]]
+       ["3. Cut tail regions" [part-3 @structures]]
+       ["4. Download docking data" [part-4]]
+       ["5. Upload docking results" [part-5]]])))
 
 ;; (rf/dispatch [::http-events/http-get-2 [:data :raw :structure "A0A0H2ZHP9"]])
 ;; (:pdb (get @(rf/subscribe [:data/structures]) "A0A0H2ZHP9"))
 
-(let [(-> @re-frame.db/app-db :forms :docking :protein-viewer)]
+#_(let [(-> @re-frame.db/app-db :forms :docking :protein-viewer)]
   )
 
 

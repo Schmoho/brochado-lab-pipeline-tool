@@ -63,7 +63,7 @@
            (into [])))))
 
 (defn protein-search
-  [proteome]
+  [& {:keys [proteome on-change model]}]
   (let [suggestions-for-search (protein-search-suggestions proteome)]
     [v
      :src      (at)
@@ -86,14 +86,74 @@
             :target "_blank"]]]]]]
       [com/typeahead
        :src (at)
+       :model model
+       :on-change
+       #(when on-change
+          (on-change %))
        :data-source suggestions-for-search
        :suggestion-to-string #(:protein-name %)
        :render-suggestion
        (fn [{:keys [protein-name gene-name id]}]
-         [com/hyperlink-href
-          :label (str id " - " gene-name " - " protein-name)
-          :href (str "/protein/" id)])
-       #_#_:on-change (re-frame/dispatch)]]]))
+         [:span (str id " - " gene-name " - " protein-name)])
+       :parts
+       {:suggestions-container {:style {:z-index 10}}
+        :suggestion {:style {:z-index 10}}}]]]))
+
+(defn protein-search-choices
+  [proteome]
+  (fn [s]
+    (let [fragment (re-pattern (str "(?i)" (or s "")))]
+      (->> proteome
+           (keep (fn [protein]
+                   (let [gene-name    (or (-> protein :genes first :geneName :value)
+                                          (-> protein :genes first :orderedLocusNames :value)
+                                          "-")
+                         protein-name (or (-> protein :proteinDescription :recommendedName :fullName :value)
+                                          (-> protein :proteinDescription :submissionNames first :fullName :value)
+                                          "-")
+                         protein-id   (or (-> protein :primaryAccession)
+                                          "-")]
+                     (when (or (re-find fragment gene-name)
+                               (re-find fragment protein-name)
+                               (re-find fragment protein-id))
+                       {:id protein-id :protein-name protein-name :gene-name gene-name}))))
+           (into [])))))
+
+(defn protein-search-2
+  [proteome]
+  (let [model                  (r/atom nil)
+        suggestions-for-search ((protein-search-choices proteome))]
+    (fn []
+      [v
+       :src      (at)
+       :children
+       [[h
+         :src (at)
+         :children
+         [[:span.field-label "Search Proteins"]
+          [com/info-button
+           :src (at)
+           :info
+           [v
+            :src (at)
+            :children
+            [[:p.info-heading "Organism ID"]
+             [:p "You need to put in a Uniprot or NCBI Taxonomy ID. Note they are the same."]
+             [com/hyperlink-href :src (at)
+              :label  "Link to docs."
+              :href   ""
+              :target "_blank"]]]]]]
+        [com/single-dropdown
+         :src (at)
+         :width "100%"
+         :choices suggestions-for-search
+         :model model
+         :on-change #(reset! model %)
+         :label-fn :protein-name
+         :filter-box? true
+         :render-fn
+         (fn [{:keys [protein-name gene-name id]}]
+           [:span (str id " - " gene-name " - " protein-name)])]]])))
 
 (defn taxon-chooser
   [& {:keys [on-change]}]
