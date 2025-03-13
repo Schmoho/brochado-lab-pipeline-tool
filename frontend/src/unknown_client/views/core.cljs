@@ -42,11 +42,10 @@
    :children
    [[navbar-link "Home" :routing/home]
     [re-com/gap :src (at) :size "40px"]
-    [navbar-link "Taxons" :routing.data/taxon]
-    [navbar-link "Ligands" :routing.data/ligand]
+    [navbar-link "Overview Core Data" :routing.data/overview]
     [navbar-link "Upload Core Data" :routing.data/upload]
     [re-com/gap :src (at) :size "40px"]
-    [navbar-link "Volcano Viewer" :routing.data/volcano]
+    [navbar-link "Volcano Viewer" :routing/volcano-viewer]
     [re-com/gap :src (at) :size "40px"]
     [navbar-link "Taxonomic Protein Comparison" :routing.pipelines/msa]
     [navbar-link "Results" :routing.results/msa]

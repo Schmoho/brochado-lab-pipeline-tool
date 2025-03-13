@@ -152,7 +152,8 @@
                        (:id @(rf/subscribe [:forms.docking/selected-proteins-model
                                             (:id taxon)])))
                      @taxons)]
-            (when (every? some? selected-proteins)
+            (when (and (every? some? selected-proteins)
+                       (seq selected-proteins))
               [v
                :children
                [[get-structures-button selected-proteins]]]))]]))))
@@ -190,13 +191,41 @@
 
 (defn part-4
   [proteins]
-  [com/button
-   :label "Download"])
+  [v
+   :children
+   [[:h4 {:style {:color "darkred"}} "Dummy button for illustration"]
+    [com/button
+     :label "Download"]]])
 
 (defn part-5
   [proteins]
-  [com/button
-   :label "Upload"])
+  [v
+   :children
+   [[:h4 {:style {:color "darkred"}} "Dummy data for illustration"]
+    [com/button
+     :label "Upload"]
+    [h
+     :children
+     [[vega/vega-chart
+       :id "omse"
+       :spec
+       {:$schema "https://vega.github.io/schema/vega-lite/v5.json"
+        :description "A simple bar chart with embedded data."
+        :data {:values [{:a "A" :b 28}
+                        {:a "B" :b 55}
+                        {:a "C" :b 43}
+                        {:a "D" :b 91}
+                        {:a "E" :b 81}
+                        {:a "F" :b 53}
+                        {:a "G" :b 19}
+                        {:a "H" :b 87}
+                        {:a "I" :b 52}]}
+        :mark "bar"
+        :encoding {:x {:field "a" :type "nominal" :axis {:labelAngle 0}}
+                   :y {:field "b" :type "quantitative"}}}]
+      [:img {:src "https://www.ebi.ac.uk/thornton-srv/software/LigPlus/manual2/ligplot_3tmn.gif"
+             :style {:width "300px"
+                     :height "auto"}}]]]]])
 
 (defn docking-panel
   []

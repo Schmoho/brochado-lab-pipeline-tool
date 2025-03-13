@@ -7,7 +7,8 @@
    [re-com.core :as re-com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
-   [unknown-client.routing :as routing]))
+   [unknown-client.routing :as routing]
+   [unknown-client.views.common.widgets :as widgets]))
 
 
 (defn msa-results-header []
@@ -25,43 +26,27 @@
        :width "1550px"
        :max-width "1550px"
        :children
-       [[re-com/simple-v-table
-         :src                       (at)
-         :model                     results
-         :max-width "1000px"
+       [[widgets/table
+         results
          :columns
          [{:id             :id
-           :header-label   "Job ID"
-           :row-label-fn   :id
-           :width          300
-           :align          "center"
-           :vertical-align "middle"}
+           :header-label   "Job ID"}
           {:id             :protein-ids
            :header-label   "Protein IDs"
            :row-label-fn   (comp
                             #(str/join ", " %)
-                            :protein-ids)
-           :align          "left"
-           :width          200
-           :vertical-align "middle"}
+                            :protein-ids)}
           {:id             :gene-names
            :header-label   "Gene Names"
            :row-label-fn   (comp
                             #(str/join ", " %)
-                            :gene-names)
-           :width          200
-           :align          "left"
-           :vertical-align "middle"}
+                            :gene-names)}
           {:id             :blast-still-running?
            :header-label   "Done?"
            :row-label-fn   #(if (:blast-still-running? %)
                               [re-com/throbber :size :small]
-                              [:i {:style {:width "40px"} :class "zmdi zmdi-check zmdi-hc-2x"}])
-           :width          200
-           :align          "left"
-           :vertical-align "middle"}]
-         :row-height                35]
-        [:> GoslingComponent
+                              [:i {:style {:width "40px"} :class "zmdi zmdi-check zmdi-hc-2x"}])}]]
+        #_[:> GoslingComponent
          {:spec spec/spec
           :margin 0
           :padding 30
@@ -71,8 +56,8 @@
           :theme "light"}]]])))
 
 
-(defmethod routing/panels :msa-results [] [msa-results-panel])
-(defmethod routing/header :msa-results [] [msa-results-header])
+(defmethod routing/panels :routing.results/msa [] [msa-results-panel])
+(defmethod routing/header :routing.results/msa [] [msa-results-header])
 
 (comment
 

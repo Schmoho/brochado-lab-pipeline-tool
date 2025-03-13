@@ -27,8 +27,8 @@
                        "docking" :routing.pipelines/docking}
          "volcano-viewer" {"" :routing/volcano-viewer
                            "/" :routing/volcano-viewer}
-         "results/"   {"msa-results"     :routing.results/msa-results
-                       "docking-results" :routing.results/docking-results}}]))
+         "results/"   {"msa-results"     :routing.results/msa
+                       "docking-results" :routing.results/docking}}]))
 
 
 (defn parse

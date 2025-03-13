@@ -19,7 +19,7 @@
 
 (defn tree-search-form
   []
-  (let [form @(re-frame/subscribe [:msa/form])]
+  (let [form @(re-frame/subscribe [:forms/msa])]
     [v
      :class (css/form-section)
      :children
@@ -60,11 +60,31 @@
                                              :params.uniprot/taxonomy
                                              :really-use-broad-taxonomic-category?])
             :help-title "Hey this is crazy!"
-            :help-text  "But the number of results will be huuuge and somebody needs to download all of this."}])]]]]))
+            :help-text  "But the number of results will be huuuge and somebody needs to download all of this."}])]]
+      [v
+         :children
+         [[h :src (at)
+           :gap      "4px"
+           :children [[:span.field-label "Gene Names"]
+                      [re-com/info-button
+                       :src (at)
+                       :info [v :src (at)
+                              :children [[:p.info-heading "Input Gene Names"]
+                                         [re-com/hyperlink-href :src (at)
+                                          :label  "Link to docs."
+                                          :href   ""
+                                          :target "_blank"]]]]]]
+          [re-com/input-textarea
+           :model (-> form :params.uniprot/protein :gene-names)
+         :on-change #(re-frame/dispatch [::form-events/set-form-data
+                                         :msa
+                                         :params.uniprot/protein
+                                         :gene-names
+                                         %])]]]]]))
 
 (defn blast-form
   []
-  (let [form @(re-frame/subscribe [:msa/form])]
+  (let [form @(re-frame/subscribe [:forms/msa])]
     [v
      :class (css/form-section)
      :children
@@ -107,7 +127,7 @@
 
 (defn uniref-form
   []
-  (let [form @(re-frame/subscribe [:msa/form])]
+  (let [form @(re-frame/subscribe [:forms/msa])]
     [v
      :class (css/form-section)
      :children
@@ -150,8 +170,7 @@
 
 (defn inputs
   []
-  (let [form @(re-frame/subscribe [:msa/form])]
-    []
+  (let [form @(re-frame/subscribe [:forms/msa])]
     [v
      :class (css/form-section)
      :children
@@ -179,26 +198,7 @@
                                            :params.uniprot/protein
                                            :protein-ids
                                            %])]]]
-        [v
-         :children
-         [[h :src (at)
-           :gap      "4px"
-           :children [[:span.field-label "Gene Names"]
-                      [re-com/info-button
-                       :src (at)
-                       :info [v :src (at)
-                              :children [[:p.info-heading "Input Gene Names"]
-                                         [re-com/hyperlink-href :src (at)
-                                          :label  "Link to docs."
-                                          :href   ""
-                                          :target "_blank"]]]]]]
-          [re-com/input-textarea
-           :model (-> form :params.uniprot/protein :gene-names)
-         :on-change #(re-frame/dispatch [::form-events/set-form-data
-                                         :msa
-                                         :params.uniprot/protein
-                                         :gene-names
-                                         %])]]]]]]]))
+        ]]]]))
         
 
 "Search by taxonomy uses these gene names in tandem with the taxon implied by the protein ID."
@@ -231,5 +231,5 @@
 (defn msa-panel []
   [msa-form])
 
-(defmethod routing/panels :msa [] [msa-panel])
-(defmethod routing/header :msa [] [msa-header])
+(defmethod routing/panels :routing.pipelines/msa [] [msa-panel])
+(defmethod routing/header :routing.pipelines/msa [] [msa-header])

@@ -198,3 +198,32 @@
                      :position "relative"
                      :border "solid grey 1px"}}
        "Loading viewer..."])}))
+
+
+(defn table
+  [data & {:keys [columns]}]
+  (if (nil? @data)
+    [com/throbber :size :regular]
+    [v
+     :width "1550px"
+     :max-width "1550px"
+     :children
+     [[h
+       :children
+       [[com/simple-v-table
+         :src                       (at)
+         :model data
+         :max-width "1000px"
+         :columns
+         (mapv (fn [defaults input]
+                 (merge defaults input))
+               (map (fn [col]
+                      (assoc
+                       {:width 300
+                        :align "center"
+                        :vertical-align "middle"}
+                       :row-label-fn #((:id col) %)
+                       :header-label (name (:id col))))
+                    columns)
+               columns)
+         :row-height                35]]]]]))
