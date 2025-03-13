@@ -60,7 +60,7 @@
                                (re-find fragment protein-id))
                        {:id protein-id :protein-name protein-name :gene-name gene-name}))))
            (take 6)
-           (into [])))))
+           (into [{:id nil :protein-name "-" :gene-name nil}])))))
 
 (defn protein-search
   [& {:keys [proteome on-change model]}]
@@ -87,6 +87,8 @@
       [com/typeahead
        :src (at)
        :model model
+       :rigid? true
+       :change-on-blur? true
        :on-change
        #(when on-change
           (on-change %))

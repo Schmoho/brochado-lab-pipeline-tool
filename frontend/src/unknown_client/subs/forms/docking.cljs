@@ -31,5 +31,15 @@
 (rf/reg-sub
  :forms.docking/selected-proteins-model
  :<- [:forms/docking]
- (fn [form]
-   (set (:selected-proteins-model form))))
+ (fn
+   ([form]
+    (:selected-proteins-model form))
+   ([form [_ id]]
+    (get (:selected-proteins-model form) id))))
+
+(rf/reg-sub
+ :forms.docking/selected-proteins-model-all
+ :<- [:forms/docking]
+ (fn
+   [form]
+   (:selected-proteins-model form)))
