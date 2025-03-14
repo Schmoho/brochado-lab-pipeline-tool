@@ -88,7 +88,7 @@
 (defn brochado-logo
   []
   [:img
-   {:src "https://static.wixstatic.com/media/a5509c_a999c4781dd844c5a49a6bc10f87ceb4~mv2.png/v1/fill/w_326,h_84,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/LabLogo_name.png"
+   {:src "/assets/logo.png"
     :width "260px"
     :height "auto"}])
 

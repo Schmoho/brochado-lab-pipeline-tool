@@ -6,7 +6,7 @@
    [ajax.core :as ajax]
    [day8.re-frame.tracing :refer-macros [fn-traced]]))
 
-(def base-api "http://localhost:3001")
+(def base-api "http://localhost:3001/api")
 
 (rf/reg-event-fx
  ::http-get

@@ -14,7 +14,7 @@
    "Look at volcanos!"
    [:<>
     [:p "Use the interactive viewer to search for interesting hits in an omics data set."]
-    [:img {:src "https://c.pxhere.com/photos/7e/7c/mount_fuji_volcano_japan_sky_sunset_painting-989657.jpg!d"
+    [:img {:src "/assets/fluff-volcano.jpg"
            :width "400px"
            :height "auto"}]]
    :on-click
@@ -28,7 +28,7 @@
     [:p {:class "card-text"} (str "Use BLAST, UniRef or gene name-based search along a taxonomic tree "
                                   "to assess the taxonomic diversity of one or multiple proteins. "
                                   "Focus on domains of interest, identify conserved or non-conserved sites.")]
-    [:img {:src "https://upload.wikimedia.org/wikipedia/commons/7/79/RPLP0_90_ClustalW_aln.gif"
+    [:img {:src "/assets/fluff-alignment.gif"
            :width "400px"
            :height "auto"}]]
    :on-click
@@ -40,7 +40,7 @@
    "Comparative Docking"
    [:<>
     [:p "Prepare a set of homologous protein structures for comparative docking, run the docking on your on machine and upload the results to get a nice set of graphics."]
-    [:img {:src "https://upload.wikimedia.org/wikipedia/commons/9/97/Docking_representation_2.png"
+    [:img {:src "/assets/fluff-docking.png"
            :width "400px"
            :height "auto"}]]
    :on-click

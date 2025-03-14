@@ -79,7 +79,7 @@
        (catch Throwable t
          false)))
 
-(defn hash [x]
+(defn get-hash [x]
   (str/replace (str (clojure.core/hash x)) "-" "0"))
 
 

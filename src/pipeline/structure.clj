@@ -15,7 +15,7 @@
    {:keys [plddt-tail-cutoff]
     :as   params}]
   (let [params      (assoc params :obabel/version (obabel/obabel-version))
-        params-hash (utils/hash params)]
+        params-hash (utils/get-hash params)]
     (if-let [pdbqt-file (db/pdbqt-by-id protein-id params-hash)]
       pdbqt-file
       (let [pdb  (db/pdb-by-id protein-id)
@@ -59,7 +59,7 @@
   [pubchem-compound-id]
   (let [params      {:obabel/args    obabel/obabel-3d-conformer-args
                      :obabel/version (obabel/obabel-version)}
-        params-hash (utils/hash params)
+        params-hash (utils/get-hash params)
         path        [:processed :obabel :ligand :pdbqt pubchem-compound-id params-hash]]
     (if-let [pdbqt-file (db/pdbqt-file-by-compound-id pubchem-compound-id params-hash)]
       pdbqt-file

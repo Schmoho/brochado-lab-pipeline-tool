@@ -3,7 +3,6 @@
    [clojure.java.shell :as sh]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
-   [clojure.spec.alpha :as s]
    [utils :as utils]))
 
 #_(utils/is-command-available? "obabel")

@@ -13,12 +13,12 @@
 
 ;; ### Simple Wrappers ###
 
-(defn list
+(defn get-list
   [database]
   (-> (http/get (format "%s/list/%s" kegg-api-base database))
       :body))
 
-(defn get
+(defn get-entity
   [id]
   (log/debug "Get entity" id "from KEGG.")
   (-> (http/get (format "%s/get/%s" kegg-api-base id))
@@ -27,7 +27,7 @@
 (defn get-ids
   [ids]
   (->> (for [ids (partition-all 10 ids)]
-         (get (str/join "+" ids)))
+         (get-entity (str/join "+" ids)))
        (apply concat)))
 
 (defn get-orthology
@@ -46,7 +46,7 @@
       :body
       (json/parse-string true)))
 
-(defn find
+(defn find-query
   [database query]
   (-> (http/get (format "%s/find/%s/%s" kegg-api-base database query))
       :body))
@@ -81,7 +81,7 @@
 (defn get-all-genes!
   [organism]
   (future
-    (->> (list organism)
+    (->> (get-list organism)
          #_(map first)
          #_(map (comp parse-kegg-get-result kegg-get))
          #_(json/generate-string)
@@ -107,7 +107,7 @@
 (def download-kegg-xform
    (comp
     (partition-all 10)
-    (map (comp kegg.parser/parse-kegg-get-result get (partial str/join "+")))))
+    (map (comp kegg.parser/parse-kegg-get-result get-entity (partial str/join "+")))))
 
 (comment
   (def ncbi-tax-id->kegg-organism
@@ -135,9 +135,9 @@
   ;;     ["99287" "stm"]
   ;;     ["588858" "seo"])
 
-  (map (comp count str/split-lines list) ["eco" "ecr" "pae" "pau" "stm" "seo"])
+  (map (comp count str/split-lines get-list) ["eco" "ecr" "pae" "pau" "stm" "seo"])
 
-  (->> (list "eco")
+  (->> (get-list "eco")
        (kegg.parser/parse-genome-list)
        (take 12)
        (transduce
@@ -148,13 +148,13 @@
        (apply concat)
        #_(utils/write! "kegg-eco.edn"))
 
-  (str/split-lines (list "br:08908"))
+  (str/split-lines (get-list "br:08908"))
 
-  (str/split-lines (find "brite" "taxonomy"))
+  (str/split-lines (find-query "brite" "taxonomy"))
 
   (ncbi-tax-id->kegg-organism "208964")
 
-  (->> (list "genome")
+  (->> (get-list "genome")
        (str/split-lines)
        (filter (fn [s]
                  (str/includes?

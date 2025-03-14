@@ -34,7 +34,7 @@
                  [metasoarous/oz "1.6.0-alpha36"]]
 
   :source-paths ["src"]
-  :resource-paths ["resources" "frontend/dist"]
+  :resource-paths ["resources"]
 
   :profiles {:dev {:dependencies [[ring/ring-mock "0.4.0"]
                                   [ring/ring-devel "1.9.5"]

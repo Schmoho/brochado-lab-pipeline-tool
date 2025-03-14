@@ -5,7 +5,6 @@
    [fast-edn.core :as edn]
    [clojure.java.io :as io]
    [clojure.tools.logging :as log]
-   [graph.accrete.core :as accrete]
    [server.core :as server]))
 
 (def config (atom nil))
@@ -24,6 +23,5 @@
                                (edn/read-string (slurp (io/resource "default-config.edn"))))]
           (log/info "Running with config:" input-config)
           (reset! config input-config)
-          (accrete/start! accrete/system)
           (server/start! (:http-port @config)))))))
 

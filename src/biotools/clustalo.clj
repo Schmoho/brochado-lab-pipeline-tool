@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]))
 
-(utils/is-command-available? "clustalo")
+#_(utils/is-command-available? "clustalo")
 
 (def mapping
   {:sequence-input   {:in         "--infile"

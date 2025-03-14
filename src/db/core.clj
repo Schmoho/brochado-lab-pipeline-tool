@@ -62,7 +62,7 @@
       (utils/read-file inserted-file)
       inserted-file)))
 
-(defn get
+(defn db-get
   [path & {:keys [read?]
            :or {read? true}}]
   (some->> (map name path)

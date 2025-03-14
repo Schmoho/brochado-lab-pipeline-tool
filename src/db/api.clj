@@ -8,7 +8,7 @@
 (defn protein-by-id
   [protein-id]
   (with-meta
-    (if-let [protein (db/get [:raw :uniprot :uniprotkb protein-id])]
+    (if-let [protein (db/db-get [:raw :uniprot :uniprotkb protein-id])]
      protein
      (let [protein (api.uniprot/uniprotkb-entry protein-id)]
        (db/insert! [:raw :uniprot :uniprotkb protein-id] "edn" protein)))
@@ -30,7 +30,7 @@
 
 (defn pdb-by-id
   [protein-id]
-  (if-let [pdb-file (db/get [:raw :afdb :pdb protein-id])]
+  (if-let [pdb-file (db/db-get [:raw :afdb :pdb protein-id])]
     pdb-file
     (:pdb (acquire-structures-by-id! protein-id))))
 
@@ -42,14 +42,14 @@
                    (= 1 (count structure-from-file-system))
                    false)
             (utils/read-file (first structure-from-file-system))
-            (first (afdb/get-pdb id)))]
+            (first (afdb/db-get-pdb id)))]
       {:status 200
        :body {:pdb structure}})
 
 (defn pdbqt-by-id
   [protein-id params-hash]
   (tap> [protein-id params-hash])
-  (db/get [:processed :obabel :protein :pdbqt protein-id params-hash]))
+  (db/db-get [:processed :obabel :protein :pdbqt protein-id params-hash]))
 
 (defn- acquire-compound-sdf-by-id!
   [pubchem-compound-id & {:keys [read?]
@@ -66,7 +66,7 @@
 
 (defn pdbqt-file-by-compound-id
   [pubchem-compound-id parameter-hash]
-  (db/get (conj [:processed :obabel :ligand :pdbqt pubchem-compound-id parameter-hash]
+  (db/db-get (conj [:processed :obabel :ligand :pdbqt pubchem-compound-id parameter-hash]
                 pubchem-compound-id)
           :read? false))
 
