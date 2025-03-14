@@ -7,3 +7,9 @@
  :<- [:forms/all-forms]
  (fn [forms]
    (:volcano-viewer forms)))
+
+(rf/reg-sub
+ :forms.volcano/go-term-selection
+ :<- [:forms/volcano-viewer]
+ (fn [form]
+   (set (:go-filter form))))

@@ -12,6 +12,12 @@
       (-> (vegaEmbed (str "#" id) (clj->js spec))
           (.then #(when on-change
                     (on-change (.-view %))))))
+    #_#_:component-did-update
+    (fn [_]
+      (.log js/console "update")
+      (-> (vegaEmbed (str "#" id) (clj->js spec))
+          (.then #(when on-change
+                    (on-change (.-view %))))))
     :reagent-render
     (fn []
       [:div {:id id

@@ -14,12 +14,6 @@
    (->> raw :taxon)))
 
 (rf/reg-sub
- :data/taxons-map
- :<- [:data/raw]
- (fn [raw]
-   (->> raw :taxon)))
-
-(rf/reg-sub
  :data/taxons
  :<- [:data/raw]
  (fn [raw]

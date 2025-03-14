@@ -46,13 +46,6 @@
       (update :already-executed-queries conj path))))
 
 (rf/reg-event-db
- ::http-get-success
- (fn-traced
-  [db [_ path response]]
-  (-> (update-in db (butlast path) #(merge % response))
-      (update :already-executed-queries conj path))))
-
-(rf/reg-event-db
  ::http-get-success-2
  (fn-traced
   [db [_ path response]]

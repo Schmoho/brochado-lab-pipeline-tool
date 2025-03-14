@@ -1,136 +1,19 @@
 (ns unknown-client.views.volcano-viewer
   (:require
+   [unknown-client.utils :as utils]
+   [unknown-client.vega-utils :as vega-utils]
    [unknown-client.routing :as routing]
    [unknown-client.events.forms :as form-events]
    [unknown-client.events.vega :as vega-events]
    [unknown-client.views.common.forms :as forms]
    [unknown-client.views.common.structure :as structure]
+   [unknown-client.subs.forms.volcano-viewer]
    [unknown-client.views.plots.volcano :as volcano-plots]
    [unknown-client.views.vega :as vega]
-   [clojure.set :as set]
    [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
    [re-frame.core :as rf]))
-
-(defn database-lookup-xform
-  [db-name & {:keys [just-take-first?]
-              :or {just-take-first? true}}]
-  (comp
-   (map (juxt :primaryAccession :uniProtKBCrossReferences))
-   (map (juxt first (comp (partial map :id)
-                          (partial filter #(= db-name (:database %)))
-                          second)))
-   (filter (comp not-empty second))
-   (if just-take-first?
-     (map (juxt first (comp first second)))
-     (map identity))))
-
-  (defn orthology-mapping-rel
-    [uniprot-proteome kegg-proteome]
-    (->> (set/join
-          (->> uniprot-proteome
-               (transduce
-                (comp
-                 (database-lookup-xform "KEGG")
-                 (map (partial zipmap [:uniprot-id :kegg-id])))
-                conj
-                []))
-          (->> kegg-proteome
-               (map (comp
-                     #(update % :orthology ffirst)
-                     #(select-keys % [:kegg-id :orthology])
-                     #(set/rename-keys % {:id :kegg-id})))))))
-
-(defn cross-data
-  [data-set-1 data-set-2]
-  (set/join
-   (->> data-set-1
-        (map #(set/rename-keys
-               %
-               {:effect_size                 :effect_size_1
-                :effect_type                 :effect_type_1
-                :log_transformed_f_statistic :log_transformed_f_statistic_1
-                :fdr                         :fdr_1
-                :gene_name                   :gene_name_1})))
-   (->> data-set-2
-        (map
-         #(set/rename-keys
-           %
-           {:effect_size                 :effect_size_2
-            :effect_type                 :effect_type_2
-            :log_transformed_f_statistic :log_transformed_f_statistic_2
-            :fdr                         :fdr_2
-            :gene_name                   :gene_name_2})))))
-
-(defn uniprot-kegg-id-mapping-rel
-    [uniprot-proteome-1 kegg-proteome-1
-     uniprot-proteome-2 kegg-proteome-2]
-    (->> (set/join
-          (set (filter (comp not-empty :orthology)
-                       (set/rename (orthology-mapping-rel
-                                    uniprot-proteome-1
-                                    kegg-proteome-1)
-                                   {:uniprot-id :uniprot-id-1
-                                    :kegg-id    :kegg-id-1})))
-          (set (filter (comp not-empty :orthology)
-                       (set/rename (orthology-mapping-rel
-                                    uniprot-proteome-2
-                                    kegg-proteome-2)
-                                   {:uniprot-id :uniprot-id-2
-                                    :kegg-id    :kegg-id-2}))))))
-
-(defn cross-species-data
-  [{:keys [data-set-1
-           uniprot-proteome-1
-           kegg-proteome-1
-           data-set-2
-           uniprot-proteome-2
-           kegg-proteome-2]}]
-  (let [mapping-rel   (uniprot-kegg-id-mapping-rel
-                       uniprot-proteome-1
-                       kegg-proteome-1
-                       uniprot-proteome-2
-                       kegg-proteome-2)
-        by-uniprot-id (-> (group-by :uniprot-id-1 mapping-rel)
-                          (update-vals first))
-        postfix-keys (fn [k postfix]
-                       (keyword (str (name k) postfix)))]
-    (->> data-set-1
-         (map
-          (fn [row]
-            (tap> row)
-            (let [protein-id (:protein_id row)
-                  mapping    (by-uniprot-id protein-id)]
-              (-> (update-keys row #(postfix-keys % "_1"))
-                  (assoc :protein_id_2
-                         (:uniprot-id-2 mapping)
-                         :orthology_id
-                         (:orthology mapping)
-                         :kegg_id_1
-                         (:kegg-id-1 mapping)
-                         :kegg_id_2
-                         (:kegg-id-2 mapping))))))
-         (set/join
-          (map
-           (fn [row]
-             (update-keys row #(postfix-keys % "_2")))
-           data-set-2)))))
-
-(defn decorate-data
-  [data]
-  (->> data
-       #_(filter (go-term-filtering-fn proteome "GO:0009252"))
-       (map
-        #(cond
-           (:orthology_id %)
-           (assoc % :url (str "https://www.kegg.jp/entry/"
-                              (:orthology_id %)))
-           (:protein_id %)
-           (assoc % :url (str "https://www.uniprot.org/uniprotkb/"
-                              (:protein_id %)))
-           :else %))))
-
 
 (defn data-set-chooser
   [volcano-form volcanos]
@@ -155,134 +38,164 @@
                :on-change
                #(rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-2 %])]]])
 
+(defn clickable-volcano
+  [table]
+  (let [volcano-form (rf/subscribe [:forms/volcano-viewer])]
+    (fn []
+      [h
+       :children
+       [[vega/vega-chart
+         :spec (volcano-plots/single-pan table)
+         :id "v1"
+         :on-change
+         #(do
+            (rf/dispatch
+             [::vega-events/register-signal-listener
+              %
+              {:signal-name
+               "pick"
+               :listener-fn
+               (fn [_signal-name signal-value]
+                 (rf/dispatch [::form-events/set-form-data
+                               :volcano-viewer
+                               :volcano-1-selection
+                               (vega-utils/clicked-points-signal signal-value)]))}])
+            (rf/dispatch [::form-events/set-form-data
+                          :volcano-viewer
+                          :volcano-1-view
+                          %]))]
+        [v
+         :children
+         [[forms/info-label "Selected genes" [:div ""]]
+          [v
+           :children
+           (into
+            []
+            (->> @volcano-form
+                 :volcano-1-selection
+                 (map #(vector :span (:gene_name (nth table %))))))]]]]])))
+
+(defn searchable-volcano
+  [table]
+  [h
+   :children
+   [[vega/vega-chart
+     :spec (volcano-plots/single-pan-searchable table)
+     :id "v1_2"]
+    [v
+     :children
+     [[forms/info-label
+       "Search by gene name"
+       [:div ""]]
+      [forms/input-text
+       :attr {:id "test"}]]]]])
+
+(defn brushable-volcano
+  [table]
+  (let  [volcano-form (rf/subscribe [:forms/volcano-viewer])]
+    (fn []
+      [h
+       :children
+       [[vega/vega-chart
+         :spec (volcano-plots/single-brush table)
+         :id "v2"
+         :on-change
+         #(do
+            (rf/dispatch [::vega-events/register-signal-listener
+                          %
+                          {:signal-name
+                           "brush"
+                           :listener-fn
+                           (fn [_signal-name signal-value]
+                             (rf/dispatch [::form-events/set-form-data
+                                           :volcano-viewer
+                                           :volcano-3-selection
+                                           (js->clj signal-value)]))}])
+            (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-3-view %]))]
+        [v
+         :children
+         [[forms/info-label
+           "Selected genes"
+           [:div ""]]
+          [v
+           :children
+           (->> table
+                (vega-utils/brushed-points (:volcano-3-selection @volcano-form))
+                (map #(vector :span %))
+                (into []))]]]]])))
+
+(defn cross-plot
+  [table-1 table-2]
+  [:div
+   {:style {:width  "800px"
+            :height "800px"}}
+   [vega/vega-chart
+    :width "100%"
+    :height "100%"
+    :spec
+    (volcano-plots/two-volcanoes-cross-plot
+     (vega-utils/cross-data table-1 table-2)
+     {:x-label "Cefotaxime Fold Change"
+      :y-label "Amikacin Fold Change"
+      :width   600
+      :height  600})
+    :id "v3"]])
+
+(defn filterable-volcano
+  [table proteome selection]
+  (let [go-term-choice (vec (utils/proteome-go-terms proteome))
+        filterfn (if (first @selection)
+                   (utils/go-term-filtering-fn proteome (first @selection))
+                   (constantly true))]
+    [h
+     :children
+     [[h
+       :children
+       [[vega/vega-chart
+         :spec (volcano-plots/single-pan (filter filterfn table))
+         :id "v8"]
+        [com/multi-select :src (at)
+         :choices       go-term-choice
+         :model         selection
+         :on-change     #(rf/dispatch [::form-events/set-form-data :volcano-viewer :go-filter %])
+         :width         "450px"
+         :left-label    "Present GO-terms"
+         :right-label   "Selected GO-terms"
+         :filter-box? true]]]]]))
+
 (defn volcano-panel
   []
   (let [volcanos     (rf/subscribe [:data/volcanos])
         volcano-form (rf/subscribe [:forms/volcano-viewer])]
     (fn []
       (let [volcano-1 (get @volcanos (:volcano-1 @volcano-form))
-            volcano-2 (get @volcanos (:volcano-2 @volcano-form))]
+            volcano-2 (get @volcanos (:volcano-2 @volcano-form))
+            taxon      (-> volcano-1 :meta :taxon)
+            proteome   @(rf/subscribe [:data/proteome taxon])]
         [v
          :children
          [[data-set-chooser @volcano-form @volcanos]
           [structure/collapsible-accordion
            (when-let [table (:table volcano-1)]
-             ["Plot Clickable"
-              [h
-               :children
-               [[vega/vega-chart
-                 :spec (volcano-plots/single-pan table)
-                 :id "v1"
-                 #_:on-change
-                 #_(rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1-view %])
-                 :on-change
-                 #(do
-                    (rf/dispatch
-                     [::vega-events/register-signal-listener
-                      %
-                      {:signal-name
-                       "pick"
-                       :listener-fn
-                       (fn [signal-name signal-value]
-                         (.log js/console signal-name (js->clj signal-value))
-                         (rf/dispatch [::form-events/set-form-data
-                                       :volcano-viewer
-                                       :volcano-1-selection
-                                       (-> (js->clj signal-value)
-                                           (get "vlPoint")
-                                           (get "or")
-                                           (->> (map (fn [a] (get a "_vgsid_")))))]))}])
-                    (rf/dispatch [::form-events/set-form-data
-                                  :volcano-viewer
-                                  :volcano-1-view
-                                  %]))]
-                [v
-                 :children
-                 [[forms/info-label
-                   "Selected genes"
-                   [:div ""]]
-                  [v
-                   :children
-                   (into
-                    []
-                    (->> @volcano-form
-                         :volcano-1-selection
-                         (map #(vector :span (:gene_name (nth table %))))))]]]]]])
+               ["Plot Clickable"
+                [clickable-volcano table]])
            (when-let [table (:table volcano-1)]
-             ["Plot Searchable"
-              [h
-               :children
-               [[vega/vega-chart
-                 :spec (volcano-plots/single-pan-searchable table)
-                 :id "v1_2"]
-                [v
-                 :children
-                 [[forms/info-label
-                   "Search by gene name"
-                   [:div ""]]
-                  [forms/input-text
-                   :attr {:id "test"}]]]]]])
+               ["Plot Searchable"
+                [searchable-volcano table]])
            (when-let [table (:table volcano-1)]
-             ["Plot Brushable"
-              [h
-               :children
-               [[vega/vega-chart
-                 :spec (volcano-plots/single-brush table)
-                 :id "v2"
-                 :on-change
-                 #(do
-                    (rf/dispatch [::vega-events/register-signal-listener
-                                  %
-                                  {:signal-name
-                                   "brush"
-                                   :listener-fn
-                                   (fn [signal-name signal-value]
-                                     (js/console.log "Brush selection updated:"
-                                                     (-> (js->clj signal-value)))
-                                     (rf/dispatch [::form-events/set-form-data
-                                                   :volcano-viewer
-                                                   :volcano-3-selection
-                                                   (-> (js->clj signal-value))]))}])
-                    (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-3-view %]))]
-                [v
-                 :children
-                 [[forms/info-label
-                   "Selected genes"
-                   [:div ""]]
-                  [v
-                   :children
-                   (into
-                    []
-                    (let [signal (:volcano-3-selection @volcano-form)
-                          [x-left x-right] (get signal "effect_size")
-                          [y-left y-right] (get signal "log_transformed_f_statistic")]
-                      (when (not-empty signal)
-                        (->> table
-                            (filter
-                             (fn [{:keys [effect_size log_transformed_f_statistic]}]
-                               (and
-                                (<= x-left effect_size x-right)
-                                (<= y-left log_transformed_f_statistic y-right))))
-                            (map #(vector :span (:gene_name %)))))))]]]]]])
+               ["Plot Brushable"
+                [brushable-volcano table]])
+           (when-let [table (:table volcano-1)]
+             (let [taxon          (-> volcano-1 :meta :taxon)
+                   proteome       @(rf/subscribe [:data/proteome taxon])]
+               ["GO-term filterable"
+                [filterable-volcano table proteome (rf/subscribe [:forms.volcano/go-term-selection])]]))
            (let [table-1 (:table volcano-1)
                  table-2 (:table volcano-2)]
-             (when (and table-1 table-2)
-               ["Cross-Plot"
-                [:div
-                 {:style {:width "800px"
-                          :height "800px"}}
-                 [vega/vega-chart
-                  :width "100%"
-                  :height "100%"
-                  :spec
-                  (volcano-plots/two-volcanoes-cross-plot
-                   (cross-data table-1
-                               table-2)
-                   {:x-label "Cefotaxime Fold Change"
-                    :y-label "Amikacin Fold Change"
-                    :width   600
-                    :height  600})
-                  :id "v3"]]]))]]]))))
+               (when (and table-1 table-2)
+                 ["Cross-Plot" [cross-plot table-1 table-2]]))]]]))))
+
+
 
 (defmethod routing/panels :routing/volcano-viewer [] [volcano-panel])
 (defmethod routing/header :routing/volcano-viewer []
