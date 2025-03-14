@@ -8,7 +8,7 @@ export default defineConfig({
     watch: {
 	// Exclude .cljs files
 	// so changes dont trigger multiple reloads
-	ignored: "**/*.js",
+	// ignored: "**/*.js",
 	usePolling: true,
 	hmr: false
     },

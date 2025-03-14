@@ -1,6 +1,6 @@
 (ns biotools.vina
   (:require
-   [biotools.utils :refer :all]
+   [utils :refer :all]
    [clojure.java.shell :as sh]
    [clojure.string :as str]))
 
