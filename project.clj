@@ -51,6 +51,7 @@
                        :aot          :all
                        :omit-source  true}}
 
-  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"
+  :jvm-opts ["-Dslf4j.internal.verbosity=WARN"
+             "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"
              "-Xmx8G"
              "-Xms1G"])

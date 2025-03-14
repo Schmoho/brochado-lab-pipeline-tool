@@ -2,10 +2,10 @@
   (:require
    [cheshire.core :as json]
    [clj-http.client :as http]
-   [clojure.string :as str]
    [mongo.core :as mongo]
    [clojure.tools.logging :as log]
-   [utils :as utils]))
+   [utils :as utils])
+  (:refer-clojure :exclude [get]))
 
 (defn get
   ([url]

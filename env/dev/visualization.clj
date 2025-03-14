@@ -1,4 +1,4 @@
-(ns pipeline.visualization
+(ns visualization
   (:require
    [utils :as utils]
    [biodb.uniprot.api :as api.uniprot]
