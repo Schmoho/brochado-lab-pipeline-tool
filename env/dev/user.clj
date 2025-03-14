@@ -2,161 +2,112 @@
   (:require
    [biodb.ncbi.api :as ncbi.api]
    [biodb.uniprot.api :as uniprot.api]
-   [cheshire.core :as json]
-   [clj-http.client :as http]
    [clojure.java.io :as io]
-   [neo4clj.client :as client]
    [portal.api :as p]
    [portal.viewer :as v]
    [utils :as utils]))
 
-;; (def last-val (atom nil))
-;; (def last-val-tap #(reset! last-val %))
-;; (add-tap last-val-tap)
-;; @last-val
-;; #_(add-tap (bound-fn* clojure.pprint/pprint))
+;; REPL data setup
+(do
+  (def brochado-strains
+    (utils/read-file  (io/resource "brochado-strains.edn")))
+  (def ncbi-tax-id "652611")
+  (def ncbi-taxon-report
+    (ncbi.api/taxon-dataset-report ncbi-tax-id {"page_size" 1000}))
+  (def ncbi-genome-annotation-summary
+    (ncbi.api/genome-annotation-summary "GCA_000006765.1"))
 
-;; (alter-var-root #'s/*explain-out* (constantly expound/printer))
+  (def ncbi-genome-annotation-report
+    (ncbi.api/genome-annotation-report "GCA_000006765.1"))
 
-;; (st/instrument)
+  (def ncbi-genome-dataset-report
+    (ncbi.api/genome-dataset-report "GCA_000006765.1"))
 
-(def brochado-strains
-  (utils/read-file  (io/resource "brochado-strains.edn")))
+  (def uniprot-taxonomy-pao1
+    (uniprot.api/taxonomy-entry "208964"))
 
-(def ncbi-tax-id "652611")
+  (def uniprot-taxonomy-ecoli
+    (uniprot.api/taxonomy-entry "83333"))
 
-(def ncbi-taxon-report
-  (ncbi.api/taxon-dataset-report ncbi-tax-id {"page_size" 1000}))
+  (def uniprot-proteome
+    (first (uniprot.api/proteomes-by-taxon-id "208964")))
 
-(def ncbi-genome-annotation-summary
-  (ncbi.api/genome-annotation-summary "GCA_000006765.1"))
+  (def uniprot-protein
+    (uniprot.api/uniprotkb-entry "G3XCV0"))
 
-(def ncbi-genome-annotation-report
-  (ncbi.api/genome-annotation-report "GCA_000006765.1"))
+  (def uniparc-protein
+    (uniprot.api/uniparc-entry "UPI00053A1130"))
 
-(def ncbi-genome-dataset-report
-  (ncbi.api/genome-dataset-report "GCA_000006765.1"))
+  #_(def uniprot-proteome-proteins
+      (uniprot.api/proteins-by-proteome "UP000002438"))
 
-(def uniprot-taxonomy-pao1
-  (uniprot.api/taxonomy-entry "208964"))
+  (def uniprot-protein-cross-references
+    (:uniProtKBCrossReferences uniprot-protein)))
 
-(def uniprot-taxonomy-ecoli
-  (uniprot.api/taxonomy-entry "83333"))
+(do
+  (def defaults
+    {string? v/text
+     bytes?  v/bin})
 
-(def uniprot-proteome
-  (first (uniprot.api/proteomes-by-taxon-id "208964")))
+  (defn- get-viewer-f [value]
+    (or (some (fn [[predicate viewer]]
+                (when (predicate value)
+                  viewer))
+              defaults)
+        v/tree))
 
-(def uniprot-protein
-  (uniprot.api/uniprotkb-entry "G3XCV0"))
+  (comment
+    (defn default-submit [value]
+      (let [f (get-viewer-f value)]
+        (p/submit (f value))))
 
-(def uniparc-protein
-  (uniprot.api/uniparc-entry "UPI00053A1130"))
+    (add-tap #'default-submit))
 
-#_(def uniprot-proteome-proteins
-    (uniprot.api/proteins-by-proteome "UP000002438"))
+  ;; this just pipes every eval in the REPL to portal
+  ;; - it's amazing
+  (defn submit [value]
+    (if (-> value meta :portal.nrepl/eval)
+      (let [{:keys [stdio report result]} value]
+        (when stdio (p/submit stdio))
+        (when report (p/submit report))
+        (p/submit result))
+      (p/submit value)))
 
-(def uniprot-protein-cross-references
-  (:uniProtKBCrossReferences uniprot-protein))
+  (add-tap submit)
+  (comment (remove-tap submit))
 
-(defn clear-db!
-  [connection]
-  (client/execute! connection "MATCH (n) DETACH DELETE n"))
+  (def p (p/open  {:portal.colors/theme :portal.colors/solarized-light}))
+  (comment (p/close p)))
 
-(defn first-map-level
-  [m]
-  (reduce-kv
-   (fn [acc k v]
-     (if (not (coll? v))
-       (assoc acc k v)
-       acc))
-   {}
-   m))
+(comment
+  (require '[clojure.spec.alpha.test :as st])
+  (st/instrument)
+  ;; (alter-var-root #'s/*explain-out* (constantly expound/printer))
 
-(defn get
-  [url]
-  (-> (http/get url)
-      :body
-      (json/parse-string true)))
+   ;; this documents how data needs to be formatted to be printeable
+  ;; in fancy ways by portal
+  (require '[clojure.spec.alpha :as sp])
 
-(defn ->uniprot-protein-cross-references
-  [db]
-  (filter #(= db (:database %))
-          (:uniProtKBCrossReferences uniprot-protein)))
+;; collection of maps of [{:x 0 :y 0} ...] maps
+  (sp/def :tabular/x number?)
+  (sp/def :tabular/y number?)
+  (sp/def ::data
+    (sp/keys :req-un [:tabular/x :tabular/y]))
+  (sp/def ::tabular-data
+    (sp/coll-of ::data :min-count 2))
 
-#_(def p (p/open  {:portal.colors/theme :portal.colors/solarized-light}))
+;; :x [0 1 2 ...] :y [0 1 2 ...]
+  (sp/def :numerical-coll/x
+    (sp/coll-of number? :min-count 2))
+  (sp/def :numerical-coll/y
+    (sp/coll-of number? :min-count 2))
+  (sp/def ::numerical-collection
+    (sp/keys :req-un [:numerical-coll/x :numerical-coll/y]))
 
-#_(p/close p )
+  (s/exercise ::tabular-data)
 
-
-
-(def defaults
-  {string? v/text
-   bytes?  v/bin})
-
-(defn- get-viewer-f [value]
-  (or (some (fn [[predicate viewer]]
-              (when (predicate value)
-                viewer))
-            defaults)
-      v/tree))
-
-(defn default-submit [value]
-  (let [f (get-viewer-f value)]
-    (p/submit (f value))))
-
-;; (add-tap #'default-submit)
-
-;; If you would like to process eval results, you can do so with a custom tap handler, such as the following:
-
-(defn submit [value]
-  (if (-> value meta :portal.nrepl/eval)
-    (let [{:keys [stdio report result]} value]
-      (when stdio (p/submit stdio))
-      (when report (p/submit report))
-      (p/submit result))
-    (p/submit value)))
-
-(add-tap submit)
-
-
-;; (remove-tap submit)
-
-;; (tap> ncbi-tax-id)
-
-;; (tap> ncbi-taxon-report)
-
-;; (tap> ncbi-genome-annotation-summary)
-
-;; (tap> ncbi-genome-annotation-report)
-
-;; (tap> ncbi-genome-dataset-report)
-
-;; (tap> uniprot-taxonomy-entry)
-
-;; (tap> uniprot-proteome)
-
-;; (tap> (with-meta uniprot-protein
-;;         {:name (format "Uniprot Protein %s" (:primaryAccession uniprot-protein))}))
-
-;; (tap> (frequencies uniprot-protein-cross-references))
-
-;; (require '[clojure.spec.alpha :as sp])
-
-;; ;; collection of maps of [{:x 0 :y 0} ...] maps
-;; (sp/def :tabular/x number?)
-;; (sp/def :tabular/y number?)
-;; (sp/def ::data
-;;   (sp/keys :req-un [:tabular/x :tabular/y]))
-;; (sp/def ::tabular-data
-;;   (sp/coll-of ::data :min-count 2))
-
-;; ;; :x [0 1 2 ...] :y [0 1 2 ...]
-;; (sp/def :numerical-coll/x
-;;   (sp/coll-of number? :min-count 2))
-;; (sp/def :numerical-coll/y
-;;   (sp/coll-of number? :min-count 2))
-;; (sp/def ::numerical-collection
-;;   (sp/keys :req-un [:numerical-coll/x :numerical-coll/y]))
-
-;; (s/exercise ::tabular-data)
-
+;; dates back to when I was playing around with Neo4j
+  (require '[neo4clj.client :as client])
+  (defn clear-db!
+    [connection]
+    (client/execute! connection "MATCH (n) DETACH DELETE n")))

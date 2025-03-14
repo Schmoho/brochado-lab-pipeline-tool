@@ -23,5 +23,5 @@
                                (edn/read-string (slurp (io/resource "default-config.edn"))))]
           (log/info "Running with config:" input-config)
           (reset! config input-config)
-          (server/start! (:http-port @config)))))))
+          #_(server/start! (:http-port @config)))))))
 

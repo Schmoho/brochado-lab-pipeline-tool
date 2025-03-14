@@ -17,9 +17,8 @@
    [reitit.swagger-ui :as swagger-ui]
    [ring.adapter.jetty :as jetty]
    [server.handler :as handler]
+   [ring.middleware.reload :refer [wrap-reload]]
    [ring.util.response :as response]
-   [ring.middleware.resource :refer [wrap-resource]]
-   #_[ring.middleware.content-type :refer [wrap-content-type]]
    [clojure.java.io :as io]))
 
 
@@ -30,91 +29,59 @@
       response/response
       (response/content-type "text/html")))
 
-
-(defn spa-not-found [req]
-  (if (some-> req :headers (get "accept") (str/includes? "text/html"))
-    (-> (io/resource "public/index.html")
-        slurp
-        response/response
-        (response/content-type "text/html"))
-    {:status 404
-     :body "Not Found"}))
-
-(defn redirect-index-html [req]
-  (let [uri (:uri req)
-        new-uri (str/replace uri #"index\.html$" "")]
-    (response/redirect new-uri)))
-
 (def app
   (ring/ring-handler
    (ring/router
-    [;; ["/assets/*" {:get (ring/create-resource-handler {:path "/public/assets"})}]
-     ;; ["/vendor/*" {:get (ring/create-resource-handler {:path "/public/vendor"})}]
-     ;; ["/js/*" {:get (ring/create-resource-handler {:path "/public/js"})}]
-     ;; ["/" {:get (fn [_request]
-     ;;              {:status 200
-     ;;               :headers {"Content-Type" "text/html"}
-     ;;               :body (slurp (io/resource "public/index.html"))})}]
-     ["/api"
+    [["/api"
       ["/swagger.json"
        {:get {:no-doc  true
               :swagger {:info {:title "unknown-api"}}
               :handler (swagger/create-swagger-handler)}}]
       ["/openapi.json"
        {:get {:no-doc  true
-              :openapi {:info {:title       "unknown-api"
-                               :description "gives cool"
+              :openapi {:info {:title       "pipeline webtool API"
+                               :description "API for the pipeline webtool"
                                :version     "0.0.1"}}
               :handler (openapi/create-openapi-handler)}}]
       ["/data"
        ["/upload"
         ["/volcano"
          {:post {:summary       "Add a volcano dataset"
-                ;; :parameters    {:body :data.input/volcano}
-                 #_#_:responses {200 {:body :uniprot/basic-response}}
-                 :handler       handler/upload-volcano}}]]
+                 ;; using vars (#') allows to update the handler
+                 ;; and have the changes immediately be reflected in a REPL
+                 :handler       #'handler/upload-volcano}}]]
        ["/raw"
         ["/taxon"
          {:get {:summary "Get taxon data."
-                :handler handler/get-taxons}}]
+                :handler #'handler/get-taxons}}]
         ["/ligand"
          {:get {:summary "Get ligand data."
-                :handler handler/get-ligands}}]
+                :handler #'handler/get-ligands}}]
 
         ["/structure/:id"
          {:get {:summary "Get PDB for a UniProt ID."
-                :handler handler/get-structure}}]]
+                :handler #'handler/get-structure}}]]
 
        ["/input"
         ["/volcano"
          {:get {:summary "Get volcano data."
-                :handler handler/get-volcanos}}]]
+                :handler #'handler/get-volcanos}}]]
 
        ["/results"
         ["/msa"
          {:get {:summary "Get MSA results."
-                :handler handler/get-msa-results-handler}}]]]
+                :handler #'handler/get-msa-results-handler}}]]]
 
       ["/pipelines"
        ["/msa"
         {:post {:summary       "Start taxonomic comparison pipeline."
                ;; :parameters {:body map?}
                 #_#_:responses {200 {:body :uniprot/basic-response}}
-                :handler       handler/start-msa-handler}}]]]
-     ["/" {:get serve-index}]
-     ;; Wildcard route to serve index.html for all in-app routes
-     #_["/{wildcard:.*index\\.html}"
-       {:get redirect-index-html}]
-     #_["/*"
-      {:get (fn [_]
-              (-> (io/resource "public/index.html")
-                  slurp
-                  ring.util.response/response
-                  (ring.util.response/content-type "text/html")))}]]
+                :handler       #'handler/start-msa-handler}}]]]
+     ["/" {:get serve-index}]]
     {:conflicts (constantly nil)
      ;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
      :validate  spec/validate ;; enable spec validation for route data
-     ;;:reitit.spec/wrap spell/closed ;; strict top-level validation
      :exception pretty/exception
      :data      {:coercion   reitit.coercion.spec/coercion
                  :muuntaja   m/instance
@@ -131,22 +98,23 @@
                               muuntaja/format-request-middleware
                               coercion/coerce-response-middleware
                               coercion/coerce-request-middleware
-                              multipart/multipart-middleware]}})
+                              multipart/multipart-middleware
+                              ;; dev-time s.t. changed namespaces are reloaded
+                              wrap-reload]}})
    (ring/routes
     (ring/create-resource-handler
      {:path "/" })
     (swagger-ui/create-swagger-ui-handler
-     {:path   "/"
+     {:path   "/api/openapi"
       :config {:validatorUrl     nil
-               :urls             [{:name "swagger" :url "swagger.json"}
-                                  {:name "openapi" :url "openapi.json"}]
+               :urls             [{:name "swagger" :url "/api/swagger.json"}
+                                  {:name "openapi" :url "/api/openapi.json"}]
                :urls.primaryName "openapi"
                :operationsSorter "alpha"}})
     (fn [req]
       (if (some-> req :headers (get "accept") (clojure.string/includes? "text/html"))
         (serve-index req)
         {:status 404 :body "Not Found"}))
-   spa-not-found
     (ring/create-default-handler))))
 
 (defn start!
@@ -156,5 +124,5 @@
 
 (comment
   (def server (start! 3001))
-  #_(.stop server))
+  (.stop server))
 
