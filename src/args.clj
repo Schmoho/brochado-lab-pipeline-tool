@@ -4,13 +4,11 @@
    [clojure.string :as str]
    [clojure.tools.cli :refer [parse-opts]]))
 
-
 (def cli-options
   ;; An option with a required argument
   [["-c" "--config-file FILE" "Config file"
     :parse-fn #(edn/read-string (slurp %))]
    ["-h" "--help"]])
-
 
 (defn usage [options-summary]
   (->> ["Unknown Server"
@@ -19,11 +17,9 @@
         options-summary]
        (str/join \newline)))
 
-
 (defn error-msg [errors]
   (str "The following errors occurred while parsing your command:\n\n"
        (str/join \newline errors)))
-
 
 (defn parse-args
   "Parse command line arguments. Either return a map indicating the program

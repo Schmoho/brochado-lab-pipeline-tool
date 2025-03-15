@@ -26,10 +26,25 @@
    (get taxons id)))
 
 (rf/reg-sub
- :data/proteome
+ :data/proteomes
  :<- [:data/raw]
- (fn [raw [_ id]]
-   (-> raw :proteome (get id))))
+ (fn [raw]
+   (-> raw :proteome)))
+
+(rf/reg-sub
+ :data/proteome
+ :<- [:data/proteomes]
+ (fn [proteomes [_ id]]
+   (get proteomes id)))
+
+(rf/reg-sub
+ :data/protein
+ :<- [:data/proteomes]
+ (fn [proteomes [_ protein-id]]
+   (->> proteomes
+        vals
+        (map #(get % protein-id))
+        first)))
 
 (rf/reg-sub
  :data/ligands
@@ -58,13 +73,13 @@
  :data/volcanos
  :<- [:data/input]
  (fn [input]
-   (->> input :volcano)))
+   (:volcano input)))
 
 (rf/reg-sub
  :data/volcanos-list
  :<- [:data/input]
  (fn [input]
-   (->> input :volcano vals vec)))
+   (-> input :volcano vals vec)))
 
 (rf/reg-sub
  :data/volcano

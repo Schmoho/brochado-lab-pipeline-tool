@@ -5,6 +5,7 @@
      [re-frame.core :as rf]
      [reagent.core :as r]
      [reagent.dom :as rdom]
+     ["react" :as react]
      [unknown-client.utils :refer [cool-select-keys]]))
 
 (defn lineage-item [idx item]
@@ -87,6 +88,7 @@
       [com/typeahead
        :src (at)
        :model model
+       :placeholder (str (:protein-name @model))
        :rigid? true
        :change-on-blur? true
        :on-change
@@ -101,61 +103,45 @@
        {:suggestions-container {:style {:z-index 10}}
         :suggestion {:style {:z-index 10}}}]]]))
 
-(defn protein-search-choices
-  [proteome]
-  (fn [s]
-    (let [fragment (re-pattern (str "(?i)" (or s "")))]
-      (->> proteome
-           (keep (fn [protein]
-                   (let [gene-name    (or (-> protein :genes first :geneName :value)
-                                          (-> protein :genes first :orderedLocusNames :value)
-                                          "-")
-                         protein-name (or (-> protein :proteinDescription :recommendedName :fullName :value)
-                                          (-> protein :proteinDescription :submissionNames first :fullName :value)
-                                          "-")
-                         protein-id   (or (-> protein :primaryAccession)
-                                          "-")]
-                     (when (or (re-find fragment gene-name)
-                               (re-find fragment protein-name)
-                               (re-find fragment protein-id))
-                       {:id protein-id :protein-name protein-name :gene-name gene-name}))))
-           (into [])))))
-
 (defn protein-search-2
-  [proteome]
-  (let [model                  (r/atom nil)
-        suggestions-for-search ((protein-search-choices proteome))]
-    (fn []
-      [v
-       :src      (at)
+  [taxon on-change]
+  (let [proteome               @(rf/subscribe [:data/proteome (:id taxon)])
+        model                  (rf/subscribe [:forms.docking/selected-protein-for-taxon (:id taxon)])
+        suggestions-for-search (protein-search-suggestions proteome)]
+    [v
+     :src      (at)
+     :children
+     [[h
+       :src (at)
        :children
-       [[h
+       [[:span.field-label "Search Proteins"]
+        [com/info-button
          :src (at)
-         :children
-         [[:span.field-label "Search Proteins"]
-          [com/info-button
-           :src (at)
-           :info
-           [v
-            :src (at)
-            :children
-            [[:p.info-heading "Organism ID"]
-             [:p "You need to put in a Uniprot or NCBI Taxonomy ID. Note they are the same."]
-             [com/hyperlink-href :src (at)
-              :label  "Link to docs."
-              :href   ""
-              :target "_blank"]]]]]]
-        [com/single-dropdown
-         :src (at)
-         :width "100%"
-         :choices suggestions-for-search
-         :model model
-         :on-change #(reset! model %)
-         :label-fn :protein-name
-         :filter-box? true
-         :render-fn
-         (fn [{:keys [protein-name gene-name id]}]
-           [:span (str id " - " gene-name " - " protein-name)])]]])))
+         :info
+         [v
+          :src (at)
+          :children
+          [[:p.info-heading "Organism ID"]
+           [:p "You need to put in a Uniprot or NCBI Taxonomy ID. Note they are the same."]
+           [com/hyperlink-href :src (at)
+            :label  "Link to docs."
+            :href   ""
+            :target "_blank"]]]]]]
+      [com/typeahead
+       :src (at)
+       :model model
+       :rigid? true
+       :change-on-blur? true
+       :on-change #(when on-change (on-change %))
+       :data-source suggestions-for-search
+       :suggestion-to-string #(:protein-name %)
+       :render-suggestion
+       (fn [{:keys [protein-name gene-name id]}]
+         [:span (str id " - " gene-name " - " protein-name)])
+       :parts
+       {:suggestions-container {:style {:z-index 10}}
+        :suggestion            {:style {:z-index 10}}}]]]))
+
 
 (defn taxon-chooser
   [& {:keys [on-change]}]
@@ -175,29 +161,50 @@
                    (on-change %))
      :placeholder "For which taxon?"]))
 
+
+
 (defn pdb-viewer
   [& {:keys [pdb style config on-load]}]
-  (r/create-class
-   {:component-did-mount
-    (fn [this]
-      (let [el     (rdom/dom-node this)
-            viewer (.createViewer js/$3Dmol el (clj->js config))]
-        (doto viewer
-          (.addModel pdb "pdb")
-          (.setStyle (clj->js {}) (clj->js style))
-          (.zoomTo)
-          (.render)
-          (.zoom 1.2 1000))
-        (when on-load
-          (on-load viewer))))
-    :reagent-render
-    (fn []
-      [:div {:class "mol-container"
-             :style {:width    "60%"
-                     :height   "400px"
-                     :position "relative"
-                     :border "solid grey 1px"}}
-       "Loading viewer..."])}))
+  (let [ref (react/createRef)
+        viewer-state (r/atom nil)]
+    (r/create-class
+     {:display-name "pdb-viewer"
+      :reagent-render
+      (fn []
+        [:div {:class "mol-container"
+               :style {:width    "450px"
+                       :height   "450px"
+                       :position "relative"
+                       :border "solid grey 1px"}
+               :ref ref}
+         "Loading viewer..."])
+      :component-did-mount
+      (fn [_]
+        (when-let [node (.-current ref)]
+          (let [viewer (.createViewer js/$3Dmol node (clj->js config))]
+            (reset! viewer-state viewer)
+            (doto viewer
+              (.addModel pdb "pdb")
+              (.setStyle (clj->js {}) (clj->js style))
+              (.zoomTo)
+              (.render)
+              (.zoom 1.2 1000))
+            (when on-load
+              (on-load viewer-state)))))
+      
+      #_#_:component-did-update
+      (fn [_]
+        (js/alert "hi")
+        (when-let [viewer @viewer-state]
+          (doto viewer
+            (.removeAllModels)
+            (.addModel pdb "pdb")
+            (.setStyle (clj->js {}) (clj->js style))
+            (.zoomTo)
+            (.render)
+            (.zoom 1.2 1000))
+          (when on-load
+            (on-load viewer))))})))
 
 
 (defn table

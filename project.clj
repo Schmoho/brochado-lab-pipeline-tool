@@ -2,7 +2,7 @@
   :main core
   :uberjar-name "unknown.jar"
   ;; this serves to copy the packaged output from Vite for compilation
-  :prep-tasks ["run" "-m" "build/copy-dist-to-public"]
+  ;; :prep-tasks [["run" "-m" "build/copy-dist-to-public"]]
   ;; check out portal https://github.com/djblue/portal?tab=readme-ov-file#demo
   :repl-options {:nrepl-middleware [portal.nrepl/wrap-portal]}
   ;; for downloading the Java BLAST service
@@ -13,7 +13,7 @@
             [cider/cider-nrepl "0.52.0"]]
   :dependencies [[org.clojure/clojure "1.12.0"]
                  [org.clojure/tools.cli "1.1.230"]
-                 
+
                  [org.clojure/tools.logging "1.3.0"]
                  [ch.qos.logback/logback-classic "1.5.7"]
 
@@ -36,6 +36,8 @@
                  [dk.ative/docjure "1.14.0"]
                  ;; makes reading edn much faster
                  [io.github.tonsky/fast-edn "1.1.2"]
+                 ;; codecs, particularly base64
+                 [org.clojure/data.codec "0.1.1"]
 
                  ;; UniProt API, used for BLAST
                  [uk.ac.ebi.uniprot/japi "1.3.3"]]

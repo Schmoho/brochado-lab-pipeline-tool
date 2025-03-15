@@ -4,13 +4,11 @@
    [biotools.adfr-suite :as adfr-suite]
    [biotools.obabel :as obabel]
    [biotools.vina :as vina]
-   [db.api :as db]
-   [db.core :as db.core]
+   [db :as db]
    [formats.pdb :as formats.pdb]
-   [utils :as utils]
-   [clojure.string :as str]))
+   [utils :as utils]))
 
-(defn preprocessing-pipeline
+#_(defn preprocessing-pipeline
   [protein-id
    {:keys [plddt-tail-cutoff]
     :as   params}]
@@ -29,7 +27,7 @@
         (db.core/insert! (conj path "params") "edn" params :read? false)
         (db.core/insert! (conj path protein-id) "pdbqt" pdbqt-file :read? false)))))
 
-(defn- get-active-site-locations-from-annotations
+#_(defn- get-active-site-locations-from-annotations
   [{:keys [active-site-name uuid]} protein-id]
   (let [protein               (db/protein-by-id protein-id)
         active-site-locations (->> protein
@@ -55,7 +53,7 @@
     (spit tmp-file box-config)
     [protein-id tmp-file]))
 
-(defn prepare-ligand
+#_(defn prepare-ligand
   [pubchem-compound-id]
   (let [params      {:obabel/args    obabel/obabel-3d-conformer-args
                      :obabel/version (obabel/obabel-version)}
@@ -80,7 +78,7 @@
    :params/docking                      {:box-size 25}
    :pipeline/uuid                       #uuid"51e4e6fa-eac0-4a2c-9490-3252a785dd6a"})
 
-(defn pipeline
+#_(defn pipeline
   [{:keys [pipeline/uuid
            params.uniprot/protein
            params.alpha-fold/structure

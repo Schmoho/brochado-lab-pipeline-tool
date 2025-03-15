@@ -5,44 +5,41 @@
    [clojure.java.io :as io]
    [portal.api :as p]
    [portal.viewer :as v]
-   [utils :as utils]))
+   [utils :as utils]
+   [server.core :as server]))
+
+(def server (server/start! 3001))
+(comment (.stop server))
 
 ;; REPL data setup
-(do
-  (def brochado-strains
-    (utils/read-file  (io/resource "brochado-strains.edn")))
-  (def ncbi-tax-id "652611")
-  (def ncbi-taxon-report
-    (ncbi.api/taxon-dataset-report ncbi-tax-id {"page_size" 1000}))
-  (def ncbi-genome-annotation-summary
-    (ncbi.api/genome-annotation-summary "GCA_000006765.1"))
+(future
+  (do
+   (def brochado-strains
+     (utils/read-file  (io/resource "brochado-strains.edn")))
+   (def ncbi-tax-id "652611")
+   (def ncbi-taxon-report
+     (ncbi.api/taxon-dataset-report ncbi-tax-id {"page_size" 1000}))
+   (def ncbi-genome-annotation-summary
+     (ncbi.api/genome-annotation-summary "GCA_000006765.1"))
+   (def ncbi-genome-annotation-report
+     (ncbi.api/genome-annotation-report "GCA_000006765.1"))
+   (def ncbi-genome-dataset-report
+     (ncbi.api/genome-dataset-report "GCA_000006765.1"))
+   (def uniprot-taxonomy-pao1
+     (uniprot.api/taxonomy-entry "208964"))
+   (def uniprot-taxonomy-ecoli
+     (uniprot.api/taxonomy-entry "83333"))
+   #_(def uniprot-proteome
+     (first (uniprot.api/proteomes-by-taxon-id "208964")))
+   (def uniprot-protein
+     (uniprot.api/uniprotkb-entry "G3XCV0"))
+   (def uniparc-protein
+     (uniprot.api/uniparc-entry "UPI00053A1130"))
+   #_(def uniprot-proteome-proteins
+       (uniprot.api/proteins-by-proteome "UP000002438"))
+   (def uniprot-protein-cross-references
+     (:uniProtKBCrossReferences uniprot-protein))))
 
-  (def ncbi-genome-annotation-report
-    (ncbi.api/genome-annotation-report "GCA_000006765.1"))
-
-  (def ncbi-genome-dataset-report
-    (ncbi.api/genome-dataset-report "GCA_000006765.1"))
-
-  (def uniprot-taxonomy-pao1
-    (uniprot.api/taxonomy-entry "208964"))
-
-  (def uniprot-taxonomy-ecoli
-    (uniprot.api/taxonomy-entry "83333"))
-
-  (def uniprot-proteome
-    (first (uniprot.api/proteomes-by-taxon-id "208964")))
-
-  (def uniprot-protein
-    (uniprot.api/uniprotkb-entry "G3XCV0"))
-
-  (def uniparc-protein
-    (uniprot.api/uniparc-entry "UPI00053A1130"))
-
-  #_(def uniprot-proteome-proteins
-      (uniprot.api/proteins-by-proteome "UP000002438"))
-
-  (def uniprot-protein-cross-references
-    (:uniProtKBCrossReferences uniprot-protein)))
 
 (do
   (def defaults

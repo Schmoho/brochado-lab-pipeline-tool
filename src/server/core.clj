@@ -16,8 +16,9 @@
    [reitit.swagger :as swagger]
    [reitit.swagger-ui :as swagger-ui]
    [ring.adapter.jetty :as jetty]
-   [server.handler :as handler]
-   [ring.middleware.reload :refer [wrap-reload]]
+   [server.handler.data :as data-handler]
+   [server.handler.pipelines :as pipelines-handler]
+   #_[ring.middleware.reload :refer [wrap-reload]]
    [ring.util.response :as response]
    [clojure.java.io :as io]))
 
@@ -49,35 +50,41 @@
          {:post {:summary       "Add a volcano dataset"
                  ;; using vars (#') allows to update the handler
                  ;; and have the changes immediately be reflected in a REPL
-                 :handler       #'handler/upload-volcano}}]]
+                 :handler       #'data-handler/upload-volcano}}]]
        ["/raw"
-        ["/taxon"
-         {:get {:summary "Get taxon data."
-                :handler #'handler/get-taxons}}]
+        
         ["/ligand"
          {:get {:summary "Get ligand data."
-                :handler #'handler/get-ligands}}]
+                :handler #'data-handler/get-ligands}}]
+
+        ["/proteome/:id"
+         {:get {:summary "Get proteome for a UniProt taxon ID."
+                :handler #'data-handler/get-proteome}}]
 
         ["/structure/:id"
          {:get {:summary "Get PDB for a UniProt ID."
-                :handler #'handler/get-structure}}]]
+                :handler #'data-handler/get-structure}}]
+
+        ["/taxon"
+         {:get {:summary "Get taxon data."
+                :handler #'data-handler/get-taxons}}]]
 
        ["/input"
         ["/volcano"
          {:get {:summary "Get volcano data."
-                :handler #'handler/get-volcanos}}]]
+                :handler #'data-handler/get-volcanos}}]]
 
        ["/results"
         ["/msa"
          {:get {:summary "Get MSA results."
-                :handler #'handler/get-msa-results-handler}}]]]
+                :handler #'data-handler/get-msa-results-handler}}]]]
 
       ["/pipelines"
        ["/msa"
         {:post {:summary       "Start taxonomic comparison pipeline."
                ;; :parameters {:body map?}
                 #_#_:responses {200 {:body :uniprot/basic-response}}
-                :handler       #'handler/start-msa-handler}}]]]
+                :handler       #'pipelines-handler/start-msa-handler}}]]]
      ["/" {:get serve-index}]]
     {:conflicts (constantly nil)
      ;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
@@ -100,7 +107,7 @@
                               coercion/coerce-request-middleware
                               multipart/multipart-middleware
                               ;; dev-time s.t. changed namespaces are reloaded
-                              wrap-reload]}})
+                              #_wrap-reload]}})
    (ring/routes
     (ring/create-resource-handler
      {:path "/" })

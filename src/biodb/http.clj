@@ -4,7 +4,8 @@
    [clj-http.client :as http]
    [mongo.core :as mongo]
    [clojure.tools.logging :as log]
-   [utils :as utils])
+   [utils :as utils]
+   [clj-http.client :as clj-http.client])
   (:refer-clojure :exclude [get]))
 
 (defn get

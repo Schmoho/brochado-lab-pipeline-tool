@@ -2,14 +2,16 @@
     "name": "unknown-client",
     "type": "module",
     "scripts": {
-        "ancient": "clojure -Sdeps '{:deps {com.github.liquidz/antq {:mvn/version \"RELEASE\"}}}' -m antq.core",
+        "shadow-dev": "npx shadow-cljs watch app",
+        "vite-dev": "vite",
+        "dev": "shadow-cljs -A:dev watch app & vite",
+        "vite-build": "vite build",
+        "vite-preview": "vite preview",
         "watch": "npx shadow-cljs watch app browser-test karma-test",
         "release": "npx shadow-cljs release app",
-        "build-report": "npx shadow-cljs run shadow.cljs.build-report app target/build-report.html",
-        "ci": "npx shadow-cljs compile karma-test && npx karma start --single-run --reporters junit,dots"
+        "build-report": "npx shadow-cljs run shadow.cljs.build-report app target/build-report.html"
     },
     "dependencies": {
-        "bootstrap": "^4.1.3",
         "detect-element-resize": "^0.0.2",
         "gosling.js": "^1.0.2",
         "react": "^18.2.0",
@@ -19,16 +21,7 @@
     "devDependencies": {
         "@vitejs/plugin-react": "^4.3.4",
         "css-loader": "^7.1.2",
-        "karma": "6.4.0",
-        "karma-chrome-launcher": "3.1.1",
-        "karma-cljs-test": "0.1.0",
-        "karma-junit-reporter": "2.0.1",
-        "mini-css-extract-plugin": "^2.9.2",
-        "sass": "^1.85.1",
-        "sass-loader": "^16.0.5",
         "shadow-cljs": "2.26.2",
-        "style-loader": "^4.0.0",
-        "vite": "^6.2.1",
-        "webpack-cli": "^6.0.1"
+        "vite": "^6.2.1"
     }
 }

@@ -18,7 +18,7 @@
            :width "400px"
            :height "auto"}]]
    :on-click
-   #(re-frame/dispatch [::routing-events/navigate :routing.data/volcano])])
+   #(re-frame/dispatch [::routing-events/navigate :routing/volcano-viewer])])
 
 (defn msa-card
   []

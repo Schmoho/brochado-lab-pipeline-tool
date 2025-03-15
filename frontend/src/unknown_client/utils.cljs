@@ -1,4 +1,15 @@
-(ns unknown-client.utils)
+(ns unknown-client.utils
+  (:require
+   [re-frame.core :as rf]
+   [re-frame.db :as rf.db]
+   [unknown-client.events.http :as http-events]))
+
+(defn get-data
+  [path]
+  (when-not
+      ((@rf.db/app-db :already-executed-queries) path)
+    (rf/dispatch
+     [::http-events/http-get path])))
 
 (defn cool-select-keys
   [m kaccessors]

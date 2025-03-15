@@ -3,9 +3,9 @@
    [bidi.bidi :as bidi]
    [pushy.core :as pushy]
    [re-frame.core :as re-frame]
-   [re-frame.db :as re-frame.db]
    [unknown-client.events.routing :as routing-events]
-   [unknown-client.events.http :as http-events]))
+   [unknown-client.events.http :as http-events]
+   [unknown-client.utils :as utils]))
 
 (defmulti panels identity)
 (defmethod panels :default [] [:div "No panel found for this route."])
@@ -62,12 +62,7 @@
  (fn [handler]
    (navigate! handler)))
 
-(defn get-data
-  [path]
-  (when-not
-      ((@re-frame.db/app-db :already-executed-queries) path)
-    (re-frame/dispatch
-     [::http-events/http-get path])))
+
 
 (re-frame/reg-fx
  :get-route-data
@@ -77,20 +72,20 @@
      (re-frame/dispatch [::http-events/get-msa-results])
      :routing.data/overview
      (do
-       (get-data [:data :input :volcano])
-       (get-data [:data :raw :ligand])
-       (get-data [:data :raw :taxon]))
+       (utils/get-data [:data :input :volcano])
+       (utils/get-data [:data :raw :ligand])
+       (utils/get-data [:data :raw :taxon]))
      :routing.data/taxon
-     (get-data [:data :raw :taxon])
+     (utils/get-data [:data :raw :taxon])
      :routing.data/ligand
-     (get-data [:data :raw :ligand])
+     (utils/get-data [:data :raw :ligand])
      :routing.data/upload
-     (get-data [:data :raw :taxon])
+     (utils/get-data [:data :raw :taxon])
      :routing/volcano-viewer
-     (get-data [:data :input :volcano])
+     (utils/get-data [:data :input :volcano])
      :routing.pipelines/docking
      (do
-       (get-data [:data :raw :ligand])
-       (get-data [:data :raw :taxon]))
+       (utils/get-data [:data :raw :ligand])
+       (utils/get-data [:data :raw :taxon]))
      nil)))
 

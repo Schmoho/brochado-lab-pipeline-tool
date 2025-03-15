@@ -6,6 +6,7 @@
     :rename {v-box v
              h-box h}]
    [unknown-client.routing :as routing]
+   [unknown-client.subs.forms.docking]
    [unknown-client.views.common.forms :as forms]
    [unknown-client.views.common.structure :as structure]
    [unknown-client.views.common.widgets :as widgets]
@@ -13,23 +14,8 @@
    [unknown-client.views.vega :as vega]
    [unknown-client.events.forms :as form-events]
    [unknown-client.events.http :as http-events]
-   [unknown-client.utils :refer [cool-select-keys]]))
+   [unknown-client.utils :refer [cool-select-keys] :as utils]))
 
-(defn get-structures-button
-  [selected-proteins]
-  (let [hover? (r/atom false)]
-    (fn []
-      [com/button
-       :src       (at)
-       :label    "GET STRUCTURES"
-       :class    (css/rectangle-button)
-       :style    {:background-color "#0072bb"}
-       :on-click (fn []
-                   (doseq [p selected-proteins]
-                     (rf/dispatch [::http-events/http-get-2 [:data :raw :structure p]])))
-       :style    {:background-color (if @hover? "#0072bb" "#4d90fe")}
-       :attr     {:on-mouse-over (com/handler-fn (reset! hover? true))
-                  :on-mouse-out  (com/handler-fn (reset! hover? false))}])))
 
 (defn taxon-choice
   [& {:keys [taxons on-change model]}]
@@ -92,11 +78,14 @@
        :model
        (rf/subscribe [:forms.docking/taxon-model])
        :on-change
-       #(rf/dispatch
-         [::form-events/set-form-data
-          :docking
-          :taxon-model
-          %])]
+       #(do
+          (doseq [chosen-taxon %]
+            (utils/get-data [:data :raw :proteome chosen-taxon]))
+          (rf/dispatch
+           [::form-events/set-form-data
+            :docking
+            :taxon-model
+            %]))]
       [com/gap :size "50px"]
       [ligand-choice
        :ligands
@@ -110,48 +99,99 @@
           :ligand-model
           %])]]]]])
 
-(def taxons (rf/subscribe [:forms.docking/taxon-model-resolved]))
+
+(defn get-structures-button
+  []
+  (let [selected-proteins (rf/subscribe [:forms.docking/selected-proteins-ids])
+        selected-taxa (rf/subscribe [:forms.docking/taxon-model])
+        hover?            (r/atom false)]
+    (fn []
+      (when (and (every? some? @selected-proteins)
+                 (seq @selected-proteins)
+                 (= (count @selected-taxa) (count @selected-proteins)))
+        [com/button
+         :src       (at)
+         :label    "GET STRUCTURES"
+         :class    (css/rectangle-button)
+         :style    {:background-color "#0072bb"}
+         :on-click (fn []
+                     (doseq [p @selected-proteins]
+                       (rf/dispatch [::http-events/http-get [:data :raw :structure p]])))
+         :style    {:background-color (if @hover? "#0072bb" "#4d90fe")}
+         :attr     {:on-mouse-over (com/handler-fn (reset! hover? true))
+                    :on-mouse-out  (com/handler-fn (reset! hover? false))}]))))
+
+(defn location->str
+  [location]
+  (let [start (-> location :start :value)
+        end (-> location :end :value)]
+    (if (= start end)
+      start
+      (str start " - " end))))
+
+(defn feature->hiccup
+  [feature]
+  [v
+   :children
+   [[h
+     :gap "5px"
+     :children
+     [[:b (:type feature)]
+      "at"
+      [:span (location->str (:location feature))]]]
+    [:span (:description feature)]]])
+
+(defn protein->has-afdb-hiccup
+  [protein]
+  (when (->> (:uniProtKBCrossReferences protein)
+             (filter #(= "AlphaFoldDB" (:database %)))
+             seq)
+    [h :gap "5px" :children [[:span "AlphaFold"] [:i {:class "zmdi zmdi-check"}]]]))
+
+
 
 (defn part-2
   []
-  (let [taxons (rf/subscribe [:forms.docking/taxon-model-resolved])]
-    (fn []
-      (let [proteome-searchers
-            (->> @taxons
-                 (mapv
-                  (fn [taxon]
-                    ^{:key (:id taxon)}
-                    [:div
-                     [:p (:scientificName taxon)]
-                     [widgets/protein-search
-                      :proteome
-                      @(rf/subscribe [:data/proteome (:id taxon)])
-                      :model
-                      (rf/subscribe [:forms.docking/selected-proteins-model
-                                     (:id taxon)])
-                      :on-change
-                      #(rf/dispatch [::form-events/set-form-data
-                                     :docking
-                                     :selected-proteins-model
-                                     (:id taxon)
-                                     %])]])))]
-        [v
-         :children
-         [[h
-           :height "300px"
-           :children
-           (into [] proteome-searchers)]
-          (let [selected-proteins
-                (map (fn [taxon]
-                       (:id @(rf/subscribe [:forms.docking/selected-proteins-model
-                                            (:id taxon)])))
-                     @taxons)]
-            (when (and (every? some? selected-proteins)
-                       (seq selected-proteins))
-              [v
-               :children
-               [[get-structures-button selected-proteins]]]))]]))))
+  (let [taxons @(rf/subscribe [:forms.docking/taxon-model-resolved])
+        proteome-searchers
+        (->> taxons
+             (mapv
+              (fn [taxon]
+                [v
+                 :children
+                 [[:h6 (:scientificName taxon)]
+                  [widgets/protein-search
+                   :proteome
+                   @(rf/subscribe [:data/proteome (:id taxon)])
+                   :model
+                   (rf/subscribe [:forms.docking/selected-protein-for-taxon (:id taxon)])
+                   :on-change
+                   #(rf/dispatch [::form-events/set-form-data
+                                  :docking
+                                  :selected-proteins-model
+                                  (:id taxon)
+                                  %])]
+                  (let [protein @(rf/subscribe [:forms.docking/selected-protein-for-taxon-resolved (:id taxon)])]
+                    [v
+                     :gap "5px"
+                     :children
+                     (into
+                      [(protein->has-afdb-hiccup protein)]
+                      (->> (:features protein)
+                           (filter #(#{"Active site" "Binding site"} (:type %)))
+                           (map feature->hiccup)))])]])))]
+    [v
+     :children
+     [[h
+       :min-height "300px"
+       :gap "30px"
+       :children
+       (into [] proteome-searchers)]
+      [get-structures-button]]]))
 
+(defn cutoff-label
+  [m]
+  [:span "pLDDT cutoff: " @m])
 
 (defn part-3
   []
@@ -165,21 +205,47 @@
                  (keep
                   (fn [protein-id]
                     (when-let [pdb (:pdb (get @structures protein-id))]
-                      [widgets/pdb-viewer
-                       :pdb pdb
-                       :style {:cartoon {:colorfunc
-                                         (fn [atom]
-                                           (if (< 85 (.-b atom))
-                                             "blue"
-                                             "yellow"))}}
-                       :config {:backgroundColor "white"}
-                       :on-load #(rf/dispatch [::form-events/set-form-data
-                                               :docking
-                                               :protein-viewer
-                                               protein-id
-                                               %])])))
+                      (let [m (r/atom 80.0)]
+                        [v
+                         :children
+                         [[cutoff-label m]
+                          [com/slider
+                           :model
+                           m
+                           :on-change #(do
+                                         (let [viewer (-> @re-frame.db/app-db :forms :docking :protein-viewer first val deref)]
+                                           (doto  ^GLViewer viewer
+                                             (.setStyle
+                                              (clj->js {})
+                                              (clj->js {:cartoon
+                                                        {:colorfunc
+                                                         (fn [atom]
+                                                           (if (< % (.-b atom))
+                                                             "blue"
+                                                             "yellow"))}}))
+                                             (.render)))
+                                         (reset! m %))]
+                          [:div
+                           {:style {:height "452px"
+                                    :width "452"
+                                    :position "relative"
+                                    :border "1px solid black"}}
+                           [widgets/pdb-viewer
+                            :pdb pdb
+                            :style {:cartoon {:colorfunc
+                                              (fn [atom]
+                                                (if (< @m (.-b atom))
+                                                  "blue"
+                                                  "yellow"))}}
+                            :config {:backgroundColor "white"}
+                            :on-load #(rf/dispatch [::form-events/set-form-data
+                                                    :docking
+                                                    :protein-viewer
+                                                    protein-id
+                                                    %])]]]]))))
                  (into []))]
         [h
+         :gap "50px"
          :children
          viewers]))))
 
@@ -232,41 +298,7 @@
    ["4. Download docking data" [part-4]]
    ["5. Upload docking results" [part-5]]])
 
-;; (rf/dispatch [::http-events/http-get-2 [:data :raw :structure "A0A0H2ZHP9"]])
-;; (:pdb (get @(rf/subscribe [:data/structures]) "A0A0H2ZHP9"))
-
-#_(let [(-> @re-frame.db/app-db :forms :docking :protein-viewer)]
-  )
-
-
 (defmethod routing/panels :routing.pipelines/docking [] [docking-panel])
 (defmethod routing/header :routing.pipelines/docking []
   [structure/header :label "Comparative Docking Pipeline"])
 
-
-
-
-
-#_(def v
-  (let [element (.querySelector js/document "#bla")
-        config {:backgroundColor "orange"}
-        viewer (.createViewer js/$3Dmol element (clj->js config))]
-    (doto viewer
-      (.addModel v (:pdb (get @(rf/subscribe [:data/structures]) "A0A0H2ZHP9")) "pdb")
-      (.setStyle v (clj->js {}) (clj->js {:cartoon {:color "spectrum"}}))
-      (.zoomTo v)
-      (.render v)
-      (.zoom v 1.2 1000)
-      (.addSphere (clj->js {:center {:x 0 :y 0 :z 0}
-                            :radius 10.0
-                            :color "green"}))
-      (.zoomTo)
-      (.render)
-      (.zoom 0.8 2000))))
-
-
-;; (.addModel v (:pdb (get @(rf/subscribe [:data/structures]) "A0A0H2ZHP9")) "pdb")
-;; (.setStyle v (clj->js {}) (clj->js {:cartoon {:color "spectrum"}}))
-;; (.zoomTo v)
-;; (.render v)
-;; (.zoom v 1.2 1000)

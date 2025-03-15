@@ -32,10 +32,34 @@
  :forms.docking/selected-proteins-model
  :<- [:forms/docking]
  (fn
-   ([form]
-    (:selected-proteins-model form))
-   ([form [_ id]]
-    (get (:selected-proteins-model form) id))))
+   [form]
+    (:selected-proteins-model form)))
+
+(rf/reg-sub
+ :forms.docking/selected-protein-for-taxon
+ :<- [:forms.docking/selected-proteins-model]
+ (fn
+   [model [_ id]]
+   (get model id)))
+
+(rf/reg-sub
+ :forms.docking/selected-protein-for-taxon-resolved
+ :<- [:forms.docking/selected-proteins-model]
+ :<- [:data/proteomes]
+ (fn
+   [[model proteomes] [_ taxon-id]]
+   (let [selected-protein (:id (get model taxon-id))
+         proteome         (get proteomes taxon-id)
+         proteome (zipmap
+                   (map :primaryAccession proteome)
+                   proteome)]
+     (get proteome selected-protein))))
+
+(rf/reg-sub
+ :forms.docking/selected-proteins-ids
+ :<- [:forms.docking/selected-proteins-model]
+ (fn [model]
+   (->> model vals (map :id))))
 
 (rf/reg-sub
  :forms.docking/selected-proteins-model-all
@@ -43,3 +67,5 @@
  (fn
    [form]
    (:selected-proteins-model form)))
+
+

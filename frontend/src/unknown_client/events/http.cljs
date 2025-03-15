@@ -42,7 +42,7 @@
  ::http-get-success
  (fn-traced
   [db [_ path response]]
-  (-> (update-in db (butlast path) #(merge % response))
+  (-> (assoc-in db path response)
       (update :already-executed-queries conj path))))
 
 (rf/reg-event-db

@@ -19,6 +19,7 @@
         [widgets/table volcanos
          :columns
          [{:id           :name
+           :header-label "Dataset Name"
            :row-label-fn
            (fn [row]
              [com/hyperlink
@@ -27,9 +28,8 @@
                   (-> row :meta :id))
               :on-click
               #(do
-                 (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1 (-> row :meta :id)])
-                 (rf/dispatch [::routing-events/navigate :routing/volcano-viewer]))])
-           :header-label "Dataset Name"}
+                (rf/dispatch [::form-events/set-form-data :volcano-viewer :volcano-1 (-> row :meta :id)])
+                (rf/dispatch [::routing-events/navigate :routing/volcano-viewer]))])}
           {:id           :taxon
            :header-label "Taxon"
            :row-label-fn

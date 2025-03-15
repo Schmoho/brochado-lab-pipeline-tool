@@ -37,12 +37,34 @@
   (io/copy file-to-copy target-file)
   (io/file target-file))
 
-(defn extension
+(defmulti extension type)
+(defmethod extension java.lang.String
   [file-name]
   (FilenameUtils/getExtension file-name))
+(defmethod extension java.io.File
+  [file-name]
+  (FilenameUtils/getExtension (.getName file-name)))
+(defmethod extension java.io.File
+  [file-name]
+  (FilenameUtils/getExtension (.getName file-name)))
+;; the assumption here is a URL is gonna be a resource
+(defmethod extension java.net.URL
+  [file]
+  (FilenameUtils/getExtension (.getName (io/file file))))
 
-(defmulti read-file (fn [file] (FilenameUtils/getExtension (.getName (io/file file)))))
+(defmulti base-name type)
+(defmethod base-name java.lang.String
+  [file-name]
+  (FilenameUtils/getBaseName file-name))
+(defmethod base-name java.io.File
+  [file]
+  (FilenameUtils/getBaseName (.getName file)))
+;; the assumption here is a URL is gonna be a resource
+(defmethod base-name java.net.URL
+  [file]
+  (FilenameUtils/getBaseName (.getName (io/file file))))
 
+(defmulti read-file extension)
 (defmethod read-file "edn"
   [file]
   (edn/read-once (io/file file)))
@@ -106,12 +128,10 @@
 (defn encode-base64 [bytes]
   (String. (b64/encode bytes)))
 
-;; (defn files-with-ending
-;;   "Path is a string, ending needs to contain the dot."
-;;   [path ending]
-;;   (->> (file-seq (io/file path))
-;;        (filter #(.isFile %))
-;;        (filter #(str/ends-with? (.getName %) ending))))
+(defn ffile-seq
+  [file]
+  (->> (file-seq (io/file file))
+       (filter #(.isFile %))))
 
 ;; (defn read-between-markers
 ;;   [o start-marker end-marker]
@@ -128,7 +148,4 @@
 ;;               inside?                                     (recur remaining-lines inside? (conj result line))
 ;;               :else                                       (recur remaining-lines inside? result))))))
 
-(defn ffile-seq
-  [file]
-  (->> (file-seq (io/file file))
-       (filter #(.isFile %))))
+
