@@ -17,6 +17,7 @@
    [reitit.swagger :as swagger]
    [reitit.swagger-ui :as swagger-ui]
    [ring.adapter.jetty :as jetty]
+   [ring.middleware.cors :refer [wrap-cors]]
    [ring.util.response :as response]
    [schmoho.dasudopit.server.handler.data :as data-handler]
    [schmoho.dasudopit.server.handler.pipelines :as pipelines-handler]))
@@ -50,7 +51,7 @@
                  ;; and have the changes immediately be reflected in a REPL
                  :handler       #'data-handler/upload-volcano}}]]
        ["/raw"
-        
+
         ["/ligand"
          {:get {:summary "Get ligand data."
                 :handler #'data-handler/get-ligands}}]
@@ -95,6 +96,8 @@
                               [:formats "application/transit+json" :encoder-opts :handlers]
                               {Instant (transit/write-handler "inst" #(.toString %))}))
                  :middleware [swagger/swagger-feature
+                              #(wrap-cors % :access-control-allow-origin [#".*"]
+                                          :access-control-allow-methods [:get :put :post :delete])
                               ;; query-params & form-params
                               parameters/parameters-middleware
                               muuntaja/format-negotiate-middleware
@@ -108,7 +111,7 @@
                               #_wrap-reload]}})
    (ring/routes
     (ring/create-resource-handler
-     {:path "/" })
+     {:path "/"})
     (swagger-ui/create-swagger-ui-handler
      {:path   "/api/openapi"
       :config {:validatorUrl     nil

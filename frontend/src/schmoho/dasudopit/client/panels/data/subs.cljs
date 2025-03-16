@@ -43,7 +43,10 @@
  (fn [proteomes [_ protein-id]]
    (->> proteomes
         vals
-        (map #(get % protein-id))
+        (mapcat (fn [proteome]
+               (filter
+                #(= protein-id (:primaryAccession %))
+                proteome)))
         first)))
 
 (rf/reg-sub

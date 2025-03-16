@@ -2,64 +2,67 @@
   (:require
    [re-com.core :as com :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
-   [reagent.core :as r]
    [schmoho.dasudopit.client.common.forms :as forms]
    [schmoho.dasudopit.client.common.views.widgets :as widgets]
-   [schmoho.dasudopit.client.utils :as utils]))
+   [schmoho.dasudopit.client.panels.pipelines.docking.subs]
+   [schmoho.dasudopit.client.panels.pipelines.docking.utils :as utils]))
 
-;; === Subs ===
-
-(rf/reg-sub
- :forms.docking/selected-proteins-model-all
- :<- [:forms/docking]
- (fn
-   [form]
-   (:selected-proteins-model form)))
-
-;; === Views ===
+(defn protein-info->coloring-map
+  [protein-info]
+  (into
+   {}
+   (mapcat
+    (fn [{:keys [location color]}]
+      (zipmap
+       (range (first location) (inc (second location)))
+       (repeat color)))
+    (concat (:domains protein-info)
+            (:binding-sites protein-info)
+            (:active-sites protein-info)))))
 
 (defn protein-colors
   [protein]
-  (let [features (:features protein)
-        by-type  (->> features
-                      (map (fn [f]
-                             {:type     (:type f)
-                              :location (utils/protein-feature->location f)})))])
-  (fn [atom]
-    "blue"))
+  (let [protein-info (utils/protein-info protein)
+        coloring-map (protein-info->coloring-map protein-info)]
+    (fn [atom]
+      (or (get coloring-map (.-resi atom))
+          "grey"))))
 
 (defn part-3
   []
-  (let [selected-proteins (rf/subscribe [:forms.docking/selected-proteins-model-all])
-        structures        (rf/subscribe [:data/structures])]
+  (let [input-model (rf/subscribe [:forms.docking/input-model])
+        structures  (rf/subscribe [:data/structures])]
     (fn []
-      (let [viewers
-            (->> @selected-proteins
-                 vals
-                 (map :id)
-                 (keep
-                  (fn [protein-id]
-                    (let [pdb     (:pdb (get @structures protein-id))
-                          protein @(rf/subscribe [:data/protein protein-id])]
-                      (when pdb
-                        ^{:key protein-id}
-                        [v
-                         :children
-                         [[:div
-                           {:style {:height   "452px"
-                                    :width    "452px"
-                                    :position "relative"
-                                    :border   "1px solid black"}}
-                           [widgets/pdb-viewer
-                            :pdb pdb
-                            :style {:cartoon {:colorfunc (protein-colors protein)}}
-                            :config {:backgroundColor "white"}
-                            :on-load #(rf/dispatch [::forms/set-form-data
-                                                    :docking
-                                                    :protein-viewer
-                                                    protein-id
-                                                    %])]]]]))))
-                 (into []))]
+      (let [protein-ids  (->> @input-model :taxon vals (map (comp :id :protein)))
+            protein-data (map
+                          (fn [id]
+                            {:id      id
+                             :pdb     (:pdb (get @structures id))
+                             :uniprot @(rf/subscribe [:data/protein id])})
+                          protein-ids)
+            viewers      (->> protein-data
+                              (keep
+                               (fn [{:keys [id pdb uniprot]}]
+                                 (when pdb
+                                   ^{:key id}
+                                   [h
+                                    :children
+                                    [[:div
+                                      {:style {:height   "452px"
+                                               :width    "452px"
+                                               :position "relative"
+                                               :border   "1px solid black"}}
+                                      [widgets/pdb-viewer
+                                       :pdb pdb
+                                       :style {:cartoon {:colorfunc (protein-colors uniprot)}}
+                                       :config {:backgroundColor "white"}
+                                       :on-load #(rf/dispatch [::forms/set-form-data
+                                                               :docking
+                                                               :protein-viewer
+                                                               id
+                                                               %])]]
+                                     [utils/protein-info-hiccup uniprot]]])))
+                              (into []))]
         [h
          :gap "50px"
          :children

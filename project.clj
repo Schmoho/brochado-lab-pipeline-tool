@@ -20,6 +20,7 @@
                  [ring/ring-core "1.13.0"]
                  [ring/ring-jetty-adapter "1.13.0"]
                  [metosin/reitit "0.8.0-alpha1"]
+                 [ring-cors "0.1.13"]
 
                  ;; mongo db client
                  [com.novemberain/monger "3.6.0"]

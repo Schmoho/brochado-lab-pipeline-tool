@@ -5,32 +5,6 @@
    [schmoho.dasudopit.client.common.forms :as forms]
    [schmoho.dasudopit.client.utils :as utils :refer [cool-select-keys]]))
 
-;; === Subs ===
-
-(rf/reg-sub
- :forms.docking.part-1/taxon-model
- :<- [:forms/docking]
- (fn [form]
-   (set (:taxon-model form))))
-
-(rf/reg-sub
- :forms.docking.part-1/ligand-model
- :<- [:forms/docking]
- (fn [form]
-   (set (:ligand-model form))))
-
-(rf/reg-sub
- :forms.docking.part-1/valid?
- :<- [:forms.docking.part-1/taxon-model]
- :<- [:forms.docking.part-1/ligand-model]
- (fn [[taxon ligand]]
-   (and (not-empty taxon)
-        (not-empty ligand)
-        (some? taxon)
-        (some? ligand))))
-
-;; === Views ===
-
 (defn ligands->choices
   [ligands]
   (->> ligands
@@ -90,6 +64,8 @@
      :required? true
      :filter-box? false]))
 
+
+
 (defn part-1
   []
   (let [taxons (rf/subscribe [:data/taxons])
@@ -112,22 +88,17 @@
               (doseq [chosen-taxon %]
                 (utils/get-data [:data :raw :proteome chosen-taxon]))
               (rf/dispatch
-               [::forms/set-form-data
-                :docking
-                :taxon-model
-                %])
-              (rf/dispatch
                [::forms/update-form-data
                 :docking
-                :selected-proteins-model
-                (fn [selected-proteins-model]
-                  (reduce
-                   (fn [acc p]
-                     (if (contains? % p)
-                       acc
-                       (dissoc acc p)))
-                   selected-proteins-model
-                   (keys selected-proteins-model)))]))]
+                :input-model
+                :taxon
+                (fn [input-state]
+                  (->> %
+                       (map (fn [taxon-id]
+                              (if-let [contained (get input-state taxon-id)]
+                                [taxon-id contained]
+                                [taxon-id {}])))
+                       (into {})))]))]
           [com/gap :size "50px"]
           [ligand-multi-choice
            :choices
@@ -138,6 +109,6 @@
            #(rf/dispatch
              [::forms/set-form-data
               :docking
-              :ligand-model
+              :input-model
+              :ligand
               %])]]]]])))
-

@@ -24,7 +24,7 @@
 
 
 (defn plddt-slider
-  [protein-id]
+  [protein-id m]
   [com/slider
    :model
    m
