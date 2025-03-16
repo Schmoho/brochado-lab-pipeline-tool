@@ -247,6 +247,8 @@
       (update :features
               (partial filter #(#{"Binding site"
                                   "Active site"
+                                  "Transmembrane"
+                                  "Topological domain"
                                   "Domain"} (:type %))))
       (assoc :references
              (dois+titles+journals protein))))

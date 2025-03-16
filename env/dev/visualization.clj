@@ -2,8 +2,8 @@
   (:require
    [clojure.set :as set]
    [clojure.string :as str]
-   [oz.core :as oz]
-   [plots.volcanoes :as volcano]
+   #_[oz.core :as oz]
+   #_[plots.volcanoes :as volcano]
    [schmoho.dasudopit.biodb.uniprot.api :as api.uniprot]
    [schmoho.dasudopit.biodb.uniprot.core :as uniprot]
    [schmoho.dasudopit.biodb.uniprot.mapping :as uniprot.mapping]

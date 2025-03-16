@@ -43,20 +43,19 @@
             viewers      (->> protein-data
                               (keep
                                (fn [{:keys [id pdb uniprot]}]
-                                 (when pdb
-                                   ^{:key id}
-                                   [h
-                                    :children
-                                    [[:div
-                                      {:style {:height   "452px"
-                                               :width    "452px"
-                                               :position "relative"
-                                               :border   "1px solid black"}}
-                                      [widgets/pdb-viewer
-                                       :pdb pdb
-                                       :style {:cartoon {:colorfunc (protein-colors uniprot)}}
-                                       :config {:backgroundColor "white"}]]
-                                     [utils/protein-info-hiccup uniprot]]])))
+                                 ^{:key id}
+                                 [h
+                                  :children
+                                  [[:div
+                                    {:style {:height   "452px"
+                                             :width    "452px"
+                                             :position "relative"
+                                             :border   "1px solid black"}}
+                                    [widgets/pdb-viewer
+                                     :pdb pdb
+                                     :style {:cartoon {:colorfunc (protein-colors uniprot)}}
+                                     :config {:backgroundColor "white"}]]
+                                   [utils/protein-info-hiccup uniprot]]]))
                               (into []))]
         [h
          :gap "50px"

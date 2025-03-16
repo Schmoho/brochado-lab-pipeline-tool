@@ -36,10 +36,15 @@
   (let [features      (:features protein)
         by-type       (->> features
                            (map (fn [f]
-                                  {:type         (:type f)
-                                   :description  (:description f)
-                                   :location-str (location-str f)
-                                   :location     (utils/protein-feature->location f)}))
+                                  (let [type (:type f)]
+                                    {:type         (if (#{"Domain"
+                                                          "Topological domain"
+                                                          "Transmembrane"} type)
+                                                     "Domain"
+                                                     type)
+                                     :description  (:description f)
+                                     :location-str (location-str f)
+                                     :location     (utils/protein-feature->location f)})))
                            (group-by :type))
         domains       (features-with-colors (get by-type "Domain") green-yellow-palette)
         active-sites  (features-with-colors (get by-type "Active site") red-palette)
