@@ -67,3 +67,24 @@
    (let [protein-ids (->> input-model :taxon vals (map (comp :id :protein)))]
      (and (every? some? (map #(get structures %) protein-ids))
           (pos? (count protein-ids))))))
+
+;; === Part 4 ===
+
+(rf/reg-sub
+ :forms.docking.part-4/plddt-cutoff
+ :<- [:forms.docking/input-model]
+ (fn [input-model [_ taxon-id]]
+   (-> input-model
+       :taxon
+       (get taxon-id)
+       :plddt-cutoff)))
+
+(rf/reg-sub
+ :forms.docking.part-4/plddt-viewer
+ :<- [:forms.docking/input-model]
+ (fn [input-model [_ taxon-id]]
+   (-> input-model
+       :taxon
+       (get taxon-id)
+       :viewer
+       :plddt)))

@@ -23,7 +23,15 @@
            :style    {:background-color "#0072bb"}
            :on-click (fn []
                        (doseq [p selected-proteins]
-                         (rf/dispatch [::http/http-get [:data :raw :structure p]])))
+                         (rf/dispatch [::http/http-get [:data :raw :structure p]]))
+                       (doseq [t (->> @input-model :taxon keys)]
+                         (rf/dispatch-sync [::forms/set-form-data
+                                            :docking
+                                            :input-model
+                                            :taxon
+                                            t
+                                            :plddt-cutoff
+                                            80])))
            :style    {:background-color (if @hover? "#0072bb" "#4d90fe")}
            :attr     {:on-mouse-over (com/handler-fn (reset! hover? true))
                       :on-mouse-out  (com/handler-fn (reset! hover? false))}])))))

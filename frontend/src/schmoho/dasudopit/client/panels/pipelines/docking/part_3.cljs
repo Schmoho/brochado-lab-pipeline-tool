@@ -55,12 +55,7 @@
                                       [widgets/pdb-viewer
                                        :pdb pdb
                                        :style {:cartoon {:colorfunc (protein-colors uniprot)}}
-                                       :config {:backgroundColor "white"}
-                                       :on-load #(rf/dispatch [::forms/set-form-data
-                                                               :docking
-                                                               :protein-viewer
-                                                               id
-                                                               %])]]
+                                       :config {:backgroundColor "white"}]]
                                      [utils/protein-info-hiccup uniprot]]])))
                               (into []))]
         [h
