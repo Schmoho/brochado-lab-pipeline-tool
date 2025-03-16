@@ -32,8 +32,8 @@
  {:app
   {:target           #_:browser :esm
    :output-dir       "public/js"
-   :modules          {:main {:entries [unknown-client.core]
-                             :init-fn unknown-client.core/init}}
+   :modules          {:main {:entries [schmoho.dasudopit.client.core]
+                             :init-fn schmoho.dasudopit.client.core/init}}
    #_#_:js-options   {:js-provider           :external
                       :external-index        "public/js/imports.js"
                       :external-index-format :esm}

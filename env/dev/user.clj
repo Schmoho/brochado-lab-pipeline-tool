@@ -1,12 +1,12 @@
 (ns user
   (:require
-   [biodb.ncbi.api :as ncbi.api]
-   [biodb.uniprot.api :as uniprot.api]
    [clojure.java.io :as io]
    [portal.api :as p]
    [portal.viewer :as v]
-   [utils :as utils]
-   [server.core :as server]))
+   [schmoho.dasudopit.biodb.ncbi.api :as ncbi.api]
+   [schmoho.dasudopit.biodb.uniprot.api :as uniprot.api]
+   [schmoho.dasudopit.server.core :as server]
+   [schmoho.dasudopit.utils :as utils]))
 
 (def server (server/start! 3001))
 (comment (.stop server))

@@ -1,5 +1,5 @@
 {
-    "name": "unknown-client",
+    "name": "schmoho.dasudopit.client",
     "type": "module",
     "scripts": {
         "shadow-dev": "npx shadow-cljs watch app",
@@ -12,10 +12,12 @@
         "build-report": "npx shadow-cljs run shadow.cljs.build-report app target/build-report.html"
     },
     "dependencies": {
+        "chroma-js": "^3.1.2",
         "detect-element-resize": "^0.0.2",
         "gosling.js": "^1.0.2",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
+        "react-vega": "^7.6.0",
         "vega-embed": "^6.29.0"
     },
     "devDependencies": {

@@ -1,6 +1,6 @@
-(defproject unknown "1.0.0-SNAPSHOT"
-  :main core
-  :uberjar-name "unknown.jar"
+(defproject dasudopit "1.0.0-SNAPSHOT"
+  :main schmoho.dasudopit.core
+  :uberjar-name "dasudopit.jar"
   ;; this serves to copy the packaged output from Vite for compilation
   ;; :prep-tasks [["run" "-m" "build/copy-dist-to-public"]]
   ;; check out portal https://github.com/djblue/portal?tab=readme-ov-file#demo
