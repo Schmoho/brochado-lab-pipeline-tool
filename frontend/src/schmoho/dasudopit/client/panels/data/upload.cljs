@@ -10,7 +10,7 @@
    [schmoho.dasudopit.client.common.views.forms :as common.forms]
    [schmoho.dasudopit.client.common.views.structure :refer [card]
     :as structure]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]))
+   [schmoho.dasudopit.client.utils :refer [cool-select-keys]]))
 
 (defn volcano-info
   []
@@ -64,6 +64,23 @@
     [com/input-text
      :model nil
      :on-change (fn [_])]]])
+(defn taxon-chooser
+  [& {:keys [on-change]}]
+  (let [taxons          (rf/subscribe [:data/taxons])
+        selection-model (r/atom nil)]
+    [com/single-dropdown
+     :choices
+     (conj (map #(cool-select-keys
+                  %
+                  [[:id :id]
+                   [:label :scientificName]])
+                @taxons)
+           {:id nil :label "-"})
+     :model selection-model
+     :on-change #(do
+                   (reset! selection-model %)
+                   (on-change %))
+     :placeholder "For which taxon?"]))
 
 (defn upload-volcano-form
   []
@@ -89,7 +106,7 @@
       [:<>]]
      [h
       :children
-      [[widgets/taxon-chooser
+      [[taxon-chooser
         :on-change
         #(rf/dispatch [::forms/set-form-data :upload/volcano :meta :taxon %])]
        [com/gap :size "80px"]

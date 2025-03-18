@@ -2,19 +2,15 @@
   (:require
    ["react" :as react]
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
-   [re-frame.core :as rf]
-   [reagent.core :as r]
-   [schmoho.dasudopit.client.utils :refer [cool-select-keys]]))
+   [reagent.core :as r][schmoho.dasudopit.client.utils :refer [rand-str]]))
 
-(defn lineage-item [idx item]
-  ^{:key idx}
+(defn lineage-item [item]
   [v
    :align :center
    :class "btn btn-outline-secondary"
    :children [#_[com/label :label (:rank item)]
               [com/hyperlink-href :label (:scientificName item)
                :href (str "https://www.uniprot.org/taxonomy/" (:id item))]]])
-
 
 (defn lineage-connector []
   [:div {:style {:display        "flex"
@@ -29,13 +25,12 @@
                   :height           "10px"
                   :background-color "#ccc"}}]])
 
-
 (defn lineage-widget [lineage]
   [v
    :children (if (empty? lineage)
                [[com/label :label "No lineage available"]]
                (->> lineage
-                    (map-indexed lineage-item)
+                    (map lineage-item)
                     (interpose [lineage-connector])
                     reverse
                     vec))])
@@ -101,41 +96,21 @@
        {:suggestions-container {:style {:z-index 10}}
         :suggestion {:style {:z-index 10}}}]]]))
 
-
-(defn taxon-chooser
-  [& {:keys [on-change]}]
-  (let [taxons          (rf/subscribe [:data/taxons])
-        selection-model (r/atom nil)]
-    [com/single-dropdown
-     :choices
-     (conj (map #(cool-select-keys
-                  %
-                  [[:id :id]
-                   [:label :scientificName]])
-                @taxons)
-           {:id nil :label "-"})
-     :model selection-model
-     :on-change #(do
-                   (reset! selection-model %)
-                   (on-change %))
-     :placeholder "For which taxon?"]))
-
-
-
 (defn pdb-viewer
   [& {:keys [pdb style config on-load]}]
-  (let [ref (react/createRef)
+  (let [ref          (react/createRef)
         viewer-state (r/atom nil)]
     (r/create-class
      {:display-name "pdb-viewer"
       :reagent-render
       (fn []
         [:div {:class "mol-container"
+               :id (rand-str)
                :style {:width    "450px"
                        :height   "450px"
                        :position "relative"
-                       :border "solid grey 1px"}
-               :ref ref}
+                       :border   "solid grey 1px"}
+               :ref   ref}
          "Loading viewer..."])
       :component-did-mount
       (fn [_]
@@ -149,22 +124,7 @@
               (.render)
               (.zoom 1.2 1000))
             (when on-load
-              (on-load viewer-state)))))
-      
-      #_#_:component-did-update
-      (fn [_]
-        (js/alert "hi")
-        (when-let [viewer @viewer-state]
-          (doto viewer
-            (.removeAllModels)
-            (.addModel pdb "pdb")
-            (.setStyle (clj->js {}) (clj->js style))
-            (.zoomTo)
-            (.render)
-            (.zoom 1.2 1000))
-          (when on-load
-            (on-load viewer))))})))
-
+              (on-load viewer-state)))))})))
 
 (defn table
   [data & {:keys [columns]}]

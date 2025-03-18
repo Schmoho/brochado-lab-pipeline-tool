@@ -19,7 +19,7 @@
      ["1. Choose taxons and ligands" [part-1]]
    (when @(rf/subscribe [:forms.docking.part-1/valid?])
      ["2. Choose proteins and binding sites" [part-2]])
-   (when @(rf/subscribe [:forms.docking.part-2/valid?])
+   #_(when @(rf/subscribe [:forms.docking.part-2/valid?])
      ["3. Choose target site" [part-3]])
    (when @(rf/subscribe [:forms.docking.part-2/valid?])
      ["4. Cut tail regions" [part-4]])

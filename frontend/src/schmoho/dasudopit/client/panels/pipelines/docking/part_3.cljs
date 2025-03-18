@@ -20,7 +20,7 @@
             (:binding-sites protein-info)
             (:active-sites protein-info)))))
 
-(defn protein-colors
+(defn protein-coloring-fn
   [protein]
   (let [protein-info (utils/protein-info protein)
         coloring-map (protein-info->coloring-map protein-info)]
@@ -28,36 +28,32 @@
       (or (get coloring-map (.-resi atom))
           "grey"))))
 
+(defn protein-site-picker
+  [pdb uniprot]
+  [h
+   :children
+   [[widgets/pdb-viewer
+     :pdb pdb
+     :style {:cartoon {:colorfunc (protein-coloring-fn uniprot)}}
+     :config {:backgroundColor "white"}]
+    [utils/protein-info-hiccup uniprot]]])
+
 (defn part-3
   []
-  (let [input-model (rf/subscribe [:forms.docking/input-model])
-        structures  (rf/subscribe [:data/structures])]
-    (fn []
-      (let [protein-ids  (->> @input-model :taxon vals (map (comp :id :protein)))
-            protein-data (map
-                          (fn [id]
-                            {:id      id
-                             :pdb     (:pdb (get @structures id))
-                             :uniprot @(rf/subscribe [:data/protein id])})
-                          protein-ids)
-            viewers      (->> protein-data
-                              (keep
-                               (fn [{:keys [id pdb uniprot]}]
-                                 ^{:key id}
-                                 [h
-                                  :children
-                                  [[:div
-                                    {:style {:height   "452px"
-                                             :width    "452px"
-                                             :position "relative"
-                                             :border   "1px solid black"}}
-                                    [widgets/pdb-viewer
-                                     :pdb pdb
-                                     :style {:cartoon {:colorfunc (protein-colors uniprot)}}
-                                     :config {:backgroundColor "white"}]]
-                                   [utils/protein-info-hiccup uniprot]]]))
-                              (into []))]
-        [h
-         :gap "50px"
-         :children
-         viewers]))))
+  (let [input-model     (rf/subscribe [:forms.docking/input-model])
+        structures      (rf/subscribe [:data/structures])
+        protein-viewers (->> @input-model
+                             :taxon
+                             vals
+                             (map
+                              (comp
+                               (fn [id]
+                                 (let [pdb     (:pdb (get @structures id))
+                                       uniprot @(rf/subscribe [:data/protein id])]
+                                   [protein-site-picker pdb uniprot]))
+                               :id
+                               :protein)))]
+    [h
+     :gap "50px"
+     :children
+     protein-viewers]))

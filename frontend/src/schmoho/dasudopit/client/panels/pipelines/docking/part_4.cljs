@@ -13,81 +13,79 @@
                               (get taxon-id)
                               :plddt-cutoff)])
 
+(defn handle-set-plddt-cutoff-fn
+  [taxon-id plddt-viewer]
+  (fn [cutoff]
+    (rf/dispatch [::forms/set-form-data
+                  :docking
+                  :input-model
+                  :taxon
+                  taxon-id
+                  :plddt-cutoff
+                  cutoff])
+    (doto ^GLViewer plddt-viewer
+      (.setStyle
+       (clj->js {})
+       (clj->js {:cartoon
+                 {:colorfunc
+                  (fn [atom]
+                    (if (< cutoff (.-b atom))
+                      "blue"
+                      "yellow"))}}))
+      (.render))))
+
 (defn plddt-slider
   [taxon-id]
   (when-let [plddt-viewer @(rf/subscribe [:forms.docking.part-4/plddt-viewer taxon-id])]
-    [com/slider
-     :model
-     (rf/subscribe [:forms.docking.part-4/plddt-cutoff taxon-id])
-     :on-change
-     #(do
-        (doto ^GLViewer @plddt-viewer
-          (.setStyle
-           (clj->js {})
-           (clj->js {:cartoon
-                     {:colorfunc
-                      (fn [atom]
-                        (if (< % (.-b atom))
-                          "blue"
-                          "yellow"))}}))
-          (.render))
-        (rf/dispatch [::forms/set-form-data
-                      :docking
-                      :input-model
-                      :taxon
-                      taxon-id
-                      :plddt-cutoff
-                      %]))]))
+    (let [plddt-cutoff-model (rf/subscribe [:forms.docking.part-4/plddt-cutoff taxon-id])
+          viewer             plddt-viewer]
+      [com/slider
+       :model plddt-cutoff-model
+       :on-change (handle-set-plddt-cutoff-fn taxon-id viewer)])))
 
-(defn plddt-viewer
+(defn handle-protein-viewer-on-load-fn
+  [taxon-id]
+  (fn [viewer]
+    (rf/dispatch [::forms/set-form-data
+                  :docking
+                  :input-model
+                  :taxon
+                  taxon-id
+                  :viewer
+                  :plddt
+                  @viewer])))
+
+(defn protein-plddt-cutoff-chooser
   [protein-data]
-  [v
-   :children
-   [[cutoff-label (:taxon-id protein-data)]
-    [plddt-slider (:taxon-id protein-data)]
-    [:div
-     {:style {:height   "452px"
-              :width    "452"
-              :position "relative"
-              :border   "1px solid black"}}
-     [widgets/pdb-viewer
-      :pdb (:pdb protein-data)
-      :style {:cartoon {:colorfunc
-                        (fn [atom]
-                          (if (< 80 (.-b atom))
-                            "blue"
-                            "yellow"))}}
-      :config {:backgroundColor "white"}
-      :on-load
-      #(do
-         (rf/dispatch-sync
-          [::forms/set-form-data
-           :docking
-           :input-model
-           :taxon
-           (:taxon-id protein-data)
-           :viewer
-           :plddt
-           %]))]]]])
+  (let [taxon-id (:taxon-id protein-data)]
+    [v
+     :children
+     [[cutoff-label taxon-id]
+      [plddt-slider taxon-id]
+      [widgets/pdb-viewer
+       :pdb (:pdb protein-data)
+       :style {:cartoon {:colorfunc
+                         (fn [atom]
+                           (if (<  80 (.-b atom))
+                             "blue"
+                             "yellow"))}}
+       :config {:backgroundColor "white"}
+       :on-load (handle-protein-viewer-on-load-fn taxon-id)]]]))
 
 (defn part-4
   []
-  (let [input-model (rf/subscribe [:forms.docking/input-model])
-        structures  (rf/subscribe [:data/structures])]
-    (fn []
-      (let [viewers (->> @input-model
-                         :taxon
-                         (map (fn [[taxon-id inputs]]
-                                (let [protein-id   (-> inputs :protein :id)
-                                      protein-data {:id    protein-id
-                                                    :pdb   (:pdb (get @structures protein-id))
-                                                    :taxon-id taxon-id
-                                                    :viewer (-> inputs)}]
-                                  ^{:key protein-id}
-                                  [plddt-viewer protein-data]))))]
-        [h
-         :gap "50px"
-         :children
-         viewers]))))
+  (let [viewers (->> @(rf/subscribe [:forms.docking/input-model])
+                     :taxon
+                     (map (fn [[taxon-id inputs]]
+                            (let [protein-id   (-> inputs :protein :id)
+                                  protein-data {:id    protein-id
+                                                :pdb   (:pdb (get @(rf/subscribe [:data/structures]) protein-id))
+                                                :taxon-id taxon-id
+                                                :viewer (-> inputs)}]
+                              [protein-plddt-cutoff-chooser protein-data]))))]
+    [h
+     :gap "50px"
+     :children
+     viewers]))
 
 

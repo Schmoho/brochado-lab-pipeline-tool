@@ -64,51 +64,50 @@
      :required? true
      :filter-box? false]))
 
+(defn handle-set-ligands
+  [ligands]
+  (rf/dispatch [::forms/set-form-data
+                :docking
+                :input-model
+                :ligand
+                ligands]))
 
-
-(defn part-1
-  []
-  (let [taxons (rf/subscribe [:data/taxons])
-        ligands (rf/subscribe [:data/ligands])]
-    (fn []
-      [v
-       :children
-       [(when-not @(rf/subscribe [:forms.docking.part-1/valid?])
-          [:span "Please choose at least one taxon and ligand."])
-        [h
-         :src      (at)
-         :children
-         [[taxon-multi-choice
-           :choices
-           (taxons->choices @taxons)
-           :model
-           (rf/subscribe [:forms.docking.part-1/taxon-model])
-           :on-change
-           #(do
-              (doseq [chosen-taxon %]
-                (utils/get-data [:data :raw :proteome chosen-taxon]))
-              (rf/dispatch
-               [::forms/update-form-data
+(defn handle-set-taxons
+  [taxons]
+  (doseq [chosen-taxon taxons]
+    (utils/get-data [:data :raw :proteome chosen-taxon]))
+  (rf/dispatch [::forms/update-form-data
                 :docking
                 :input-model
                 :taxon
                 (fn [input-state]
-                  (->> %
+                  (->> taxons
                        (map (fn [taxon-id]
                               (if-let [contained (get input-state taxon-id)]
                                 [taxon-id contained]
                                 [taxon-id {}])))
-                       (into {})))]))]
-          [com/gap :size "50px"]
-          [ligand-multi-choice
-           :choices
-           (ligands->choices @ligands)
-           :model
-           (rf/subscribe [:forms.docking.part-1/ligand-model])
-           :on-change
-           #(rf/dispatch
-             [::forms/set-form-data
-              :docking
-              :input-model
-              :ligand
-              %])]]]]])))
+                       (into {})))]))
+
+(defn part-1
+  []
+  (let [taxons       @(rf/subscribe [:data/taxons])
+        ligands      @(rf/subscribe [:data/ligands])
+        form-valid?  @(rf/subscribe [:forms.docking.part-1/valid?])
+        taxon-model  (rf/subscribe [:forms.docking.part-1/taxon-model])
+        ligand-model (rf/subscribe [:forms.docking.part-1/ligand-model])]
+    [v
+     :children
+     [(when-not form-valid?
+        [:span "Please choose at least one taxon and ligand."])
+      [h
+       :src      (at)
+       :children
+       [[taxon-multi-choice
+         :choices   (taxons->choices taxons)
+         :model     taxon-model
+         :on-change #(handle-set-taxons %)]
+        [com/gap :size "50px"]
+        [ligand-multi-choice
+         :choices   (ligands->choices ligands)
+         :model     ligand-model
+         :on-change #(handle-set-ligands %)]]]]]))
