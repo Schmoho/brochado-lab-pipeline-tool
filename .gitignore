@@ -1,6 +1,5 @@
 /target/
 /.nrepl-port
-/dev-config.edn
 /.calva/
 /.clj-kondo/
 /.lsp/
