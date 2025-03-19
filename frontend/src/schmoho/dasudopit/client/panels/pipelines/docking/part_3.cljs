@@ -28,15 +28,30 @@
       (or (get coloring-map (.-resi atom))
           "grey"))))
 
+(rf/reg-sub
+ :where-box
+ :<- [:forms.docking/input-model]
+ (fn [input-model]
+   (-> input-model :asdf)))
+
 (defn protein-site-picker
   [pdb uniprot]
-  [h
-   :children
-   [[widgets/pdb-viewer
-     :pdb pdb
-     :style {:cartoon {:colorfunc (protein-coloring-fn uniprot)}}
-     :config {:backgroundColor "white"}]
-    [utils/protein-info-hiccup uniprot]]])
+  (let [where-box (rf/subscribe [:where-box])]
+    (.log js/console @where-box)
+    [h
+     :children
+     [[widgets/pdb-viewer
+       :objects {:pdb pdb
+                 :spheres [(when (= "10" @where-box)
+                             {:center {:x 0, :y 0, :z 0}, :radius 10.0, :color "green"})]}
+       :style {:cartoon {:colorfunc (protein-coloring-fn uniprot)}}
+       :config {:backgroundColor "white"}]
+      [com/input-text :model where-box :on-change #(rf/dispatch [::forms/set-form-data
+                                                                 :docking
+                                                                 :input-model
+                                                                 :asdf
+                                                                 %])]
+      [utils/protein-info-hiccup uniprot]]]))
 
 (defn part-3
   []

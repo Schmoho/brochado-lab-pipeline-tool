@@ -5,7 +5,6 @@
     :rename {v-box v h-box h}]
    [re-frame.core :as re-frame]
    [schmoho.dasudopit.client.routing :as routing]
-   [schmoho.dasudopit.client.routing :as routing]
    [schmoho.dasudopit.client.common.views.structure :as structure]
    [schmoho.dasudopit.client.common.views.widgets :as widgets]))
 
@@ -89,7 +88,8 @@
      :justify :between
      :children
      [[proteome-stats]
-      [widgets/protein-search proteome]
+      #_[widgets/protein-search
+         :proteome proteome]
       [bug-fluff lineage]]]))
 
 (defn single-taxon-header []

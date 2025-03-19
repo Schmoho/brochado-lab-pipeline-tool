@@ -79,6 +79,6 @@
                         :body-params
                         (update :meta assoc :id id)
                         #_(update :meta assoc :timestamp (Instant/now)))]
-    (db/insert! [:data :input :volcano] upload-form)
+    (db/insert! [:data :input :volcano] id upload-form)
     {:status 200
      :body   {id (:meta upload-form)}}))

@@ -97,15 +97,24 @@
         :suggestion {:style {:z-index 10}}}]]]))
 
 (defn pdb-viewer
-  [& {:keys [pdb style config on-load]}]
+  [& {:keys [objects style config on-load]}]
   (let [ref          (react/createRef)
         viewer-state (r/atom nil)]
     (r/create-class
      {:display-name "pdb-viewer"
       :reagent-render
-      (fn []
+      (fn [& {:keys [objects style]}]
+        (when-let [viewer @viewer-state]
+          (let [{:keys [spheres boxes]} objects]
+            (.removeAllShapes ^GLViewer viewer)
+            (doseq [sphere (filter some? spheres)]
+              (.addSphere ^GLViewer viewer (clj->js sphere)))
+            (doseq [box (filter some? boxes)]
+              (.addBox ^GLViewer viewer (clj->js box)))
+            (doto ^GLViewer viewer
+              (.setStyle (clj->js {}) (clj->js style))
+              (.render))))
         [:div {:class "mol-container"
-               :id (rand-str)
                :style {:width    "450px"
                        :height   "450px"
                        :position "relative"
@@ -115,9 +124,14 @@
       :component-did-mount
       (fn [_]
         (when-let [node (.-current ref)]
-          (let [viewer (.createViewer js/$3Dmol node (clj->js config))]
+          (let [viewer (.createViewer js/$3Dmol node (clj->js config))
+                {:keys [pdb spheres boxes]} objects]
             (reset! viewer-state viewer)
-            (doto viewer
+            (doseq [sphere (filter some? spheres)]
+              (.addSphere ^GLViewer viewer (clj->js sphere)))
+            (doseq [box (filter some? boxes)]
+              (.addBox ^GLViewer viewer (clj->js box)))
+            (doto ^GLViewer viewer
               (.addModel pdb "pdb")
               (.setStyle (clj->js {}) (clj->js style))
               (.zoomTo)

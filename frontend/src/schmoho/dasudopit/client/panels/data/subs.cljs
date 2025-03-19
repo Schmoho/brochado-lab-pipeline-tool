@@ -56,8 +56,14 @@
    (->> raw :ligand vals vec)))
 
 (rf/reg-sub
+ :data/ligands-map
+ :<- [:data/raw]
+ (fn [raw]
+   (:ligand raw)))
+
+(rf/reg-sub
  :data/ligand
- :<- [:data/ligands]
+ :<- [:data/ligands-map]
  (fn [ligands [_ id]]
    (get ligands id)))
 

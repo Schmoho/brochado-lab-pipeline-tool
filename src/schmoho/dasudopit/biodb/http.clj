@@ -13,13 +13,13 @@
   ([url req]
    (get "results" url req))
   ([collection url req]
-   (or (-> (mongo/get-api-result
+   (or #_(-> (mongo/get-api-result
             collection
             {:url     url
              :request req}))
        (let [_      (log/debug "Did not find" url "with" req "in MongoDB" collection)
              result (http/get url req)]
-         (mongo/save-api-result!
+         #_(mongo/save-api-result!
           collection
           (->  result
                (assoc

@@ -64,8 +64,8 @@
 
 
 (defn single-ligand-panel []
-  (let [params @(re-frame/subscribe [::routing/active-route-params])
-        results @(re-frame/subscribe [:data/ligand (:ligand/id params)])
+  (let [params    @(re-frame/subscribe [::routing/active-route-params])
+        results   @(re-frame/subscribe [:data/ligand (:ligand/id  params)])
         json-data (:json results)
         png       (:png results)
         img-src   (str "data:image/png;base64," png)]

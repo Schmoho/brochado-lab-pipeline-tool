@@ -4,8 +4,9 @@
    [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v h-box h}]
    [re-frame.core :as rf]
+   [reagent.core :as r]
    [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.http :as http]
+   [schmoho.dasudopit.client.panels.data.events :as events]
    [schmoho.dasudopit.client.routing :as routing]
    [schmoho.dasudopit.client.common.views.forms :as common.forms]
    [schmoho.dasudopit.client.common.views.structure :refer [card]
@@ -112,7 +113,7 @@
        [com/gap :size "80px"]
        [common.forms/action-button
         :label "Save"
-        :on-click #(rf/dispatch [::http/post-volcano])]]]]]])
+        :on-click #(rf/dispatch [::events/post-volcano])]]]]]])
 
 (defn upload-data-panel
   []

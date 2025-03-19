@@ -20,7 +20,8 @@
    [ring.middleware.cors :refer [wrap-cors]]
    [ring.util.response :as response]
    [schmoho.dasudopit.server.handler.data :as data-handler]
-   [schmoho.dasudopit.server.handler.pipelines :as pipelines-handler]))
+   [schmoho.dasudopit.server.handler.pipelines :as pipelines-handler]
+   [clojure.walk :as walk]))
 
 ;; Define a helper to serve your index.html directly
 (defn serve-index [req]
@@ -133,4 +134,3 @@
 (comment
   (def server (start! 3001))
   (.stop server))
-

@@ -7,6 +7,7 @@
    [schmoho.dasudopit.client.common.db :as db]
    [schmoho.dasudopit.client.config :as config]
    [schmoho.dasudopit.client.css.core :as css]
+   [schmoho.dasudopit.client.panels.data.events]
    [schmoho.dasudopit.client.panels.data.ligand]
    [schmoho.dasudopit.client.panels.data.overview]
    [schmoho.dasudopit.client.panels.data.protein]
