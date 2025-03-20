@@ -4,7 +4,7 @@
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [reagent.core :as r]
    [schmoho.dasudopit.client.utils :refer [rand-str]]
-   ["3dmol/build/3Dmol.js" :default threeDmol]))
+   ["3dmol/build/3Dmol.js" :as threeDmol]))
 
 (defn lineage-item [item]
   [v
@@ -110,7 +110,14 @@
           (let [{:keys [spheres boxes]} objects]
             (.removeAllShapes viewer)
             (doseq [sphere (filter some? spheres)]
-              (.addSphere viewer (clj->js sphere)))
+              #_(.addSphere viewer (clj->js sphere))
+              (when (:resi sphere)
+                (when-let [^js selected-atoms (first (.selectedAtoms viewer (clj->js {:resi (:resi sphere)})))]
+                  (.addSphere viewer (clj->js {:center {:x (.-x selected-atoms),
+                                                        :y (.-y selected-atoms)
+                                                        :z (.-z selected-atoms)}
+                                               :radius (or (:radius sphere) 4.0)
+                                               :color (:color sphere)})))))
             (doseq [box (filter some? boxes)]
               (.addBox viewer (clj->js box)))
             (doto viewer
@@ -129,8 +136,18 @@
           (let [^js viewer (.createViewer threeDmol node (clj->js config))
                 {:keys [pdb spheres boxes]} objects]
             (reset! viewer-state viewer)
+            #_(doseq [sphere (filter some? spheres)]
+                (.addSphere viewer (clj->js sphere)))
             (doseq [sphere (filter some? spheres)]
-              (.addSphere viewer (clj->js sphere)))
+              #_(.addSphere viewer (clj->js sphere))
+              (when (:resi sphere)
+                (when-let [^js selected-atoms (first (.selectedAtoms viewer (clj->js {:resi (:resi sphere)})))]
+                  (.addSphere viewer (clj->js {:center {:x (.-x selected-atoms),
+                                                        :y (.-y selected-atoms)
+                                                        :z (.-z selected-atoms)}
+                                               :radius (or (:radius sphere) 4.0)
+                                               :color (:color sphere)})))
+                #_(.addSphere viewer (clj->js sphere))))
             (doseq [box (filter some? boxes)]
               (.addBox viewer (clj->js box)))
             (doto viewer
