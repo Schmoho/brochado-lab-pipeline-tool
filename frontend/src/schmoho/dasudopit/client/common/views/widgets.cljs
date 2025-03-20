@@ -2,7 +2,9 @@
   (:require
    ["react" :as react]
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
-   [reagent.core :as r][schmoho.dasudopit.client.utils :refer [rand-str]]))
+   [reagent.core :as r]
+   [schmoho.dasudopit.client.utils :refer [rand-str]]
+   ["3dmol/build/3Dmol.js" :default threeDmol]))
 
 (defn lineage-item [item]
   [v
@@ -104,14 +106,14 @@
      {:display-name "pdb-viewer"
       :reagent-render
       (fn [& {:keys [objects style]}]
-        (when-let [viewer @viewer-state]
+        (when-let [^js viewer @viewer-state]
           (let [{:keys [spheres boxes]} objects]
-            (.removeAllShapes ^GLViewer viewer)
+            (.removeAllShapes viewer)
             (doseq [sphere (filter some? spheres)]
-              (.addSphere ^GLViewer viewer (clj->js sphere)))
+              (.addSphere viewer (clj->js sphere)))
             (doseq [box (filter some? boxes)]
-              (.addBox ^GLViewer viewer (clj->js box)))
-            (doto ^GLViewer viewer
+              (.addBox viewer (clj->js box)))
+            (doto viewer
               (.setStyle (clj->js {}) (clj->js style))
               (.render))))
         [:div {:class "mol-container"
@@ -124,14 +126,14 @@
       :component-did-mount
       (fn [_]
         (when-let [node (.-current ref)]
-          (let [viewer (.createViewer js/$3Dmol node (clj->js config))
+          (let [^js viewer (.createViewer threeDmol node (clj->js config))
                 {:keys [pdb spheres boxes]} objects]
             (reset! viewer-state viewer)
             (doseq [sphere (filter some? spheres)]
-              (.addSphere ^GLViewer viewer (clj->js sphere)))
+              (.addSphere viewer (clj->js sphere)))
             (doseq [box (filter some? boxes)]
-              (.addBox ^GLViewer viewer (clj->js box)))
-            (doto ^GLViewer viewer
+              (.addBox viewer (clj->js box)))
+            (doto viewer
               (.addModel pdb "pdb")
               (.setStyle (clj->js {}) (clj->js style))
               (.zoomTo)

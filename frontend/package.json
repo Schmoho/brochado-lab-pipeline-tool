@@ -12,6 +12,7 @@
         "build-report": "npx shadow-cljs run shadow.cljs.build-report app target/build-report.html"
     },
     "dependencies": {
+        "3dmol": "^2.4.2",
         "chroma-js": "^3.1.2",
         "detect-element-resize": "^0.0.2",
         "gosling.js": "^1.0.2",
