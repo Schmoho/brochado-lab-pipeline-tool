@@ -64,12 +64,20 @@
   (fn [path _id _stuff] path))
 
 (defmethod insert! [:data :raw :afdb :pdb]
-  [path id stuff]
-  (let [fs-path (fs-pathify path id "pdb")]
-    (utils/write! (io/file fs-path) stuff)))
+  [path id {:keys [meta structure]}]
+  (utils/write!
+   (fs-pathify (concat path [id])
+               "meta"
+               "edn")
+   meta)
+  (csv-utils/write-csv-data!
+   (fs-pathify (concat path [id])
+               "structure"
+               "pdb")
+   structure))
 
 (defmethod insert! [:data :input :volcano]
-  [path id {:keys [meta file]}]
+  [path id {:keys [meta table]}]
   (utils/write!
    (fs-pathify (concat path [id])
                "meta"
@@ -79,7 +87,7 @@
    (fs-pathify (concat path [id])
                "table"
                "csv")
-   file))
+   table))
 
 (defn- get-edn-record
   [path id]
@@ -111,12 +119,65 @@
 
 (defmethod get-record [:data :raw :afdb :pdb]
   [path id]
-  (let [filename (fs-pathify path id "pdb")]
-    (try
-      (utils/read-file filename)
-      (catch Exception e
-        (log/info "Tried to access non-existing file:"
-                  (ex-message e))))))
+  (let [folder (fs-pathify (concat path [id]))]
+    (->> folder
+         utils/ffile-seq
+         index-folder)))
+
+(defmethod get-record [:data :input :structure]
+  [path ids]
+  (let [folder (fs-pathify (concat path ids))]
+    (->> folder
+         utils/ffile-seq
+         index-folder)))
+
+(defmethod get-record [:data :processed :structure]
+  [path ids]
+  (let [folder (fs-pathify (concat path ids))]
+    (->> folder
+         utils/ffile-seq
+         index-folder)))
+
+(defn get-all-structures-for-protein-id
+  [protein-id]
+  {:afdb      (get-record [:data :raw :afdb :pdb])
+   :input     (->> nil
+                   (utils/folder-seq)
+                   (map (fn [folder]
+                          [(.getName folder)
+                           (->> folder
+                                utils/ffile-seq
+                                index-folder)]))
+                   (into {}))
+   :processed (->> nil
+                   (utils/folder-seq)
+                   (map (fn [folder]
+                          [(.getName folder)
+                           (->> folder
+                                utils/ffile-seq
+                                index-folder)]))
+                   (into {}))})
+
+#_(get-record [:data :raw :afdb :pdb] "A0A0H2ZHP9")
+
+(defmethod get-record [:data :raw :uniprot :taxonomy]
+  [path id]
+  (with-meta
+    (get-edn-record path (str id))
+    api.uniprot/taxon-meta))
+
+(defmethod get-record [:data :raw :pubchem :compound]
+  [path id]
+  (let [data (get-edn-record path (str id))]
+    (-> (assoc data :id (-> data :json :PC_Compounds first :id :id :cid str))
+        (assoc :json (get-in data [:json :PC_Compounds]))
+        (update :json
+                (comp #(dissoc % :bonds)
+                      #(dissoc % :atoms)
+                      #(dissoc % :stereo)
+                      #(dissoc % :coords)
+                      first))
+        (dissoc :sdf))))
 
 (defmethod get-record [:data :processed :obabel :ligand :pdbqt]
   [path {:keys [id params-hash]}]

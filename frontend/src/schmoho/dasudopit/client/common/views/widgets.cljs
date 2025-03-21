@@ -186,3 +186,24 @@
                     columns)
                columns)
          :row-height                35]]]]]))
+
+(defn alert
+  [& {:keys [heading body dismissible? alert-type]}]
+  [:div {:class (str "alert fade show "
+                     (case alert-type
+                       :warning "alert-warning "
+                       :danger "alert-danger "
+                       :success "alert-success "
+                       :primary "alert-primary "
+                       :secondary "alert-secondary "
+                       :info "alert-info "
+                       "alert-info ")
+                     (when dismissible? "alert-dismissible "))
+         :role "alert"}
+   [:strong heading]
+   body
+   [:button {:type "button"
+             :class "close"
+             :data-dismiss "alert"
+             :aria-label "Close"}
+    [:span {:aria-hidden "true"} "×"]]])

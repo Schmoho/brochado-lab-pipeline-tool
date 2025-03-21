@@ -21,8 +21,11 @@
 
 (defn get-pdb
   [id]
-  (let [info (alpha-fold-info id)]
-    (map (comp :body http/get :pdbUrl) info)))
+  (let [info (first (alpha-fold-info id))]
+    {:structure          (-> info :pdbUrl http/get :body)
+     :meta {:source :afdb
+            :model-created-date (:modelCreatedDate info)
+            :model-version      (:latestVersion info)}}))
 
 #_(get-pdb "A0A0H2ZHP9")
 

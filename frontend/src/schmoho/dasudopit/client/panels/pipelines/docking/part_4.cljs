@@ -3,68 +3,66 @@
    [re-com.core :as com :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
    [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]))
+   [schmoho.dasudopit.client.common.views.widgets :as widgets]
+   [schmoho.dasudopit.client.panels.pipelines.docking.subs]
+   [schmoho.dasudopit.client.panels.pipelines.docking.utils :as utils]))
 
-(defn cutoff-label
-  [taxon-id]
-  [:span "pLDDT cutoff: "
-   (-> @(rf/subscribe [:forms.docking/input-model])
-       :taxon
-       (get taxon-id)
-       :plddt-cutoff)])
+(defn protein-info->coloring-map
+  [protein-info]
+  (->> (concat (:domains protein-info)
+               (:binding-sites protein-info)
+               (:active-sites protein-info))
+       (mapcat
+        (fn [{:keys [location color]}]
+          (zipmap
+           (range (first location) (inc (second location)))
+           (repeat color))))
+       (into {})))
 
-(defn handle-set-plddt-cutoff-fn
-  [taxon-id]
-  (fn [cutoff]
-    (rf/dispatch [::forms/set-form-data
-                  :docking
-                  :input-model
-                  :taxon
-                  taxon-id
-                  :plddt-cutoff
-                  cutoff])))
+(defn protein-coloring-fn
+  [protein-info]
+  (let [coloring-map (protein-info->coloring-map protein-info)]
+    (fn [atom]
+      (or (get coloring-map (.-resi ^js atom))
+          "grey"))))
 
-(defn plddt-slider
-  [taxon-id]
-  (let [plddt-cutoff-model (rf/subscribe [:forms.docking.part-4/plddt-cutoff taxon-id])]
-    [com/slider
-     :model plddt-cutoff-model
-     :on-change (handle-set-plddt-cutoff-fn taxon-id)]))
-
-
-(defn protein-plddt-cutoff-chooser
-  [protein-data]
-  (let [taxon-id (:taxon-id protein-data)
-        cutoff   @(rf/subscribe [:forms.docking.part-4/plddt-cutoff taxon-id])]
-    [v
+(defn protein-site-picker
+  [pdb uniprot]
+  (let [protein-info (utils/protein-info uniprot)
+        active-sites (->> protein-info
+                          :active-sites
+                          (map (fn [{:keys [location color]}]
+                                 {:resi location :radius 3.0 :color color})))]
+    [h
      :children
-     [[cutoff-label taxon-id]
-      [plddt-slider taxon-id]
-      [widgets/pdb-viewer
-       :objects {:pdb (:pdb protein-data)}
-       :style {:cartoon {:colorfunc
-                         (fn [atom]
-                           (if (< (or cutoff 80) (.-b atom))
-                             "blue"
-                             "yellow"))}}
-       :config {:backgroundColor "white"}]]]))
+     [[widgets/pdb-viewer
+       :objects {:pdb pdb
+                 :spheres active-sites}
+       :style {:cartoon {:colorfunc (protein-coloring-fn protein-info)}}
+       :config {:backgroundColor "white"}]
+      #_[com/input-text :model where-box :on-change #(rf/dispatch [::forms/set-form-data
+                                                                   :docking
+                                                                   :input-model
+                                                                   :asdf
+                                                                   %])]
+      [utils/protein-info-hiccup uniprot]]]))
 
 (defn part-4
   []
-  (let [viewers
-        (->> @(rf/subscribe [:forms.docking/input-model])
-             :taxon
-             (map (fn [[taxon-id inputs]]
-                    (let [protein-id   (-> inputs :protein :id)
-                          protein-data {:id    protein-id
-                                        :pdb   (-> @(rf/subscribe [:data/structures])
-                                                   (get protein-id)
-                                                   :pdb)
-                                        :taxon-id taxon-id}]
-                      [protein-plddt-cutoff-chooser protein-data]))))]
+  (let [input-model     (rf/subscribe [:forms.docking/input-model])
+        structures      (rf/subscribe [:data/structures])
+        protein-viewers (->> @input-model
+                             :taxon
+                             vals
+                             (map
+                              (comp
+                               (fn [id]
+                                 (let [pdb     (:pdb (get @structures id))
+                                       uniprot @(rf/subscribe [:data/protein id])]
+                                   [protein-site-picker pdb uniprot]))
+                               :id
+                               :protein)))]
     [h
      :gap "50px"
      :children
-     viewers]))
-
-
+     protein-viewers]))

@@ -19,6 +19,7 @@
              :request req}))
        (let [_      (log/debug "Did not find" url "with" req "in MongoDB" collection)
              result (http/get url req)]
+         result
          #_(mongo/save-api-result!
           collection
           (->  result

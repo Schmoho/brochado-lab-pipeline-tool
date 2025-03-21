@@ -1,13 +1,16 @@
 (ns schmoho.dasudopit.client.panels.pipelines.docking.part-2
   (:require
+   [clojure.string :as str]
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
    [reagent.core :as r]
    [schmoho.dasudopit.client.common.forms :as forms]
    [schmoho.dasudopit.client.common.http :as http]
+   [schmoho.dasudopit.client.common.views.forms :as views.forms] 
    [schmoho.dasudopit.client.common.views.widgets :as widgets]
    [schmoho.dasudopit.client.css.forms :as css]
-   [schmoho.dasudopit.client.panels.pipelines.docking.utils :as utils]))
+   [schmoho.dasudopit.client.panels.pipelines.docking.utils :as utils]
+   [schmoho.dasudopit.client.panels.pipelines.docking.events :as events]))
 
 (defn handle-get-structures-click-fn
   [selected-proteins selected-taxons]
@@ -66,6 +69,51 @@
       (when (and protein (not form-valid?))
         [utils/protein-info-hiccup protein])]]))
 
+
+(defn volcano-info
+  []
+  [:<>
+   [:p.info-heading "Input Volcano File"]
+   [:p "You can upload CSV files that satisfy this schema:"]
+   [:p (str/join " | "
+                 ["effect_size"
+                  "effect_type"
+                  "log_transformed_f_statistic"
+                  "fdr"
+                  "gene_name (optional)"
+                  "protein_id (optional)"])]
+   [com/hyperlink-href :src (at)
+    :label  "Link to docs."
+    :href   ""
+    :target "_blank"]])
+
+
+(defn upload-pdb-modal
+  []
+  [com/modal-panel
+   :child
+   [v
+    :children
+    [[views.forms/info-label
+      "Required: Name"
+      [:div ""]]
+     [views.forms/input-text
+      :on-change #(rf/dispatch [::forms/set-form-data :upload/structure :meta :name %])
+      :placeholder "Insert a name for the structure"]
+     [com/gap :size "10px"]
+     [views.forms/info-label
+      "Required: PDB file"
+      [volcano-info]]
+     [views.forms/pdb-upload
+      :on-load #(rf/dispatch [::forms/set-form-data :upload/structure :file %])]
+     [h
+      :children
+      [[com/gap :size "80px"]
+       [views.forms/action-button
+        :label "Save"
+        :on-click #(rf/dispatch [::events/post-structure])]]]]]])
+
+
 (defn part-2
   []
   (let [form-valid?        @(rf/subscribe [:forms.docking.part-2/valid?])
@@ -86,4 +134,5 @@
        :gap "30px"
        :children
        (into [] proteome-searchers)]
-      [get-structures-button]]]))
+      [get-structures-button]
+      #_[upload-pdb-modal]]]))

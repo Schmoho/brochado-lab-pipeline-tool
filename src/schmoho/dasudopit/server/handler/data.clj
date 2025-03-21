@@ -32,6 +32,14 @@
   {:status 200
    :body   (db/get-all-records [:data :raw :uniprot :taxonomy])})
 
+(defn get-taxon
+  [request]
+  (tap> request)
+  (let  [id (-> request :path-params :id)]
+    (log/info "Getting taxon data for ID" id)
+    {:status 200
+     :body   (db/get-record [:data :raw :uniprot :taxonomy] id)}))
+
 (defn get-proteome
   [request]
   (tap> request)
@@ -47,13 +55,23 @@
   {:status 200
    :body   (db/get-all-records [:data :raw :pubchem :compound])})
 
+(defn get-ligand
+  [request]
+  (tap> request)
+  (let [id (-> request :path-params :id)]
+    (log/info "Getting ligand data.")
+    {:status 200
+     :body   (db/get-record [:data :raw :pubchem :compound] id)}))
+
+#_"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/37768/xrefs/RegistryID,RN,SBURL/JSON"
+
 (defn get-volcanos
   [request]
   (tap> request)
   {:status 200
    :body   (db/get-all-records [:data :input :volcano])})
 
-(defn get-structure
+(defn get-afdb-structure
   [request]
   (tap> request)
   (let [id               (-> request :path-params :id)
@@ -61,14 +79,32 @@
     (log/debug "Get structure for " id)
     (if-let [db-record (db/get-record [:data :raw :afdb :pdb] id)]
       {:status 200
-       :body   {:pdb db-record}}
-      ;; TODO: there could be more than one
-      ;; structure here - what to do then?
-      (let [structure (first (afdb/get-pdb id))]
+       :body   db-record}
+      (let [data (afdb/get-pdb id)]
         (when save-when-fetch?
-          (db/insert! [:data :raw :afdb :pdb] id structure))
+          (db/insert! [:data :raw :afdb :pdb] id data))
         {:status 200
-         :body   {:pdb structure}}))))
+         :body   data}))))
+
+(defn get-input-structure
+  [request]
+  (tap> request)
+  (let [protein-id (-> request :path-params :protein-id)
+        id (-> request :path-params :id)]
+    (log/debug "Get structure" id "for" protein-id)
+    (let [db-record (db/get-record [:data :input :structure] [protein-id id])]
+      {:status 200
+       :body   db-record})))
+
+(defn get-processed-structure
+  [request]
+  (tap> request)
+  (let [protein-id (-> request :path-params :protein-id)
+        id (-> request :path-params :id)]
+    (log/debug "Get structure" id "for" protein-id)
+    (let [db-record (db/get-record [:data :processed :structure] [protein-id id])]
+      {:status 200
+       :body   db-record})))
 
 (defn upload-volcano
   [request]
@@ -81,4 +117,4 @@
                         #_(update :meta assoc :timestamp (Instant/now)))]
     (db/insert! [:data :input :volcano] id upload-form)
     {:status 200
-     :body   {id (:meta upload-form)}}))
+     :body   {id upload-form}}))

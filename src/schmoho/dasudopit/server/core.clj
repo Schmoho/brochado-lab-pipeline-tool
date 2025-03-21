@@ -51,28 +51,48 @@
                  ;; using vars (#') allows to update the handler
                  ;; and have the changes immediately be reflected in a REPL
                  :handler       #'data-handler/upload-volcano}}]]
+       ["/structures/:protein-id"
+        {:get {:summary "Get all structures (AFDB, input and processed) for a UniProt protein ID."
+                :handler #'data-handler/get-all-structures-for-protein-id}}]
        ["/raw"
 
         ["/ligand"
          {:get {:summary "Get ligand data."
                 :handler #'data-handler/get-ligands}}]
 
+        ["/ligand/:id"
+         {:get {:summary "Get ligand data by Pubchem ID."
+                :handler #'data-handler/get-ligand}}]
+        
         ["/proteome/:id"
          {:get {:summary "Get proteome for a UniProt taxon ID."
                 :handler #'data-handler/get-proteome}}]
 
         ["/structure/:id"
-         {:get {:summary "Get PDB for a UniProt ID."
-                :handler #'data-handler/get-structure}}]
+         {:get {:summary "Get AFDB PDB for a UniProt ID."
+                :handler #'data-handler/get-afdb-structure}}]
 
         ["/taxon"
          {:get {:summary "Get taxon data."
-                :handler #'data-handler/get-taxons}}]]
+                :handler #'data-handler/get-taxons}}]
+        
+        ["/taxon/:id"
+         {:get {:summary "Get taxon data by NCBI/UniProt Taxonomy ID."
+                :handler #'data-handler/get-taxon}}]]
 
        ["/input"
+        ["/structure/:id"
+         {:get {:summary "Get user input PDB for UUID."
+                :handler #'data-handler/get-input-structure}}]
+        
         ["/volcano"
          {:get {:summary "Get volcano data."
                 :handler #'data-handler/get-volcanos}}]]
+
+       ["/processed"
+        ["/structure/:id"
+         {:get {:summary "Get processed PDB for UUID."
+                :handler #'data-handler/get-processed-structure}}]]
 
        ["/results"
         ["/msa"

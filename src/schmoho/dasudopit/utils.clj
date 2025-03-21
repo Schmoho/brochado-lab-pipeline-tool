@@ -133,6 +133,11 @@
   (->> (file-seq (io/file file))
        (filter #(.isFile %))))
 
+(defn folder-seq
+  [file]
+  (->> (file-seq (io/file file))
+       (filter #(.isDirectory %))))
+
 ;; (defn read-between-markers
 ;;   [o start-marker end-marker]
 ;;   (loop [lines   (str/split-lines o)

@@ -70,7 +70,7 @@
             {:db             (assoc db
                                     :active-route route
                                     :active-panel (:handler route))
-             :get-route-data (:handler route)}))
+             :get-route-data route}))
 
 
 (rf/reg-fx
@@ -80,8 +80,8 @@
 
 (rf/reg-fx
  :get-route-data
- (fn [route]
-   (case route
+ (fn [{:keys [handler route-params]}]
+   (case handler
      :routing.results/msa-results
      (rf/dispatch [::msa-results-events/get-msa-results])
      :routing.data/overview
@@ -89,8 +89,12 @@
        (utils/get-data [:data :input :volcano])
        (utils/get-data [:data :raw :ligand])
        (utils/get-data [:data :raw :taxon]))
+     :routing.data/taxon-entry
+     (utils/get-data [:data :raw :taxon (:taxon/id route-params)])
      :routing.data/taxon
      (utils/get-data [:data :raw :taxon])
+     :routing.data/ligand-entry
+     (utils/get-data [:data :raw :ligand (:ligand/id route-params)])
      :routing.data/ligand
      (utils/get-data [:data :raw :ligand])
      :routing.data/upload

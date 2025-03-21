@@ -27,7 +27,7 @@
                   (-> row :meta :id))
               :on-click
               #(do
-                (rf/dispatch [::forms/set-form-data :volcano-viewer :volcano-1 (-> row :meta :id)])
+                 (rf/dispatch [::forms/set-form-data :volcano-viewer :left :volcano (-> row :meta :id)])
                 (rf/dispatch [::routing/navigate :routing/volcano-viewer]))])}
           {:id           :taxon
            :header-label "Taxon"

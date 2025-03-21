@@ -2,7 +2,7 @@
   (:require
    [schmoho.dasudopit.client.routing :as routing]
    [re-frame.core :as re-frame]
-   [re-com.core :as re-com :refer [at v-box h-box]
+   [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
    [schmoho.dasudopit.client.common.views.structure :as structure]))
@@ -15,22 +15,22 @@
                         (:sval value)
                         (when-let [bin (:binary value)]
                           (str "Binary (" (count bin) " chars)")))]
-    [re-com/h-box
+    [h
      :gap "10px"
-     :children [[re-com/label :label (str (:label urn)
+     :children [[com/label :label (str (:label urn)
                                           (when-let [n (:name urn)]
                                             (str " (" n ")")))]
-                [re-com/label :label (str "Value: " display-val)]]]))
+                [com/label :label (str "Value: " display-val)]]]))
 
 (defn json-details [json]
-  [re-com/v-box
+  [v
    :gap "10px"
-   :children [[re-com/label :label (str "ID: " (get-in json [:id :id :cid]))]
-              [re-com/label :label (str "Charge: " (:charge json))]
-              [re-com/title :label "Properties" :level :level2]
-              [re-com/v-box :gap "5px" :children (map render-prop (:props json))]
-              [re-com/title :label "Count" :level :level2]
-              [re-com/label :label (:count json)]]])
+   :children [[com/label :label (str "ID: " (get-in json [:id :id :cid]))]
+              [com/label :label (str "Charge: " (:charge json))]
+              [com/title :label "Properties" :level :level2]
+              [v :gap "5px" :children (map render-prop (:props json))]
+              [com/title :label "Count" :level :level2]
+              [com/label :label (:count json)]]])
 
 (defn ligands-panel []
   (let [results (re-frame/subscribe [:data/ligands])]
@@ -40,7 +40,7 @@
      :children
      [[h
        :children
-       [[re-com/simple-v-table
+       [[com/simple-v-table
          :src                       (at)
          :model                     results
          :max-width "1000px"
@@ -75,9 +75,9 @@
      [[h
        :align :center
        :children
-       [[re-com/title :label (:name results)
+       [[com/title :label (:name results)
          :level :level1]
-        [re-com/gap :size "1"]
+        [com/gap :size "1"]
         [:img {:src   img-src
                :style {:max-width  "250px"
                        :max-height "250px"
@@ -87,7 +87,7 @@
 (defn single-ligand-header []
   (let [params @(re-frame/subscribe [::routing/active-route-params])
         results @(re-frame/subscribe [:data/ligand (:ligand/id params)])]
-    [re-com/title
+    [com/title
      :src   (at)
      :label (:name results)
      :level :level1]))

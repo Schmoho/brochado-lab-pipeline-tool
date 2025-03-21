@@ -65,6 +65,7 @@
     [com/input-text
      :model nil
      :on-change (fn [_])]]])
+
 (defn taxon-chooser
   [& {:keys [on-change]}]
   (let [taxons          (rf/subscribe [:data/taxons])
@@ -101,7 +102,7 @@
       "Required: Volcano File"
       [volcano-info]]
      [common.forms/csv-upload
-      :on-load #(rf/dispatch [::forms/set-form-data :upload/volcano :file %])]
+      :on-load #(rf/dispatch [::forms/set-form-data :upload/volcano :table %])]
      [common.forms/info-label
       "Optional: Taxon"
       [:<>]]

@@ -68,6 +68,15 @@
      (and (every? some? (map #(get structures %) protein-ids))
           (pos? (count protein-ids))))))
 
+
+;; (rf/reg-sub
+;;  :forms.docking.part-2/show-modal?
+;;  :<- [:forms.docking/input-model]
+;;  (fn [input-model]
+;;    (let [show-modal? (->> input-model :taxon vals (map (comp :id :protein)))]
+;;      (and (every? some? (map #(get structures %) protein-ids))
+;;           (pos? (count protein-ids))))))
+
 ;; === Part 4 ===
 
 (rf/reg-sub
