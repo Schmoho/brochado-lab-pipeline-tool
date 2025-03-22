@@ -20,23 +20,8 @@
     :timeout         10000
     :format          (ajax/transit-request-format)
     :response-format (ajax/transit-response-format {:keywords? true})
-    :on-success      (into [::http-get-success path])
-    :on-failure      (into [::http-failure path])}}))
-
-(rf/reg-event-fx
- ::http-get-2
- (fn-traced
-  [{:keys [db]} [_ path]]
-  {:db db
-   :http-xhrio
-   {:method          :get
-    :uri             (str base-api "/"
-                          (str/join "/" (map name path)))
-    :timeout         10000
-    :format          (ajax/transit-request-format)
-    :response-format (ajax/transit-response-format {:keywords? true})
-    :on-success      (into [::http-get-success-2 path])
-    :on-failure      (into [::http-failure path])}}))
+    :on-success      [::http-get-success path]
+    :on-failure      [::http-failure path]}}))
 
 (rf/reg-event-db
  ::http-get-success
@@ -45,15 +30,35 @@
   (-> (assoc-in db path response)
       (update :already-executed-queries conj path))))
 
+(rf/reg-event-fx
+ ::http-post
+ (fn-traced
+  [{:keys [db]} [_ path {:keys [params success-event]}]]
+  (let [api-segment (->> (map name path)
+                         (str/join "/")
+                         (str "/"))]
+    {:db db
+     :http-xhrio
+     {:method          :post
+      :uri             (str base-api api-segment)
+      :params          params
+      :timeout         10000
+      :format          (ajax/transit-request-format)
+      :response-format (ajax/transit-response-format {:keywords? true})
+      :on-success      (or success-event [::http-post-success path])
+      :on-failure      [::http-failure]}})))
+
+
 (rf/reg-event-db
- ::http-get-success-2
+ ::post-structure-success
  (fn-traced
   [db [_ path response]]
-  (-> (update-in db path #(merge % response))
-      (update :already-executed-queries conj path))))
+  (-> db (update-in path #(merge % response)))))
+
 
 (rf/reg-event-fx
  ::http-failure
  (fn-traced
   [{:keys [db]} response]
   (js/alert response)))
+

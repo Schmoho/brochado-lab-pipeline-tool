@@ -89,3 +89,42 @@
    :label label
    :level :level1
    :style {:color "white"}])
+
+
+(defn carousel
+  [slides]
+  (let [id "some"]
+    [:div {:id            "some"
+           :class         "carousel slide"
+           :data-ride     "carousel"
+           :data-interval false}
+     (into [:ol {:class "carousel-indicators"}]
+           (->> slides
+                (map-indexed
+                 (fn [idx _]
+                   [:li {:data-target   (str "#" id)
+                         :data-slide-to (str idx)
+                         :class         (when (= 0 idx) "active")
+                         :style {:background-color "#787878"}}]))))
+     (into [:div {:class "carousel-inner"}]
+           (->> slides
+                (map-indexed (fn [idx slide]
+                               [:div (if (= 0 idx)
+                                       {:class "carousel-item active"}
+                                       {:class "carousel-item"}) slide]))))
+     (when (< 1 (count slides))
+       [:a {:class      "carousel-control-prev"
+            :href       (str "#" id)
+            :role       "button"
+            :data-slide "prev"}
+        [:span {:class       (css/my-carousel-control-prev-icon)
+                :aria-hidden "true"}]
+        [:span {:class "sr-only"} "Previous"]])
+     (when (< 1 (count slides))
+       [:a {:class      "carousel-control-next"
+            :href       (str "#" id)
+            :role       "button"
+            :data-slide "next"}
+        [:span {:class       (css/my-carousel-control-next-icon)
+                :aria-hidden "true"}]
+        [:span {:class "sr-only"} "Next"]])]))

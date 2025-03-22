@@ -82,29 +82,20 @@
  :get-route-data
  (fn [{:keys [handler route-params]}]
    (case handler
-     :routing.results/msa-results
-     (rf/dispatch [::msa-results-events/get-msa-results])
-     :routing.data/overview
-     (do
-       (utils/get-data [:data :input :volcano])
-       (utils/get-data [:data :raw :ligand])
-       (utils/get-data [:data :raw :taxon]))
-     :routing.data/taxon-entry
-     (utils/get-data [:data :raw :taxon (:taxon/id route-params)])
-     :routing.data/taxon
-     (utils/get-data [:data :raw :taxon])
-     :routing.data/ligand-entry
-     (utils/get-data [:data :raw :ligand (:ligand/id route-params)])
-     :routing.data/ligand
-     (utils/get-data [:data :raw :ligand])
-     :routing.data/upload
-     (utils/get-data [:data :raw :taxon])
-     :routing/volcano-viewer
-     (utils/get-data [:data :input :volcano])
-     :routing.pipelines/docking
-     (do
-       (utils/get-data [:data :raw :ligand])
-       (utils/get-data [:data :raw :taxon]))
+     :routing.results/msa-results (rf/dispatch [::msa-results-events/get-msa-results])
+     :routing.data/overview       (do
+                                    (utils/get-data [:data :volcano])
+                                    (utils/get-data [:data :ligand])
+                                    (utils/get-data [:data :taxon]))
+     :routing.data/taxon-entry    (utils/get-data [:data :taxon (:taxon/id route-params)])
+     :routing.data/taxon          (utils/get-data [:data :taxon])
+     :routing.data/ligand-entry   (utils/get-data [:data :ligand (:ligand/id route-params)])
+     :routing.data/ligand         (utils/get-data [:data :ligand])
+     :routing.data/upload         (utils/get-data [:data :taxon])
+     :routing/volcano-viewer      (utils/get-data [:data :volcano])
+     :routing.pipelines/docking   (do
+                                    (utils/get-data [:data :ligand])
+                                    (utils/get-data [:data :taxon]))
      nil)))
 
 

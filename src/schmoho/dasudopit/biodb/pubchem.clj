@@ -5,7 +5,7 @@
    [schmoho.dasudopit.utils :as utils]))
 
 (def cid-prefix "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/")
-
+(def name-prefix "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name")
 ;; === Simple Wrappers ===
 
 (defn get-sdf-by-compound-id
@@ -16,17 +16,38 @@
 ;; === Convenience Wrappers ===
 
 (defn get-compound-data-by-id
-  [cid]
-  (let [sdf  (-> (http/get (str cid-prefix cid "/SDF"))
-                 :body)
-        json (-> (http/get (str cid-prefix cid "/JSON"))
+  [cid & {:keys [sdf?]
+          :or {sdf? true}}]
+  (let [sdf  (when sdf?
+               (-> (http/get (str cid-prefix cid "/SDF"))
+                   :body))
+        json (-> (http/get (str cid-prefix cid "/property/Title/JSON"))
                  :body
-                 (json/parse-string true))
+                 (json/parse-string true)
+                 :PropertyTable
+                 :Properties
+                 first)
         png  (-> (http/get (str cid-prefix cid "/PNG?record_type=2d") {:as :byte-array})
-                 :body)]
-    {:sdf  sdf
-     :json json
-     :png  png}))
+                 :body
+                 utils/encode-base64)]
+    (cond-> {:meta json
+             :png  png}
+      sdf (assoc :sdf sdf))))
+
+
+(defn search-compound-by-name
+  [name-str]
+  (let [cids (-> (http/get (format "%s/%s/JSON"
+                                   name-prefix
+                                   name-str))
+                 :body
+                 (json/parse-string true)
+                 (->> :PC_Compounds
+                      (map (comp :cid :id :id))
+                      (take 3)))]
+    (->> (for [cid cids]
+           [cid (get-compound-data-by-id cid :sdf? false)]))))
+
 
 (comment
 

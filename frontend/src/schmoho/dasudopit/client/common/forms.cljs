@@ -40,6 +40,3 @@
  :<- [:forms/all-forms]
  (fn [forms [_ & path]]
    (get-in forms path)))
-
-
-

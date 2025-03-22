@@ -15,16 +15,14 @@
 (defn handle-get-structures-click-fn
   [selected-proteins selected-taxons]
   (fn []
-    (doseq [p selected-proteins]
-      (rf/dispatch [::http/http-get [:data :raw :structure p]]))
     (doseq [t selected-taxons]
-      (rf/dispatch-sync [::forms/set-form-data
-                         :docking
-                         :input-model
-                         :taxon
-                         t
-                         :plddt-cutoff
-                         80]))))
+      (rf/dispatch [::forms/set-form-data
+                    :docking
+                    :input-model
+                    :taxon
+                    t
+                    :plddt-cutoff
+                    80]))))
 
 (defn get-structures-button
   []
@@ -59,13 +57,15 @@
       [widgets/protein-search
        :proteome  proteome
        :model     protein-model
-       :on-change #(rf/dispatch [::forms/set-form-data
-                                 :docking
-                                 :input-model
-                                 :taxon
-                                 (:id taxon)
-                                 :protein
-                                 %])]
+       :on-change #(do
+                     (rf/dispatch [::forms/set-form-data
+                                  :docking
+                                  :input-model
+                                  :taxon
+                                  (:id taxon)
+                                  :protein
+                                   %])
+                     (rf/dispatch [::http/http-get [:data :structure %]]))]
       (when (and protein (not form-valid?))
         [utils/protein-info-hiccup protein])]]))
 

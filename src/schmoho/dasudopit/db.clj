@@ -1,30 +1,17 @@
 (ns schmoho.dasudopit.db
-  (:refer-clojure :exclude [get])
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
-   [schmoho.dasudopit.biodb.uniprot.api :as api.uniprot]
    [schmoho.dasudopit.csv-utils :as csv-utils]
    [schmoho.dasudopit.data-cleaning :as clean]
    [schmoho.dasudopit.utils :as utils]))
 
-(defn- fs-pathify
-  ([path file-name file-type]
-   (fs-pathify (concat path (if (coll? file-name)
-                              file-name
-                              [file-name])) file-type))
-  ([path file-type]
-   (let [file-type (if (str/starts-with? file-type ".") (subs file-type 1) file-type)]
-     (str (->> path
-               (map name)
-               (str/join "/"))
-          "."
-          file-type)))
-  ([path]
-   (->> path
-        (map name)
-        (str/join "/"))))
+(defn- pathify
+  [file]
+  (let [segments (-> file (.getPath) (str/split #"/"))]
+    (conj (mapv keyword (butlast segments))
+          (keyword (utils/base-name (last segments))))))
 
 (defn- index-folder
   [files]
@@ -40,68 +27,92 @@
                :else  (utils/read-file file))])))
        (into {})))
 
-(defn- get-all-by-path
-  [path xform]
-  (->> path
-       (map name)
-       (str/join "/")
-       (io/file)
-       (utils/ffile-seq)
-       (transduce
-        xform
-        (completing #(assoc %1 (first %2) (second %2)))
-        {})))
+(defn- drop-common-vector-prefix
+  "Already assumes the vectors have common prefix."
+  [v1 v2]
+  (let [v1-count  (count v1)
+        v2-count  (count v2)
+        i (min v1-count v2-count)]
+    (vec (drop i (if (< v1-count v2-count)
+                   v2
+                   v1)))))
 
-(defn- insert-file
-  [path file-type input-file read?]
-  (let [fs-path       (fs-pathify path file-type)
-        inserted-file (utils/copy! (io/file fs-path) input-file)]
-    (if read?
-      (utils/read-file inserted-file)
-      inserted-file)))
+(defn get-metadata
+  [path]
+  (let [path (if (str/starts-with? path "/")
+               (subs path 1)
+               path)
+        prefix-segments (map keyword (str/split path #"/"))]
+    (->> path
+         utils/ffile-seq
+         (filter #(= "meta" (utils/base-name %)))
+         (map (juxt pathify utils/read-file))
+         (reduce
+          (fn [acc [path data]]
+            (assoc-in acc (drop-common-vector-prefix
+                           path
+                           prefix-segments)
+                      data))
+          {}))))
 
-(defmulti insert!
-  (fn [path _id _stuff] path))
+#_(get-metadata "/data/volcano")
 
-(defmethod insert! [:data :raw :afdb :pdb]
-  [path id {:keys [meta structure]}]
-  (utils/write!
-   (fs-pathify (concat path [id])
-               "meta"
-               "edn")
-   meta)
-  (csv-utils/write-csv-data!
-   (fs-pathify (concat path [id])
-               "structure"
-               "pdb")
-   structure))
+(defn get-dataset
+  [path]
+  (let [path (if (str/starts-with? path "/")
+               (subs path 1)
+               path)]
+    (->> path
+         utils/ffile-seq
+         index-folder)))
 
-(defmethod insert! [:data :input :volcano]
-  [path id {:keys [meta table]}]
-  (utils/write!
-   (fs-pathify (concat path [id])
-               "meta"
-               "edn")
-   meta)
-  (csv-utils/write-csv-data!
-   (fs-pathify (concat path [id])
-               "table"
-               "csv")
-   table))
+#_(get-dataset "/data/structure/processed/P02919/058878110")
 
-(defn- get-edn-record
-  [path id]
-  (let [filename (fs-pathify path id "edn")]
-    (try
-      (utils/read-file filename)
-      (catch Exception e
-        (log/info "Tried to access non-existing file:"
-                  (ex-message e))))))
+(defn delete-dataset!
+  [path]
+  (let [path (if (str/starts-with? path "/")
+               (subs path 1)
+               path)
+        files (->> path
+                   utils/ffile-seq)]
+    (doseq [f files]
+      (log/info "Delete file" (.getPath f))
+      (io/delete-file f))
+    (io/delete-file path)))
 
-(defmulti get-record (fn [path _id] path))
-(defmethod get-record [:data :raw :uniprot :proteome]
-  [path id]
-  (get-edn-record path id))
+#_(delete-dataset! "/data/volcano/5c71b78c-e60f-412b-b61b-049fdc420c8d")
+
+(defn update-metadata!
+  [path meta]
+  (let [path      (if (str/starts-with? path "/")
+                    (subs path 1)
+                    path)
+        meta-path (str path "/meta.edn")
+        old-meta  (utils/read-file meta-path)]
+    (utils/write! meta-path (merge old-meta meta))
+    (merge old-meta meta)))
+
+#_(update-dataset! "/data/volcano/f5550dc9-2c45-46a5-b486-6aec1d9eac22"
+                   {:name "Updated name"})
+
+(defn upload-dataset!
+  [path data]
+  (let [path (if (str/starts-with? path "/")
+               (subs path 1)
+               path)]
+    (doseq [[filename-kw data] data]
+      (cond
+        (= :table filename-kw)
+        (let [filename "table.csv"]
+          (csv-utils/write-csv-data! (str path "/" filename)
+                                     data))
+        :else
+        (let [filename (case filename-kw
+                         :meta      "meta.edn"
+                         :structure "structure.pdb"
+                         :data      "data.edn")]
+          (utils/write! (str path "/" filename)
+                        data))))))
 
 #_(->> (get-record [:data :raw :uniprot :proteome] "208963")
      (walk/postwalk
@@ -110,153 +121,3 @@
                  (:evidenceCode e))
           (assoc e :evidenceDescription (eco/term-lookup (:evidenceCode e)))
           e))))
-
-(defmethod get-record [:data :raw :uniprot :uniprotkb]
-  [path id]
-  (with-meta
-    (get-edn-record path id)    
-    api.uniprot/uniprotkb-entry-meta))
-
-(defmethod get-record [:data :raw :afdb :pdb]
-  [path id]
-  (let [folder (fs-pathify (concat path [id]))]
-    (->> folder
-         utils/ffile-seq
-         index-folder)))
-
-(defmethod get-record [:data :input :structure]
-  [path ids]
-  (let [folder (fs-pathify (concat path ids))]
-    (->> folder
-         utils/ffile-seq
-         index-folder)))
-
-(defmethod get-record [:data :processed :structure]
-  [path ids]
-  (let [folder (fs-pathify (concat path ids))]
-    (->> folder
-         utils/ffile-seq
-         index-folder)))
-
-(defn get-all-structures-for-protein-id
-  [protein-id]
-  {:afdb      (get-record [:data :raw :afdb :pdb])
-   :input     (->> nil
-                   (utils/folder-seq)
-                   (map (fn [folder]
-                          [(.getName folder)
-                           (->> folder
-                                utils/ffile-seq
-                                index-folder)]))
-                   (into {}))
-   :processed (->> nil
-                   (utils/folder-seq)
-                   (map (fn [folder]
-                          [(.getName folder)
-                           (->> folder
-                                utils/ffile-seq
-                                index-folder)]))
-                   (into {}))})
-
-#_(get-record [:data :raw :afdb :pdb] "A0A0H2ZHP9")
-
-(defmethod get-record [:data :raw :uniprot :taxonomy]
-  [path id]
-  (with-meta
-    (get-edn-record path (str id))
-    api.uniprot/taxon-meta))
-
-(defmethod get-record [:data :raw :pubchem :compound]
-  [path id]
-  (let [data (get-edn-record path (str id))]
-    (-> (assoc data :id (-> data :json :PC_Compounds first :id :id :cid str))
-        (assoc :json (get-in data [:json :PC_Compounds]))
-        (update :json
-                (comp #(dissoc % :bonds)
-                      #(dissoc % :atoms)
-                      #(dissoc % :stereo)
-                      #(dissoc % :coords)
-                      first))
-        (dissoc :sdf))))
-
-(defmethod get-record [:data :processed :obabel :ligand :pdbqt]
-  [path {:keys [id params-hash]}]
-  (->> (concat path [id params-hash])
-       fs-pathify
-       utils/ffile-seq
-       index-folder))
-
-(defmethod get-record [:data :processed :obabel :protein :pdbqt]
-  [path {:keys [id params-hash]}]
-  (->> (concat path [id params-hash])
-       fs-pathify
-       utils/ffile-seq
-       index-folder))
-
-(defmulti get-all-records (fn [path] path))
-
-(defmethod get-all-records [:data :raw :uniprot :taxonomy]
-  [path]
-  (get-all-by-path
-   path
-   (map
-    (comp
-     (juxt #(str (:taxonId %)) #(assoc % :id (str (:taxonId %))))
-     utils/read-file))))
-
-(defmethod get-all-records [:data :raw :uniprot :proteome]
-  [path]
-  (get-all-by-path
-   path
-   (map
-    (comp
-     (juxt utils/base-name
-           utils/read-file)))))
-
-(defmethod get-all-records [:data :raw :pubchem :compound]
-  [path]
-  (get-all-by-path
-   path
-   (map
-    (comp
-     (juxt :id identity)
-     (fn [data]
-       (-> (assoc data :id (-> data :json :PC_Compounds first :id :id :cid str))
-           (assoc :json (get-in data [:json :PC_Compounds]))
-           (update :json
-                   (comp #(dissoc % :bonds)
-                         #(dissoc % :atoms)
-                         #(dissoc % :stereo)
-                         #(dissoc % :coords)
-                         first))
-           (dissoc :sdf)))
-     utils/read-file))))
-
-(defmethod get-all-records [:data :input :volcano]
-  [path]
-  (->> path
-       (map name)
-       (str/join "/")
-       (io/file)
-       (utils/ffile-seq)
-       (group-by #(.getName (.getParentFile %)))
-       (map (fn [[id files]]
-              [id (index-folder files)]))
-       (into {})))
-
-
-
-
-;; (defn- acquire-structures-by-id!
-;;   [protein-id]
-;;   (let [structure (afdb/get-structure-files protein-id)]
-;;     (if (or (< 1 (count (:pdb structure)))
-;;             (< 1 (count (:cif structure))))
-;;       (throw (ex-info "Multiple structure files. Deal with it!"
-;;                       {:protein-id protein-id}))
-;;       (let [{:keys [pdb cif]}
-;;             (->  structure
-;;                  (update :pdb first)
-;;                  (update :cif first))]
-;;         {:pdb (db/insert! [:raw :afdb :pdb protein-id] "pdb" pdb)
-;;          :cif (db/insert! [:raw :afdb :cif protein-id] "cif" cif)}))))

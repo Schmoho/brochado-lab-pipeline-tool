@@ -160,7 +160,7 @@
               (on-load viewer-state)))))})))
 
 (defn table
-  [data & {:keys [columns]}]
+  [data & {:keys [columns on-enter-row on-leave-row]}]
   (if (nil? @data)
     [com/throbber :size :regular]
     [v
@@ -185,7 +185,9 @@
                        :header-label (name (:id col))))
                     columns)
                columns)
-         :row-height                35]]]]]))
+         :row-height                35
+         :on-enter-row on-enter-row
+         :on-leave-row on-leave-row]]]]]))
 
 (defn alert
   [& {:keys [heading body dismissible? alert-type]}]

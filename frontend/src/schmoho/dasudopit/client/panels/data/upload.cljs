@@ -5,10 +5,12 @@
     :rename {v-box v h-box h}]
    [re-frame.core :as rf]
    [reagent.core :as r]
+   [schmoho.dasudopit.client.css.structure :as css]
    [schmoho.dasudopit.client.common.forms :as forms]
    [schmoho.dasudopit.client.panels.data.events :as events]
    [schmoho.dasudopit.client.routing :as routing]
    [schmoho.dasudopit.client.common.views.forms :as common.forms]
+   [schmoho.dasudopit.client.common.http :as http]
    [schmoho.dasudopit.client.common.views.structure :refer [card]
     :as structure]
    [schmoho.dasudopit.client.utils :refer [cool-select-keys]]))
@@ -48,23 +50,84 @@
      :model nil
      :on-change (fn [_])]]])
 
+(defn search-ligand-button
+  []
+  (let [input-model (rf/subscribe [:provision.ligand/input-model])]
+    [common.forms/action-button
+     :label "Search"
+     :on-click #(rf/dispatch [::http/http-get
+                              [:data :ligand @input-model :search]])]))
+
+
+(defn ligand-search-result
+  [{:keys [meta png]}]
+  [v
+   :align :center
+   :children
+   [[com/title :label (:Title meta)
+     :level :level4]
+    [com/gap :size "1"]
+    [:img {:src (str "data:image/png;base64," png)
+           :style {:max-width  "250px"
+                   :max-height "250px"
+                   :border     "1px solid #ddd"}}]]])
+
+(defn ligand-chooser
+  []
+  (let [search-results (rf/subscribe [:provision.ligand/search-result])
+        tab-model      (rf/subscribe [:provision.ligand/tab-model])]
+    (fn []
+      [v
+      :children
+      [[com/horizontal-bar-tabs
+        :model tab-model
+        :on-change #(rf/dispatch [::forms/set-form-data :provision/ligand :tab %])
+        :tabs
+        (->> @search-results
+             (map (fn [[_ data]]
+                    {:id    (-> data :meta :Title)
+                     :label (-> data :meta :Title)}))
+             vec)]
+       [ligand-search-result
+        (->> @search-results
+             (filter
+              (fn [[_ data]]
+                (= @tab-model (-> data :meta :Title))))
+             first
+             second)]
+       [common.forms/action-button
+        :label "Save"
+        :on-click #(rf/dispatch [:alert @tab-model])]]])))
+
+
 (defn provision-ligand-form
   []
-  [card
-   "Provision Ligand via Pubchem"
-   [:<>
-    [common.forms/info-label
-     "Pubchem Compound ID"
-     [:<>
-      [:p.info-heading "Pubchem ID"]
-         [:p "You need to put in a Pubchem Compound ID. Please note Pubchem distinguishes 'substances' and 'compounds'. We are going for compounds."]
-         [com/hyperlink-href :src (at)
-          :label  "Link to docs."
-          :href   ""
-          :target "_blank"]]]
-    [com/input-text
-     :model nil
-     :on-change (fn [_])]]])
+  (let [input-model    (rf/subscribe [:provision.ligand/input-model])
+        search-results (rf/subscribe [:provision.ligand/search-result])]
+    [v
+     :children
+     [[common.forms/info-label
+       "Pubchem Compound ID"
+       [:<>
+        [:p.info-heading "Compound name or Pubchem ID"]
+        [:p (str "If you put in a name, please note that you might have to choose between multiple results. A tab bar will appear and let you choose the options."
+                 "If you put in a Pubchem Compound ID, please note Pubchem distinguishes 'substances' and 'compounds'. We are going for compounds.")]
+        [com/hyperlink-href :src (at)
+         :label  "Link to docs."
+         :href   ""
+         :target "_blank"]]]
+      [com/input-text
+       :model input-model
+       :on-change #(do (rf/dispatch [::forms/set-form-data :provision/ligand :input %])
+                       (rf/dispatch [::forms/set-form-data :provision/ligand :tab nil]))]
+      [search-ligand-button]
+      (when (not-empty @search-results)
+        [ligand-chooser])]]))
+
+(rf/reg-event-fx
+ :alert
+ (fn [_ result]
+   (js/alert result)))
 
 (defn taxon-chooser
   [& {:keys [on-change]}]
@@ -122,7 +185,9 @@
    :gap "20px"
    :children
    [[upload-volcano-form]
-    [provision-ligand-form]
+    [card
+     "Provision Ligand via Pubchem"
+     [provision-ligand-form]]
     [provision-organism-form]]])
 
 

@@ -44,9 +44,6 @@
 (defmethod extension java.io.File
   [file-name]
   (FilenameUtils/getExtension (.getName file-name)))
-(defmethod extension java.io.File
-  [file-name]
-  (FilenameUtils/getExtension (.getName file-name)))
 ;; the assumption here is a URL is gonna be a resource
 (defmethod extension java.net.URL
   [file]
@@ -136,7 +133,9 @@
 (defn folder-seq
   [file]
   (->> (file-seq (io/file file))
-       (filter #(.isDirectory %))))
+       (filter #(and
+                 (not= % (io/file file))
+                 (.isDirectory %)))))
 
 ;; (defn read-between-markers
 ;;   [o start-marker end-marker]

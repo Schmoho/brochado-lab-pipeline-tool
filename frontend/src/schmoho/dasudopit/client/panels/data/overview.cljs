@@ -8,6 +8,11 @@
    [schmoho.dasudopit.client.common.views.structure :as structure]
    [schmoho.dasudopit.client.common.views.widgets :as widgets]))
 
+(rf/reg-event-fx
+ :testdelete
+ (fn [a b]
+   (js/alert b)))
+
 (defn overview-panel []
   (let [volcanos (rf/subscribe [:data/volcanos-list])
         taxons   (rf/subscribe [:data/taxons])
@@ -28,13 +33,21 @@
               :on-click
               #(do
                  (rf/dispatch [::forms/set-form-data :volcano-viewer :left :volcano (-> row :meta :id)])
-                (rf/dispatch [::routing/navigate :routing/volcano-viewer]))])}
+                 (rf/dispatch [::routing/navigate :routing/volcano-viewer]))])}
           {:id           :taxon
            :header-label "Taxon"
            :row-label-fn
            (fn [row]
              [:a {:href (str "taxon/" (-> row :meta :taxon))}
-              (-> row :meta :taxon)])}]]]
+              (-> row :meta :taxon)])}
+          {:id :actions
+           :header-label "Actions"
+           :row-label-fn
+           (fn [row]
+             [com/row-button
+              :md-icon-name "zmdi-delete"
+              :mouse-over-row? true
+              :on-click #(rf/dispatch [:testdelete (-> row :meta :id)])])}]]]
        ["Taxons"
         [widgets/table taxons
          :columns

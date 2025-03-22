@@ -20,11 +20,10 @@
    [ring.middleware.cors :refer [wrap-cors]]
    [ring.util.response :as response]
    [schmoho.dasudopit.server.handler.data :as data-handler]
-   [schmoho.dasudopit.server.handler.pipelines :as pipelines-handler]
-   [clojure.walk :as walk]))
+   [schmoho.dasudopit.server.handler.results :as results-handler]
+   [schmoho.dasudopit.server.handler.pipelines :as pipelines-handler]))
 
-;; Define a helper to serve your index.html directly
-(defn serve-index [req]
+(defn serve-index [_req]
   (-> (io/resource "public/index.html")
       slurp
       response/response
@@ -44,66 +43,79 @@
                                :description "API for the pipeline webtool"
                                :version     "0.0.1"}}
               :handler (openapi/create-openapi-handler)}}]
+
       ["/data"
-       ["/upload"
-        ["/volcano"
-         {:post {:summary       "Add a volcano dataset"
-                 ;; using vars (#') allows to update the handler
-                 ;; and have the changes immediately be reflected in a REPL
-                 :handler       #'data-handler/upload-volcano}}]]
-       ["/structures/:protein-id"
-        {:get {:summary "Get all structures (AFDB, input and processed) for a UniProt protein ID."
-                :handler #'data-handler/get-all-structures-for-protein-id}}]
-       ["/raw"
+       ["/volcano"
+        [""
+         {:get  {:summary "Get all volcanos metadata."
+                ;; using vars (#') allows to update the handler
+                ;; and have the changes immediately be reflected in a REPL
+                 :handler #'data-handler/get-metadata}
+          :post {:summary "Add a volcano dataset"
+                 :handler #'data-handler/upload-dataset!}}]
+        ["/:id"
+         {:get    {:summary "Get volcano a dataset."
+                   :handler #'data-handler/get-dataset}
+          :delete {:summary "Delete a volcano dataset"
+                   :handler #'data-handler/delete-dataset!}
+          :put    {:summary "Edit a volcano dataset"
+                   :handler #'data-handler/update-metadata!}}]]
 
-        ["/ligand"
+       ["/structure"
+        ["/:protein-id"
+         [""
+          #_{:get {:summary "Get all structures (AFDB, input and processed) for a UniProt protein ID."
+                   :handler #'data-handler/get-all-structures-for-protein-id}}]
+         ["/afdb"
+          {:get {:summary "Get AFDB PDB for a UniProt ID."
+                 :handler
+                 (partial data-handler/get-dataset
+                          data-handler/provision-afdb-structure)}}]
+         ["/input/:id"
+          {:get    {:summary "Get user input PDB for UUID."
+                    :handler #'data-handler/get-dataset}
+           :delete {:summary "Delete a user input PDB."
+                    :handler #'data-handler/delete-dataset!}}]
+         ["/processed/:id"
+          {:get    {:summary "Get processed PDB for UUID."
+                    :handler #'data-handler/get-dataset}
+           :delete {:summary "Delete a processed structure."
+                    :handler #'data-handler/delete-dataset!}}]]]
+
+       ["/ligand"
+        [""
          {:get {:summary "Get ligand data."
-                :handler #'data-handler/get-ligands}}]
+                :handler #'data-handler/get-metadata}}]
+        ["/:id"
+         [""
+          {:get    {:summary "Get ligand data by Pubchem ID."
+                    :handler #'data-handler/get-dataset}
+           :delete {:summary "Delete ligand data."
+                    :handler #'data-handler/delete-dataset!}}]
+         ["/search"
+          {:get    {:summary "Search for ligand data on Pubchem."
+                    :handler #'data-handler/search-ligand}}]]]
 
-        ["/ligand/:id"
-         {:get {:summary "Get ligand data by Pubchem ID."
-                :handler #'data-handler/get-ligand}}]
-        
-        ["/proteome/:id"
-         {:get {:summary "Get proteome for a UniProt taxon ID."
-                :handler #'data-handler/get-proteome}}]
-
-        ["/structure/:id"
-         {:get {:summary "Get AFDB PDB for a UniProt ID."
-                :handler #'data-handler/get-afdb-structure}}]
-
-        ["/taxon"
-         {:get {:summary "Get taxon data."
-                :handler #'data-handler/get-taxons}}]
-        
-        ["/taxon/:id"
-         {:get {:summary "Get taxon data by NCBI/UniProt Taxonomy ID."
-                :handler #'data-handler/get-taxon}}]]
-
-       ["/input"
-        ["/structure/:id"
-         {:get {:summary "Get user input PDB for UUID."
-                :handler #'data-handler/get-input-structure}}]
-        
-        ["/volcano"
-         {:get {:summary "Get volcano data."
-                :handler #'data-handler/get-volcanos}}]]
-
-       ["/processed"
-        ["/structure/:id"
-         {:get {:summary "Get processed PDB for UUID."
-                :handler #'data-handler/get-processed-structure}}]]
+       ["/taxon"
+        ["" {:get {:summary "Get taxon data."
+                   :handler #'data-handler/get-metadata}}]
+        ["/:id"
+         ["" {:get    {:summary "Get taxon data by NCBI/UniProt Taxonomy ID."
+                       :handler #'data-handler/get-dataset}
+              :delete {:summary "Delete taxon data and the associated proteome."
+                       :handler #'data-handler/delete-dataset!}}]
+         ["/proteome"
+          {:get {:summary "Get proteome for a UniProt taxon ID."
+                 :handler #'data-handler/get-dataset}}]]]
 
        ["/results"
         ["/msa"
          {:get {:summary "Get MSA results."
-                :handler #'data-handler/get-msa-results-handler}}]]]
+                :handler #'results-handler/get-msa-results-handler}}]]]
 
       ["/pipelines"
        ["/msa"
         {:post {:summary       "Start taxonomic comparison pipeline."
-               ;; :parameters {:body map?}
-                #_#_:responses {200 {:body :uniprot/basic-response}}
                 :handler       #'pipelines-handler/start-msa-handler}}]]]
      ["/" {:get serve-index}]]
     {:conflicts (constantly nil)

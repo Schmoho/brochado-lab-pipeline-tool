@@ -3,21 +3,29 @@
    [re-frame.core :as rf]))
 
 (rf/reg-sub
- :data/raw
+ ::data
  (fn [db _]
-   (->> db :data :raw)))
+   (->> db :data)))
+
+
+(rf/reg-sub
+ :data/by-path
+ :<- [::data]
+ (fn [data [_ & path]]
+   (get-in data path)))
+
 
 (rf/reg-sub
  :data/taxons-map
- :<- [:data/raw]
- (fn [raw]
-   (->> raw :taxon)))
+ :<- [::data]
+ (fn [data]
+   (:taxon data)))
 
 (rf/reg-sub
  :data/taxons
- :<- [:data/raw]
- (fn [raw]
-   (->> raw :taxon vals vec)))
+ :<- [::data]
+ (fn [data]
+   (->> data :taxon vals vec)))
 
 (rf/reg-sub
  :data/taxon
@@ -27,15 +35,15 @@
 
 (rf/reg-sub
  :data/proteomes
- :<- [:data/raw]
- (fn [raw]
-   (-> raw :proteome)))
+ :<- [:data/taxons]
+ (fn [taxons]
+   (map :proteome taxons)))
 
 (rf/reg-sub
  :data/proteome
- :<- [:data/proteomes]
- (fn [proteomes [_ id]]
-   (get proteomes id)))
+ :<- [:data/taxons]
+ (fn [taxons [_ id]]
+   (-> (get taxons id) :proteome)))
 
 (rf/reg-sub
  :data/protein
@@ -51,15 +59,15 @@
 
 (rf/reg-sub
  :data/ligands
- :<- [:data/raw]
- (fn [raw]
-   (->> raw :ligand vals vec)))
+ :<- [::data]
+ (fn [data]
+   (->> data :ligand vals vec)))
 
 (rf/reg-sub
  :data/ligands-map
- :<- [:data/raw]
- (fn [raw]
-   (:ligand raw)))
+ :<- [::data]
+ (fn [data]
+   (:ligand data)))
 
 (rf/reg-sub
  :data/ligand
@@ -68,27 +76,21 @@
    (get ligands id)))
 
 (rf/reg-sub
- :data/structures
- :<- [:data/raw]
- (fn [raw]
-   (->> raw :structure)))
-
-(rf/reg-sub
- :data/input
- (fn [db _]
-   (->> db :data :input)))
+ :data/structure
+ (fn [db]
+   (:structure db)))
 
 (rf/reg-sub
  :data/volcanos
- :<- [:data/input]
- (fn [input]
-   (:volcano input)))
+ :<- [::data]
+ (fn [data]
+   (:volcano data)))
 
 (rf/reg-sub
  :data/volcanos-list
- :<- [:data/input]
- (fn [input]
-   (-> input :volcano vals vec)))
+ :<- [::data]
+ (fn [data]
+   (-> data :volcano vals vec)))
 
 (rf/reg-sub
  :data/volcano
@@ -97,15 +99,11 @@
    (get volcanos id)))
 
 (rf/reg-sub
- :data/results
- (fn [db _]
-   (->> db :data :results)))
-
-(rf/reg-sub
  :results/msa
- :<- [:data/results]
- (fn [results]
-   (->> results
+ :<- [::data]
+ (fn [data]
+   (->> data
+        :results
         :msa
         (mapv (fn [[uuid {:keys [params.uniprot/taxonomy
                                  params.uniprot/uniref
@@ -119,11 +117,33 @@
 
 (rf/reg-sub
  :results/docking
- :<- [:data/results]
- (fn [results]
-   (->> results
+ :<- [::data]
+ (fn [data]
+   (->> data
+        :results
         :docking
         (mapv (fn [results]
                 {:id                     (str uuid)
                  :protein-ids            (-> results :protein-ids)
                  :docking-still-running? (-> results :docking-still-running?)})))))
+
+(rf/reg-sub
+ :provision.ligand/input-model
+ :<- [:forms/by-path :provision/ligand]
+ (fn [form]
+   (:input form)))
+
+(rf/reg-sub
+ :provision.ligand/search-result
+ :<- [:data/ligands-map]
+ :<- [:provision.ligand/input-model]
+ (fn [[ligands input]]
+   (-> ligands (get input) :search)))
+
+(rf/reg-sub
+ :provision.ligand/tab-model
+ :<- [:forms/by-path :provision/ligand]
+ :<- [:provision.ligand/search-result]
+ (fn [[form search-result]]
+   (or (:tab form)
+       (-> search-result first second :meta :Title))))
