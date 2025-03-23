@@ -15,7 +15,7 @@
 /frontend/node_modules/
 /frontend/package-lock.json
 /frontend/dist/
-/frontend/public/
 /frontend/js/
 /resources/public/
 /.lein-repl-history
+/frontend/public/js/main.js
