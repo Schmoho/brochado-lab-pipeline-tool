@@ -4,7 +4,10 @@
    [re-frame.core :as rf]
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [reagent.core :as r]
+   [schmoho.dasudopit.client.utils :refer [cool-select-keys]]
    ["3dmol/build/3Dmol.js" :as threeDmol]))
+
+;; === Lineage ===
 
 (defn lineage-item [item]
   [v
@@ -38,66 +41,9 @@
                     reverse
                     vec))])
 
-(defn protein-search-suggestions
-  [proteome]
-  (fn [s]
-    (let [fragment (re-pattern (str "(?i)" (or s "")))]
-      (->> proteome
-           (keep (fn [protein]
-                   (let [gene-name    (or (-> protein :genes first :geneName :value)
-                                          (-> protein :genes first :orderedLocusNames :value)
-                                          "-")
-                         protein-name (or (-> protein :proteinDescription :recommendedName :fullName :value)
-                                          (-> protein :proteinDescription :submissionNames first :fullName :value)
-                                          "-")
-                         protein-id   (or (-> protein :primaryAccession)
-                                          "-")]
-                     (when (or (re-find fragment gene-name)
-                               (re-find fragment protein-name)
-                               (re-find fragment protein-id))
-                       {:id protein-id :protein-name protein-name :gene-name gene-name}))))
-           (take 6)
-           (into [{:id nil :protein-name "-" :gene-name nil}])))))
+;; === Protein Search ===
 
-(defn protein-search
-  [& {:keys [proteome on-change model]}]
-  (let [suggestions-for-search (protein-search-suggestions proteome)]
-    [v
-     :src      (at)
-     :children
-     [[h
-       :src (at)
-       :children
-       [[:span.field-label "Search Proteins"]
-        [com/info-button
-         :src (at)
-         :info
-         [v
-          :src (at)
-          :children
-          [[:p.info-heading "Organism ID"]
-           [:p "You need to put in a Uniprot or NCBI Taxonomy ID. Note they are the same."]
-           [com/hyperlink-href :src (at)
-            :label  "Link to docs."
-            :href   ""
-            :target "_blank"]]]]]]
-      [com/typeahead
-       :src (at)
-       :model model
-       :placeholder (str (:protein-name @model))
-       :rigid? true
-       :change-on-blur? true
-       :on-change
-       #(when on-change
-          (on-change %))
-       :data-source suggestions-for-search
-       :suggestion-to-string #(:protein-name %)
-       :render-suggestion
-       (fn [{:keys [protein-name gene-name id]}]
-         [:span (str id " - " gene-name " - " protein-name)])
-       :parts
-       {:suggestions-container {:style {:z-index 10}}
-        :suggestion {:style {:z-index 10}}}]]]))
+;; === Structure Viewer ===
 
 (defn pdb-viewer
   [& {:keys [objects style config on-load]}]
@@ -210,3 +156,19 @@
              :data-dismiss "alert"
              :aria-label "Close"}
     [:span {:aria-hidden "true"} "×"]]])
+
+(defn taxon-chooser
+  [& {:keys [on-change model]}]
+  (let [taxons          (rf/subscribe [:data/taxons-list])
+        selection-model model]
+    [com/single-dropdown
+     :choices
+     (conj (map #(cool-select-keys
+                  %
+                  {:id    [:meta :id]
+                   :label [:meta :name]})
+                @taxons)
+           {:id nil :label "-"})
+     :model selection-model
+     :on-change #(when on-change (on-change %))
+     :placeholder "For which taxon?"]))

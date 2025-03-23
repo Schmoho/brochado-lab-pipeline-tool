@@ -1,5 +1,6 @@
 (ns schmoho.dasudopit.client.utils
   (:require
+   ["chroma-js" :as chroma]
    [re-frame.core :as rf]
    [re-frame.db :as rf.db]
    [schmoho.dasudopit.client.common.http :as http]))
@@ -22,54 +23,24 @@
                      (kaccessor m))]))
        (into {})))
 
-
 (defn rand-str
   []
   (apply str (repeatedly 20 #(rand-nth "abcdefghijklmnopqrstuvwxyz"))))
 
+;; === Color Palettes ===
 
-(defn protein-go-terms
-  [protein]
-  (->> protein
-       :uniProtKBCrossReferences
-       (filter #(= "GO" (:database %)))
-       (map (fn [go-term]
-              {:id (:id go-term)
-               :label (->> (:properties go-term)
-                           (filter #(= "GoTerm" (:key %)))
-                           first
-                           :value)}))))
+(defn generate-palette
+  "Generates a list of `n` colors interpolated between `start-color` and `end-color`."
+  [start-color end-color n]
+  (-> (chroma/scale (clj->js [start-color end-color]))
+      (.mode "lch")
+      (.colors n)))
 
-(defn proteome-go-terms
-  [proteome]
-  (->> proteome
-      (mapcat protein-go-terms)
-      set))
+(def green-yellow-palette (partial generate-palette "#fafa6e" "#2A4858"))
+(def red-palette (partial generate-palette "#FFCCCC" "#FF0000"))
+(def purple-palette (partial generate-palette "#6A0DAD" "#FF69B4"))
 
-(defn has-go-term?
-  [go-term protein]
-  (->> protein
-       :uniProtKBCrossReferences
-       (filter #(and (= "GO" (:database %))
-                     (= go-term (:id %))))
-       not-empty))
 
-(defn go-term-filtering-fn
-  [proteome go-term]
-  (let [proteome-lookup
-        (->> proteome
-             (map (juxt :primaryAccession identity))
-             (into {}))]
-    (fn [table-row]
-      (some->> table-row
-               :protein_id
-               proteome-lookup
-               (has-go-term? go-term)))))
-
-(defn protein-feature->location
-  [protein-feature]
-  [(-> protein-feature :location :start :value)
-   (-> protein-feature :location :end :value)])
 
 
 
@@ -83,4 +54,3 @@
 ;; (vec (for [prop props]
 ;;    (let [val (aget js/$3Dmol prop)]
 ;;      [prop (type val)])))
-

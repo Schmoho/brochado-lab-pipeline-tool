@@ -21,6 +21,7 @@
    [schmoho.dasudopit.client.panels.results.docking.views]
    [schmoho.dasudopit.client.panels.results.msa.events]
    [schmoho.dasudopit.client.panels.results.msa.views]
+   [schmoho.dasudopit.client.panels.results.subs]
    [schmoho.dasudopit.client.panels.volcano-viewer.events]
    [schmoho.dasudopit.client.panels.volcano-viewer.subs]
    [schmoho.dasudopit.client.panels.volcano-viewer.views]

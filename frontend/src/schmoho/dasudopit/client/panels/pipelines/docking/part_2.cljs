@@ -6,11 +6,9 @@
    [reagent.core :as r]
    [schmoho.dasudopit.client.common.forms :as forms]
    [schmoho.dasudopit.client.common.http :as http]
-   [schmoho.dasudopit.client.common.views.forms :as views.forms] 
    [schmoho.dasudopit.client.common.views.widgets :as widgets]
    [schmoho.dasudopit.client.css.forms :as css]
-   [schmoho.dasudopit.client.panels.pipelines.docking.utils :as utils]
-   [schmoho.dasudopit.client.panels.pipelines.docking.events :as events]))
+   [schmoho.dasudopit.client.common.views.protein :as protein]))
 
 (defn handle-get-structures-click-fn
   [selected-proteins selected-taxons]
@@ -67,7 +65,7 @@
                                    %])
                      (rf/dispatch [::http/http-get [:data :structure %]]))]
       (when (and protein (not form-valid?))
-        [utils/protein-info-hiccup protein])]]))
+        [protein/protein-info->hiccup protein])]]))
 
 
 (defn volcano-info

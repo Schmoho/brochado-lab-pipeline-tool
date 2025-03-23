@@ -5,7 +5,7 @@
    [schmoho.dasudopit.client.common.forms :as forms]
    [schmoho.dasudopit.client.common.views.widgets :as widgets]
    [schmoho.dasudopit.client.panels.pipelines.docking.subs]
-   [schmoho.dasudopit.client.panels.pipelines.docking.utils :as utils]))
+   [schmoho.dasudopit.client.common.views.protein :as protein]))
 
 (defn protein-info->coloring-map
   [protein-info]
@@ -28,7 +28,7 @@
 
 (defn protein-site-picker
   [pdb uniprot]
-  (let [protein-info (utils/protein-info uniprot)
+  (let [protein-info (protein/protein-info uniprot)
         active-sites (->> protein-info
                           :active-sites
                           (map (fn [{:keys [location color]}]
@@ -45,7 +45,7 @@
                                                                    :input-model
                                                                    :asdf
                                                                    %])]
-      [utils/protein-info-hiccup uniprot]]]))
+      [protein/protein-info->hiccup uniprot]]]))
 
 (defn part-4
   []

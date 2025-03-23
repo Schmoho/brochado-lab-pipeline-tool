@@ -129,16 +129,17 @@
 
 (defn provision-taxon
   [request]
-  (let [path     (str/replace (:uri request) "/api" "")
-        taxon-id (-> request :path-params :id)
-        taxon    (uniprot.api/taxonomy-entry taxon-id {:fields "id,common_name,scientific_name,lineage,statistics"})
-        proteome (-> (if (-> taxon :statistics :referenceProteomeCount pos-int?)
-                       (uniprot.api/ref-proteomes-by-taxon-id taxon-id)
-                       (uniprot.api/proteomes-by-taxon-id taxon-id))
-                     first)]
-    (db/upload-dataset! path {:data (assoc taxon :id (str (:taxonId taxon)))
-                              :meta {:id   (str (:taxonId taxon))
-                                     :name (:scientificName taxon)}})
+  (let [path          (str/replace (:uri request) "/api" "")
+        taxon-id      (-> request :path-params :id)
+        taxon         (uniprot.api/taxonomy-entry taxon-id {:fields "id,common_name,scientific_name,lineage,statistics"})
+        proteome      (-> (if (-> taxon :statistics :referenceProteomeCount pos-int?)
+                            (uniprot.api/ref-proteomes-by-taxon-id taxon-id)
+                            (uniprot.api/proteomes-by-taxon-id taxon-id))
+                          first)
+        taxon-dataset {:data (assoc taxon :id (str (:taxonId taxon)))
+                       :meta {:id   (str (:taxonId taxon))
+                              :name (:scientificName taxon)}}]
+    (db/upload-dataset! path taxon-dataset)
     (future (let [proteins (uniprot.api/proteins-by-proteome (:id proteome))]
               (db/upload-dataset! (str path "/proteome")
                                   {:data (map #(assoc % :id (:primaryAccession %)) proteins)
@@ -147,7 +148,7 @@
                                           :proteome-type (:proteomeType proteome)}})
               (log/info "Added proteome" (:id proteome) "for" taxon-id)))
     {:status 200
-     :body taxon}))
+     :body   taxon-dataset}))
 
 #_(provision-taxon {:path-params {:id "83333"}
                     :uri "/api/data/taxon/83333"})

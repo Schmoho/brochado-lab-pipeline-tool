@@ -58,7 +58,7 @@
  (fn-traced
   [db [_ path response]]
   (-> db
-      (update-in path #(merge % response))
+      (assoc-in path response)
       (assoc-in [:queries path] :done))))
 
 (rf/reg-event-fx
@@ -98,7 +98,7 @@
 (rf/reg-event-db
  ::register-running-query
  (fn-traced
-  [db [_ path _xhrio]]
+  [db [_ path]]
   (assoc-in db [:queries path] :running)))
 
 (rf/reg-sub

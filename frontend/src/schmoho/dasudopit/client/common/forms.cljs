@@ -40,3 +40,16 @@
  :<- [:forms/all-forms]
  (fn [forms [_ & path]]
    (get-in forms path)))
+
+;; === Utils ===
+
+(defn model
+  [form-model k]
+  (let [path (get form-model k)]
+    (rf/subscribe (into [:forms/by-path] path))))
+
+(defn setter
+  [form-model k]
+  (let [path (get form-model k)]
+    #(rf/dispatch (conj (into [::set-form-data] path)
+                        %))))
