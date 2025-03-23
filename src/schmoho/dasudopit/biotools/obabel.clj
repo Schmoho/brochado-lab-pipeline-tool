@@ -11,27 +11,29 @@
 
 (def obabel-3d-conformer-args ["-opdbqt" "--gen3D" "--best"])
 
-(defmulti produce-obabel-3d-conformer! (fn [sdf args] (type sdf)))
+(defmulti produce-obabel-3d-conformer! (fn [sdf] (type sdf)))
 
 (defmethod produce-obabel-3d-conformer! java.lang.String
-  [sdf args]
-  (let [input-sdf-file (utils/create-temp-file sdf)]
-    (slurp (produce-obabel-3d-conformer! input-sdf-file args))))
+  ([sdf]
+   (let [input-sdf-file (utils/create-temp-file "sdf")]
+     (spit input-sdf-file sdf)
+     (let [result-pdbqt-file (produce-obabel-3d-conformer! input-sdf-file)]
+       (slurp result-pdbqt-file)))))
 
 (defmethod produce-obabel-3d-conformer! java.io.File
-  [input-sdf-file args]
+  [input-sdf-file]
   (let [output-pdbqt-file (utils/create-temp-file "pdbqt")
-        {:keys [exit out err]
+        {:keys [exit _out err]
          :as   return}
         (apply (partial sh/sh "obabel" (.getAbsolutePath input-sdf-file) "-O" (.getAbsolutePath output-pdbqt-file))
-               args)]
+               obabel-3d-conformer-args)]
     (if (or (not= 0 exit)
             (and (not-empty err)
                  (str/includes? err "Open Babel Error")))
       (throw (ex-info (str "Error when using OBabel: " err)
                       {:input-sdf-file input-sdf-file
                        :return         return
-                       :args           args}))
+                       :args           obabel-3d-conformer-args}))
       output-pdbqt-file)))
 
 (defmulti hydrogenate! type)
@@ -52,7 +54,7 @@
   [pdb]
   (log/info "obabel hydrogens" pdb)
   (let [output-file (utils/create-temp-file "pdb")
-        {:keys [exit out err]
+        {:keys [exit _out err]
          :as   return}
         (sh/sh "obabel" (.getAbsolutePath pdb) "-O" (.getAbsolutePath output-file) "-h")]
     (if (or (not= 0 exit)

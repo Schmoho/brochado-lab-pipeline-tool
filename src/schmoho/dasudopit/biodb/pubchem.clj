@@ -2,7 +2,8 @@
   (:require
    [cheshire.core :as json]
    [schmoho.dasudopit.biodb.http :as http]
-   [schmoho.dasudopit.utils :as utils]))
+   [schmoho.dasudopit.utils :as utils]
+   [clojure.string :as str]))
 
 (def cid-prefix "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/")
 (def name-prefix "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name")
@@ -18,6 +19,7 @@
 (defn get-compound-data-by-id
   [cid & {:keys [sdf?]
           :or {sdf? true}}]
+  (tap> cid)
   (let [sdf  (when sdf?
                (-> (http/get (str cid-prefix cid "/SDF"))
                    :body))
@@ -26,7 +28,9 @@
                  (json/parse-string true)
                  :PropertyTable
                  :Properties
-                 first)
+                 first
+                 (update-keys (comp keyword str/lower-case name))
+                 (update-vals str))
         png  (-> (http/get (str cid-prefix cid "/PNG?record_type=2d") {:as :byte-array})
                  :body
                  utils/encode-base64)]
@@ -46,8 +50,7 @@
                       (map (comp :cid :id :id))
                       (take 3)))]
     (->> (for [cid cids]
-           [cid (get-compound-data-by-id cid :sdf? false)]))))
-
+           [(str cid) (get-compound-data-by-id cid :sdf? false)]))))
 
 (comment
 

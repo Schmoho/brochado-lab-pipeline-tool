@@ -3,8 +3,8 @@
   (:require
    [cheshire.core :as json]
    [clj-http.client :as http]
+   [clojure.string :as str]
    [clojure.tools.logging :as log]
-   [schmoho.dasudopit.mongo.core :as mongo]
    [schmoho.dasudopit.utils :as utils]))
 
 (defn get
@@ -31,14 +31,17 @@
 (defn id-query
   [url-template result-meta]
   (fn -id-query
-      ([id]
-       (-id-query id {}))
-      ([id query-params]
-       (let [url    (format url-template id)
-             _      (log/debug "Query" url "with" query-params)
-             result (-> (get url {:query-params query-params})
-                        (:body)
-                        (json/parse-string)
-                        (utils/white-space-safe-keywordize-keys))]
-        (with-meta result result-meta)))))
+    ([id]
+     (-id-query id {}))
+    ([id query-params]
+     (let [url          (format url-template id)
+           query-params (update query-params :fields #(if (coll? %)
+                                                        (str/join "," %)
+                                                        %))
+           _            (log/debug "Query" url "with" query-params)
+           result       (-> (get url {:query-params query-params})
+                            (:body)
+                            (json/parse-string)
+                            (utils/white-space-safe-keywordize-keys))]
+       (with-meta result result-meta)))))
 

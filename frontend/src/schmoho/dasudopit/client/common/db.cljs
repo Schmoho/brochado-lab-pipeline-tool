@@ -4,8 +4,7 @@
    [day8.re-frame.tracing :refer-macros [fn-traced]]))
 
 (def default-db
-  {:already-executed-queries #{}
-   :forms
+  {:forms
    {:msa
     {:params.uniprot/taxonomy
      {:use-taxonomic-search? true}

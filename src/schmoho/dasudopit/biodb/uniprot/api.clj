@@ -18,17 +18,24 @@
   {:biodb/source :uniprot
    :uniprot/type :taxon})
 
+(def taxon-fields-of-interest
+  ["common_name" "id" "lineage" "rank" "scientific_name" "statistics"])
+
 (def taxonomy-entry
   (http/id-query
    (str (format "%s/taxonomy/" uniprot-api-base) "%s")
    taxon-meta))
 
-#_(:lineage (taxonomy-entry "208964"))
+#_(:lineage (taxonomy-entry "208964" {:fields taxon-fields-of-interest}))
 
 ;; ;; Proteomes
+
 (def proteome-meta
   {:biodb/source :uniprot
    :uniprot/type :proteome})
+
+(def proteome-fields-of-interest
+  ["organism_id" "protein_count" "upid"])
 
 (def proteomes-entry
   (http/id-query
@@ -40,6 +47,9 @@
 (defn proteomes-search
   [query-params]
   (let [url       (format "%s/proteomes/search" uniprot-api-base)
+        query-params (update query-params :fields #(if (coll? %)
+                                                     (str/join "," %)
+                                                     %))
         _         (log/debug "Query" url "with" query-params)
         proteomes (-> (http/get url {:query-params query-params})
                       (:body)
@@ -48,20 +58,48 @@
                       :results)]
     (mapv #(with-meta % proteome-meta) proteomes)))
 
-#_(proteomes-search {:query "208964"})
-
 ;; ;; Proteins
 
 (def uniprotkb-entry-meta
   {:biodb/source :uniprot
    :uniprot/type :uniprotkb-entry})
 
+(def protein-fields-of-interest
+  ["accession"
+   "cc_domain"
+   "cc_pathway"
+   "ec"
+   "ft_act_site"
+   "ft_binding"
+   "ft_dna_bind"
+   "ft_domain"
+   "ft_region"
+   "ft_site"
+   "ft_topo_dom"
+   "ft_transmem"
+   "ft_zn_fing"
+   "gene_names"
+   "go"
+   "protein_existence"
+   "protein_families"
+   "protein_name"
+   "sequence"
+   "structure_3d"
+   "xref_alphafolddb"
+   "xref_biocyc"
+   "xref_drugbank"
+   "xref_drugcentral"
+   "xref_interpro"
+   "xref_kegg"
+   "xref_pdb"
+   "xref_unipathway"])
+
 (def uniprotkb-entry
   (http/id-query
    (str (format "%s/uniprotkb/" uniprot-api-base) "%s")
    uniprotkb-entry-meta))
 
-#_(uniprotkb-entry "G3XCV0")
+#_(uniprotkb-entry "G3XCV0" #_{:fields protein-fields-of-interest})
 
 (defn uniprotkb-search
   [query-params]
@@ -180,7 +218,8 @@
         http-result (clj-http.client/get
                      url
                      {:query-params
-                      {:query (format "proteome:%s" proteome-id)}})
+                      {:query (format "proteome:%s" proteome-id)
+                       :fields protein-fields-of-interest}})
         proteins    (-> http-result
                         :body
                         (json/parse-string)
@@ -191,20 +230,23 @@
 #_(for [proteome '("UP000002438" "UP001223114" "UP001235792" "UP001241625")]
     (count (proteins-by-proteome proteome)))
 
-#_(->> (proteins-by-proteome "UP000002438")
-       (map :primaryAccession))
+#_(time (count (proteins-by-proteome "UP000002438")))
+
+(defn ref-proteomes-by-taxon-id
+  [taxon-id]
+  (->> (proteomes-search {:query (format "organism_id=%s AND proteome_type=\"1\"" taxon-id)
+                          :fields proteome-fields-of-interest})
+       (mapv #(with-meta % proteome-meta))))
+
+#_(ref-proteomes-by-taxon-id "208964")
 
 (defn proteomes-by-taxon-id
   [taxon-id]
-  (->> (proteomes-search {:query taxon-id})
-       :results
-       (filter #(= (if-not (number? taxon-id)
-                     (parse-long taxon-id) taxon-id)
-                   (-> % :taxonomy :taxonId)))
+  (->> (proteomes-search {:query (format "organism_id=%s" taxon-id)
+                          :fields proteome-fields-of-interest})
        (mapv #(with-meta % proteome-meta))))
 
-#_(->> (proteomes-by-taxon-id "208964")
-       (map :genomeAssembly))
+#_(proteomes-by-taxon-id "83333")
 
 (defn uniref-by-protein-id
   [protein-id]

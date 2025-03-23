@@ -91,19 +91,31 @@
           {:get    {:summary "Get ligand data by Pubchem ID."
                     :handler #'data-handler/get-dataset}
            :delete {:summary "Delete ligand data."
-                    :handler #'data-handler/delete-dataset!}}]
+                    :handler #'data-handler/delete-dataset!}
+           :post   {:summary "Provision a new ligand."
+                    :handler #'data-handler/provision-ligand}}]
          ["/search"
-          {:get    {:summary "Search for ligand data on Pubchem."
-                    :handler #'data-handler/search-ligand}}]]]
+          {:get {:summary "Search for ligand data on Pubchem."
+                 :handler #'data-handler/search-ligand}}]
+         ["/processed"
+          {:get {:summary "Get docking-ready 3D conformer."
+                 :handler #'data-handler/get-dataset}}]]]
 
        ["/taxon"
-        ["" {:get {:summary "Get taxon data."
-                   :handler #'data-handler/get-metadata}}]
+        [""
+         {:get {:summary "Get taxon data."
+                :handler #'data-handler/get-metadata}}]
         ["/:id"
-         ["" {:get    {:summary "Get taxon data by NCBI/UniProt Taxonomy ID."
-                       :handler #'data-handler/get-dataset}
-              :delete {:summary "Delete taxon data and the associated proteome."
-                       :handler #'data-handler/delete-dataset!}}]
+         [""
+          {:get    {:summary "Get taxon data by NCBI/UniProt Taxonomy ID."
+                    :handler #'data-handler/get-dataset}
+           :delete {:summary "Delete taxon data and the associated proteome."
+                    :handler #'data-handler/delete-dataset!}
+           :post   {:summary "Provision a new taxon."
+                    :handler #'data-handler/provision-taxon}}]
+         ["/search"
+          {:get {:summary "Search a taxon by ID, returns basic taxon information and a best effort proteome selection."
+                 :handler #'data-handler/search-taxon}}]
          ["/proteome"
           {:get {:summary "Get proteome for a UniProt taxon ID."
                  :handler #'data-handler/get-dataset}}]]]
@@ -115,8 +127,8 @@
 
       ["/pipelines"
        ["/msa"
-        {:post {:summary       "Start taxonomic comparison pipeline."
-                :handler       #'pipelines-handler/start-msa-handler}}]]]
+        {:post {:summary "Start taxonomic comparison pipeline."
+                :handler #'pipelines-handler/start-msa-handler}}]]]
      ["/" {:get serve-index}]]
     {:conflicts (constantly nil)
      ;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs

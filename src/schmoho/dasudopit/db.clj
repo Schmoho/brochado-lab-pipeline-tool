@@ -5,7 +5,8 @@
    [clojure.tools.logging :as log]
    [schmoho.dasudopit.csv-utils :as csv-utils]
    [schmoho.dasudopit.data-cleaning :as clean]
-   [schmoho.dasudopit.utils :as utils]))
+   [schmoho.dasudopit.utils :as utils]
+   [reitit.ring.middleware.exception :as exception]))
 
 (defn- pathify
   [file]
@@ -49,13 +50,16 @@
          (map (juxt pathify utils/read-file))
          (reduce
           (fn [acc [path data]]
-            (assoc-in acc (drop-common-vector-prefix
-                           path
-                           prefix-segments)
+            (assoc-in acc (update (drop-common-vector-prefix
+                                   path
+                                   prefix-segments)
+                                  0
+                                  name)
                       data))
           {}))))
 
 #_(get-metadata "/data/volcano")
+
 
 (defn get-dataset
   [path]
@@ -70,15 +74,20 @@
 
 (defn delete-dataset!
   [path]
-  (let [path (if (str/starts-with? path "/")
-               (subs path 1)
-               path)
-        files (->> path
-                   utils/ffile-seq)]
-    (doseq [f files]
-      (log/info "Delete file" (.getPath f))
-      (io/delete-file f))
-    (io/delete-file path)))
+  (try
+    (let [path  (if (str/starts-with? path "/")
+                  (subs path 1)
+                  path)
+          _     (when-not (str/starts-with? path "data")
+                  (throw (ex-info "Probably not deleting what you want."
+                                  {:path path})))
+          files (reverse (file-seq (io/file path)))]
+      (doseq [f files]
+        (log/info "Delete file" (.getPath f))
+        (io/delete-file f)))
+    (catch Exception e
+      (log/error e)
+      (throw e))))
 
 #_(delete-dataset! "/data/volcano/5c71b78c-e60f-412b-b61b-049fdc420c8d")
 
@@ -108,9 +117,12 @@
                                      data))
         :else
         (let [filename (case filename-kw
-                         :meta      "meta.edn"
-                         :structure "structure.pdb"
-                         :data      "data.edn")]
+                         :meta          "meta.edn"
+                         :structure     "structure.pdb"
+                         :docking-ready "structure.pdbqt"
+                         :data          "data.edn"
+                         :png           "image.png.b64"
+                         :sdf           "structure.sdf")]
           (utils/write! (str path "/" filename)
                         data))))))
 

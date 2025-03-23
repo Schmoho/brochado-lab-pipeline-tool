@@ -4,7 +4,8 @@
    [re-frame.core :as rf]
    [day8.re-frame.http-fx]
    [ajax.core :as ajax]
-   [day8.re-frame.tracing :refer-macros [fn-traced]]))
+   [day8.re-frame.tracing :refer-macros [fn-traced]]
+   [schmoho.dasudopit.client.common.http :as http]))
 
 (def base-api "http://localhost:3001/api")
 

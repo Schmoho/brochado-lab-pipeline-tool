@@ -9,7 +9,7 @@
    [schmoho.dasudopit.client.common.views.widgets :as widgets]))
 
 (defn taxons-panel []
-  (let [results (re-frame/subscribe [:data/taxons])]
+  (let [results (re-frame/subscribe [:data/taxons-list])]
     (fn []
       (if (empty? @results)
         [com/throbber :size :regular]

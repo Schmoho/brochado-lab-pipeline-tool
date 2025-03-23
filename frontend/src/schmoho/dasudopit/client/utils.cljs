@@ -6,10 +6,8 @@
 
 (defn get-data
   [path]
-  (when-not
-      ((@rf.db/app-db :already-executed-queries) path)
-    (rf/dispatch
-     [::http/http-get path])))
+  (when-not (get (@rf.db/app-db :queries) path)
+    (rf/dispatch [::http/http-get path])))
 
 (defn cool-select-keys
   [m kaccessors]

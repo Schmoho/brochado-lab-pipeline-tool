@@ -88,32 +88,6 @@
     :target "_blank"]])
 
 
-(defn upload-pdb-modal
-  []
-  [com/modal-panel
-   :child
-   [v
-    :children
-    [[views.forms/info-label
-      "Required: Name"
-      [:div ""]]
-     [views.forms/input-text
-      :on-change #(rf/dispatch [::forms/set-form-data :upload/structure :meta :name %])
-      :placeholder "Insert a name for the structure"]
-     [com/gap :size "10px"]
-     [views.forms/info-label
-      "Required: PDB file"
-      [volcano-info]]
-     [views.forms/pdb-upload
-      :on-load #(rf/dispatch [::forms/set-form-data :upload/structure :file %])]
-     [h
-      :children
-      [[com/gap :size "80px"]
-       [views.forms/action-button
-        :label "Save"
-        :on-click #(rf/dispatch [::events/post-structure])]]]]]])
-
-
 (defn part-2
   []
   (let [form-valid?        @(rf/subscribe [:forms.docking.part-2/valid?])
@@ -134,5 +108,4 @@
        :gap "30px"
        :children
        (into [] proteome-searchers)]
-      [get-structures-button]
-      #_[upload-pdb-modal]]]))
+      [get-structures-button]]]))

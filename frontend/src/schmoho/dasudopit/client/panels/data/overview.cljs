@@ -6,17 +6,13 @@
    [schmoho.dasudopit.client.routing :as routing]
    [schmoho.dasudopit.client.common.forms :as forms]
    [schmoho.dasudopit.client.common.views.structure :as structure]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]))
-
-(rf/reg-event-fx
- :testdelete
- (fn [a b]
-   (js/alert b)))
+   [schmoho.dasudopit.client.common.views.widgets :as widgets]
+   [schmoho.dasudopit.client.common.http :as http]))
 
 (defn overview-panel []
   (let [volcanos (rf/subscribe [:data/volcanos-list])
-        taxons   (rf/subscribe [:data/taxons])
-        ligands  (rf/subscribe [:data/ligands])]
+        taxons   (rf/subscribe [:data/taxons-list])
+        ligands  (rf/subscribe [:data/ligands-list])]
     (fn []
       [structure/collapsible-accordion-2
        ["Volcanos"
@@ -47,27 +43,45 @@
              [com/row-button
               :md-icon-name "zmdi-delete"
               :mouse-over-row? true
-              :on-click #(rf/dispatch [:testdelete (-> row :meta :id)])])}]]]
+              :on-click #(rf/dispatch [::http/http-delete [:data :volcano (-> row :meta :id)]])])}]]]
        ["Taxons"
         [widgets/table taxons
          :columns
          [{:id           :id
            :row-label-fn (fn [row]
-                           [:a {:href (str "taxon/" (:id row))}
-                            (:id row)])
+                           (let [id (-> row :meta :id)]
+                             [:a {:href (str "taxon/" id)} id]))
            :header-label "Taxon ID"}
-          {:id           :scientificName
-           :header-label "Name"}]]]
+          {:id           :name
+           :row-label-fn (comp :name :meta)
+           :header-label "Name"}
+          {:id :actions
+           :header-label "Actions"
+           :row-label-fn
+           (fn [row]
+             [com/row-button
+              :md-icon-name "zmdi-delete"
+              :mouse-over-row? true
+              :on-click #(rf/dispatch [::http/http-delete [:data :taxon (-> row :meta :id)]])])}]]]
        ["Ligands"
         [widgets/table ligands
          :columns
          [{:id :id
            :row-label-fn (fn [row]
-                           [:a {:href (str "ligand/" (:id row))}
-                            (:id row)])
+                           (let [id (-> row :meta :cid)]
+                             [:a {:href (str "ligand/" id)} id]))
            :header-label "Ligand ID"}
           {:id :name
-           :header-label "Name"}]]]])))
+           :row-label-fn (comp :title :meta)
+           :header-label "Name"}
+          {:id :actions
+           :header-label "Actions"
+           :row-label-fn
+           (fn [row]
+             [com/row-button
+              :md-icon-name "zmdi-delete"
+              :mouse-over-row? true
+              :on-click #(rf/dispatch [::http/http-delete [:data :ligand (-> row :meta :cid)]])])}]]]])))
 
 (defmethod routing/panels :routing.data/overview [] [overview-panel])
 (defmethod routing/header :routing.data/overview []

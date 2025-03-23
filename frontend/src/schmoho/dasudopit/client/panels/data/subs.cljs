@@ -1,6 +1,7 @@
 (ns schmoho.dasudopit.client.panels.data.subs
   (:require
-   [re-frame.core :as rf]))
+   [re-frame.core :as rf]
+   [schmoho.dasudopit.client.common.http :as http]))
 
 (rf/reg-sub
  ::data
@@ -22,7 +23,7 @@
    (:taxon data)))
 
 (rf/reg-sub
- :data/taxons
+ :data/taxons-list
  :<- [::data]
  (fn [data]
    (->> data :taxon vals vec)))
@@ -34,20 +35,20 @@
    (get taxons id)))
 
 (rf/reg-sub
- :data/proteomes
- :<- [:data/taxons]
+ :data/proteomes-list
+ :<- [:data/taxons-list]
  (fn [taxons]
    (map :proteome taxons)))
 
 (rf/reg-sub
  :data/proteome
- :<- [:data/taxons]
+ :<- [:data/taxons-list]
  (fn [taxons [_ id]]
    (-> (get taxons id) :proteome)))
 
 (rf/reg-sub
  :data/protein
- :<- [:data/proteomes]
+ :<- [:data/proteomes-list]
  (fn [proteomes [_ protein-id]]
    (->> proteomes
         vals
@@ -58,7 +59,7 @@
         first)))
 
 (rf/reg-sub
- :data/ligands
+ :data/ligands-list
  :<- [::data]
  (fn [data]
    (->> data :ligand vals vec)))
@@ -146,4 +147,49 @@
  :<- [:provision.ligand/search-result]
  (fn [[form search-result]]
    (or (:tab form)
-       (-> search-result first second :meta :Title))))
+       (-> search-result ffirst))))
+
+(rf/reg-sub
+ :provision.ligand/search-running?
+ :<- [::http/queries]
+ :<- [:provision.ligand/input-model]
+ (fn [[queries input]]
+   (= (get queries [:data :ligand input :search])
+      :running)))
+
+(rf/reg-sub
+ :provision.ligand/post-query-state
+ :<- [:provision.ligand/tab-model]
+ :<- [::http/queries]
+ (fn [[id queries]]
+   (get queries [:data :ligand id])))
+
+
+
+(rf/reg-sub
+ :provision.taxon/input-model
+ :<- [:forms/by-path :provision/taxon]
+ (fn [form]
+   (:input form)))
+
+(rf/reg-sub
+ :provision.taxon/search-result
+ :<- [:data/taxons-map]
+ :<- [:provision.taxon/input-model]
+ (fn [[taxons input]]
+   (-> taxons (get input) :search)))
+
+(rf/reg-sub
+ :provision.taxon/search-running?
+ :<- [::http/queries]
+ :<- [:provision.taxon/input-model]
+ (fn [[queries input]]
+   (= (get queries [:data :taxon input :search])
+      :running)))
+
+(rf/reg-sub
+ :provision.taxon/post-query-state
+ :<- [:provision.taxon/input-model]
+ :<- [::http/queries]
+ (fn [[id queries]]
+   (get queries [:data :taxon id])))

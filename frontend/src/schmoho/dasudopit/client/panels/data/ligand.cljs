@@ -33,7 +33,7 @@
               [com/label :label (:count json)]]])
 
 (defn ligands-panel []
-  (let [results (re-frame/subscribe [:data/ligands])]
+  (let [results (re-frame/subscribe [:data/ligands-list])]
     [v
      :width "1550px"
      :max-width "1550px"

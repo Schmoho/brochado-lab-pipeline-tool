@@ -90,8 +90,8 @@
 
 (defn part-1
   []
-  (let [taxons       @(rf/subscribe [:data/taxons])
-        ligands      @(rf/subscribe [:data/ligands])
+  (let [taxons       @(rf/subscribe [:data/taxons-list])
+        ligands      @(rf/subscribe [:data/ligands-list])
         form-valid?  @(rf/subscribe [:forms.docking.part-1/valid?])
         taxon-model  (rf/subscribe [:forms.docking.part-1/taxon-model])
         ligand-model (rf/subscribe [:forms.docking.part-1/ligand-model])]

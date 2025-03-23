@@ -5,6 +5,18 @@
    [schmoho.dasudopit.client.css.structure :as css]
    [schmoho.dasudopit.client.utils :as utils]))
 
+(defn minicard
+  [header title body]
+  [:div {:class "card bg-light mb-3 "
+         :style {:font-size "14px"}}
+   [:div {:class "card-header"
+           :style {:font-size "14px"}} header]
+   [:div {:class "card-body"
+           :style {:font-size "14px"}}
+    [:h5 {:class "card-title"
+           :style {:font-size "14px"}} title]
+    body]])
+
 (defn card
   [header title body & {:keys [on-click]}]
   (let [hover?  (r/atom false)]

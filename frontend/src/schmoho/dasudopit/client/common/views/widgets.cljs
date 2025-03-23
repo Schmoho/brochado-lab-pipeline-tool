@@ -1,18 +1,19 @@
 (ns schmoho.dasudopit.client.common.views.widgets
   (:require
    ["react" :as react]
+   [re-frame.core :as rf]
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [reagent.core :as r]
-   [schmoho.dasudopit.client.utils :refer [rand-str]]
    ["3dmol/build/3Dmol.js" :as threeDmol]))
 
 (defn lineage-item [item]
   [v
    :align :center
    :class "btn btn-outline-secondary"
-   :children [#_[com/label :label (:rank item)]
-              [com/hyperlink-href :label (:scientificName item)
-               :href (str "https://www.uniprot.org/taxonomy/" (:id item))]]])
+   :children
+   [#_[com/label :label (:rank item)]
+    [com/hyperlink-href :label (:scientificName item)
+     :href (str "https://www.uniprot.org/taxonomy/" (:taxonId item))]]])
 
 (defn lineage-connector []
   [:div {:style {:display        "flex"
