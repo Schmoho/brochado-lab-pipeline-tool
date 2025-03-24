@@ -4,7 +4,7 @@ Developed for the [Brochado Lab](https://www.brochadolab.com/).
 
 ## Development
 
-The project has two parts, backend and frontend.
+The project has two parts, backend and frontend. A significant portion of code that is in principle independent of this project is in [common](src/common/schmoho), frontend components that might be useful in other contexts are in [components](src/frontend/schmoho/components).
 
 The two parts use different tools for building and compilation, and are therefore discussed separately.
 
@@ -37,15 +37,11 @@ Alternatively, you can run `lein repl` to start an nREPL server to which you can
 
 The backend is written in [Clojurescript](https://clojurescript.org/) and uses [shadow-cljs](https://shadow-cljs.github.io/docs/UsersGuide.html) as the compiler and build tool.
 
-shadow-cljs uses the file [shadow-cljs.edn](frontend/shadow-cljs.edn) for configuration.
-
-Due to the usage of [gosling.js](https://gosling-lang.org/) I ended up in a situation where I had to set up a non-standard build process.
-Therefore, the frontend build not only uses shadow-cljs, but also [Vite](https://vite.dev/).
-Vite uses [vite.config.js](vite.config.js) for configuration.
+shadow-cljs uses the file [shadow-cljs.edn](shadow-cljs.edn) for configuration.
+NPM dependencies are installed directly via `npm`, see [package.json](package.json).
 
 The process is like this: shadow-cljs compiles Clojurescript to Javascript.
-Vite bundles external NPM dependencies and the compiled output of shadow-cljs into the Javascript file that is included in the [index.html](frontend/index.html) and puts everything in the folder [dist](frontend/dist).
-The output folder `dist` needs to be included as a folder `public` in the [resources](resources) of the backend.
+The folder [resources/frontend](resources/frontend) needs to be included as a folder `public` in the [resources](resources/backend) of the backend.
 
 This project uses the [re-frame](https://day8.github.io/re-frame/) frontend framework.
 re-frame is an opinionated way of writing a [Reagent](https://reagent-project.github.io/) based single-page application.
