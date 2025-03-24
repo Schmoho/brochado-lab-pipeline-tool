@@ -4,7 +4,7 @@
    [re-frame.core :as rf]
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [reagent.core :as r]
-   [schmoho.dasudopit.client.utils :refer [cool-select-keys]]
+   [schmoho.utils.core :refer [cool-select-keys]]
    ["3dmol/build/3Dmol.js" :as threeDmol]))
 
 ;; === Lineage ===

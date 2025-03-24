@@ -4,12 +4,12 @@
    [clojure.string :as str]
    #_[oz.core :as oz]
    #_[plots.volcanoes :as volcano]
-   [schmoho.dasudopit.biodb.uniprot.api :as api.uniprot]
-   [schmoho.dasudopit.biodb.uniprot.core :as uniprot]
-   [schmoho.dasudopit.biodb.uniprot.mapping :as uniprot.mapping]
-   [schmoho.dasudopit.csv-utils :as csv]
-   [schmoho.dasudopit.data-cleaning :as clean]
-   [schmoho.dasudopit.utils :as utils]))
+   [schmoho.biodb.uniprot.api :as api.uniprot]
+   [schmoho.biodb.uniprot.core :as uniprot]
+   [schmoho.biodb.uniprot.mapping :as uniprot.mapping]
+   [schmoho.utils.csv :as csv]
+   [schmoho.utils.data-cleaning :as clean]
+   [schmoho.utils.file :as utils]))
 
 (defn cross-data
   [data-set-1 data-set-2]

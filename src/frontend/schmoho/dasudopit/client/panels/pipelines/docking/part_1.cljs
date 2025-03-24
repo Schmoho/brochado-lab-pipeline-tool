@@ -3,7 +3,8 @@
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
    [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.utils :as utils :refer [cool-select-keys]]))
+   [schmoho.dasudopit.client.utils.re-frame :as utils]
+   [schmoho.utils.core :refer [cool-select-keys]]))
 
 (defn ligands->choices
   [ligands]

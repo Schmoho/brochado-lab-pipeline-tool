@@ -5,7 +5,7 @@
    [pushy.core :as pushy]
    [re-frame.core :as rf]
    [schmoho.dasudopit.client.panels.results.msa.events :as msa-results-events]
-   [schmoho.dasudopit.client.utils :as utils]))
+   [schmoho.dasudopit.client.utils.re-frame :as utils]))
 
 (defmulti panels identity)
 (defmethod panels :default [] [:div "No panel found for this route."])

@@ -3,9 +3,9 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
-   [schmoho.dasudopit.csv-utils :as csv-utils]
-   [schmoho.dasudopit.data-cleaning :as clean]
-   [schmoho.dasudopit.utils :as utils]
+   [schmoho.utils.csv :as csv-utils]
+   [schmoho.utils.data-cleaning :as clean]
+   [schmoho.utils.file :as utils]
    [reitit.ring.middleware.exception :as exception]))
 
 (defn- pathify

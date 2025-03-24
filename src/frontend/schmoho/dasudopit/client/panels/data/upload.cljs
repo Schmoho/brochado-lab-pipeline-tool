@@ -19,7 +19,7 @@
   [v
    :gap "20px"
    :children
-   [#_[upload-volcano-form]
+   [[upload-volcano-form]
     #_[card
      "Provision Ligand via Pubchem"
      [provision-ligand-form]]

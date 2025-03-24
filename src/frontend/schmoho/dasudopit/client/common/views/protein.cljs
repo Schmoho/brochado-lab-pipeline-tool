@@ -1,6 +1,6 @@
 (ns schmoho.dasudopit.client.common.views.protein
   (:require
-   [schmoho.dasudopit.client.utils :as utils]
+   [schmoho.utils.color :as color]
    [re-frame.core :as rf]
    [schmoho.dasudopit.client.common.views.widgets :as widgets]
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]))
@@ -40,9 +40,9 @@
                                      :location-str (location-str f)
                                      :location     (protein-feature->location f)})))
                            (group-by :type))
-        domains       (features-with-colors (get by-type "Domain") utils/green-yellow-palette)
-        active-sites  (features-with-colors (get by-type "Active site") utils/red-palette)
-        binding-sites (features-with-colors (get by-type "Binding site") utils/purple-palette)
+        domains       (features-with-colors (get by-type "Domain") color/green-yellow-palette)
+        active-sites  (features-with-colors (get by-type "Active site") color/red-palette)
+        binding-sites (features-with-colors (get by-type "Binding site") color/purple-palette)
         has-afdb?     (->> (:uniProtKBCrossReferences protein)
                            (filter #(= "AlphaFoldDB" (:database %)))
                            seq)]

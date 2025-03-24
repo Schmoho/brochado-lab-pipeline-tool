@@ -1,6 +1,6 @@
 (ns schmoho.dasudopit.client.panels.results.msa.views
   (:require
-   ["gosling.js" :refer [GoslingComponent]]
+   ;; ["gosling.js" :refer [GoslingComponent]]
    [clojure.string :as str]
    [re-com.core :as re-com :rename {v-box v}]
    [re-frame.core :as rf]
@@ -51,15 +51,15 @@
 (defmethod routing/header :routing.results/msa []
   [structure/header :label "Sequence Comparison Results"])
 
-(comment
+;; (comment
 
-  (require '["gosling.js" :refer [GoslingComponent]])
+;;   (require '["gosling.js" :refer [GoslingComponent]])
 
-  [:> GoslingComponent
-   {:spec spec/spec
-    :margin 0
-    :padding 30
-    :border "none"
-    :id "my-gosling-component-id"
-    :className "my-gosling-component-style"
-    :theme "light"}])
+;;   [:> GoslingComponent
+;;    {:spec spec/spec
+;;     :margin 0
+;;     :padding 30
+;;     :border "none"
+;;     :id "my-gosling-component-id"
+;;     :className "my-gosling-component-style"
+;;     :theme "light"}])

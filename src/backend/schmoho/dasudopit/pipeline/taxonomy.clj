@@ -1,11 +1,11 @@
 (ns schmoho.dasudopit.pipeline.taxonomy
   (:require
    [clojure.tools.logging :as log]
-   [schmoho.dasudopit.biodb.uniprot.api :as api.uniprot]
-   [schmoho.dasudopit.biodb.uniprot.core :as uniprot]
-   [schmoho.dasudopit.biotools.clustalo :as clustalo]
-   [schmoho.dasudopit.formats.fasta :as formats.fasta]
-   [schmoho.dasudopit.utils :as utils]))
+   [schmoho.biodb.uniprot.api :as api.uniprot]
+   [schmoho.biodb.uniprot.core :as uniprot]
+   [schmoho.biotools.clustalo :as clustalo]
+   [schmoho.formats.fasta :as formats.fasta]
+   [schmoho.utils.file :as utils]))
 
 (def running-blast-jobs (atom #{}))
 

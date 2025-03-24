@@ -14,6 +14,7 @@
    [schmoho.dasudopit.client.panels.data.subs]
    [schmoho.dasudopit.client.panels.data.taxon]
    [schmoho.dasudopit.client.panels.data.upload]
+   [schmoho.dasudopit.client.panels.data.upload.structure]
    [schmoho.dasudopit.client.panels.home]
    [schmoho.dasudopit.client.panels.pipelines.docking.views]
    [schmoho.dasudopit.client.panels.pipelines.msa.subs]

@@ -1,8 +1,8 @@
 (ns schmoho.dasudopit.pipeline.structure
   (:require
-   [schmoho.dasudopit.biotools.vina :as vina]
-   [schmoho.dasudopit.formats.pdb :as formats.pdb]
-   [schmoho.dasudopit.utils :as utils]))
+   [schmoho.biotools.vina :as vina]
+   [schmoho.formats.pdb :as formats.pdb]
+   [schmoho.utils.file :as utils]))
 
 #_(defn preprocessing-pipeline
   [protein-id

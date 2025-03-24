@@ -1,10 +1,10 @@
 (ns schmoho.dasudopit.client.panels.volcano-viewer.views
   (:require
-   [schmoho.dasudopit.client.utils :as utils]
    [schmoho.dasudopit.client.vega-utils :as vega-utils]
    [schmoho.dasudopit.client.routing :as routing]
    [schmoho.dasudopit.client.common.forms :as forms]
    [schmoho.dasudopit.client.common.views.forms :as form-views]
+   [schmoho.dasudopit.client.common.views.protein :as protein]
    [schmoho.dasudopit.client.common.views.structure :as structure]
    [schmoho.dasudopit.client.panels.volcano-viewer.events :as events]
    [schmoho.dasudopit.client.panels.volcano-viewer.plots :as volcano-plots]
@@ -149,30 +149,30 @@
                 :go-filter
                 go-filter]))
 
-(defn filterable-volcano
-  [table proteome]
-  (let [selection      (rf/subscribe [:forms.volcano/go-term-selection :left])
-        go-term-choice (vec (utils/proteome-go-terms proteome))
-        filterfn       (if (first @selection)
-                         (utils/go-term-filtering-fn proteome (first @selection))
-                         (constantly true))]
-    [h
-     :children
-     [[h
-       :children
-       [[com/multi-select :src (at)
-         :choices       go-term-choice
-         :model         selection
-         :on-change #(handle-set-go-term-filter %)
-         :width         "450px"
-         :left-label    "Present GO-terms"
-         :right-label   "Selected GO-terms"
-         :filter-box? true]
-        [:div
-         {:style {:width "400px"}}
-         [vega/chart
-          {:spec (volcano-plots/single-pan :table)
-           :data {:table (filter filterfn table)}}]]]]]]))
+;; (defn filterable-volcano
+;;   [table proteome]
+;;   (let [selection      (rf/subscribe [:forms.volcano/go-term-selection :left])
+;;         go-term-choice (vec (protein/proteome-go-terms proteome))
+;;         filterfn       (if (first @selection)
+;;                          (protein/go-term-filtering-fn proteome (first @selection))
+;;                          (constantly true))]
+;;     [h
+;;      :children
+;;      [[h
+;;        :children
+;;        [[com/multi-select :src (at)
+;;          :choices       go-term-choice
+;;          :model         selection
+;;          :on-change #(handle-set-go-term-filter %)
+;;          :width         "450px"
+;;          :left-label    "Present GO-terms"
+;;          :right-label   "Selected GO-terms"
+;;          :filter-box? true]
+;;         [:div
+;;          {:style {:width "400px"}}
+;;          [vega/chart
+;;           {:spec (volcano-plots/single-pan :table)
+;;            :data {:table (filter filterfn table)}}]]]]]]))
 
 (defn volcano-panel
   []
@@ -195,11 +195,11 @@
        (when-let [table (:table volcano-left)]
          ["Plot Brushable"
           [brushable-volcano table]])
-       (when-let [table (:table volcano-left)]
-         ["GO-term filterable"
-          [filterable-volcano
-           table
-           proteome]])
+       ;; (when-let [table (:table volcano-left)]
+       ;;   ["GO-term filterable"
+       ;;    [filterable-volcano
+       ;;     table
+       ;;     proteome]])
        (let [table-1 (:table volcano-left)
              table-2 (:table volcano-right)]
          (when (and table-1 table-2)

@@ -1,10 +1,11 @@
 (ns schmoho.dasudopit.client.common.views.vega
   (:require [reagent.core :as r]
             ["react" :as react]
-            ["react-vega" :refer [VegaLite]]
-            ["vega-tooltip" :refer [Handler]]))
+            ;; ["react-vega@7.6.0" :refer [VegaLite]]
+            ;; ["vega-tooltip" :refer [Handler]]
+            ))
 
-(def -vega-chart (r/adapt-react-class VegaLite))
+(def -vega-chart (r/adapt-react-class js/VegaLite))
 
 (def default-config {:padding 5
                      :axis    {:labelFont       :inherit
@@ -44,7 +45,7 @@
                                :width      @width
                                :height     height
                                :renderer   renderer
-                               :tooltip    (.-call (Handler.))}
+                               #_#_:tooltip    (.-call (Handler.))}
                         (seq signal-handlers)
                         (assoc :signal-listeners signal-handlers))]])
 

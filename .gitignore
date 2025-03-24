@@ -23,3 +23,7 @@
 /resources/backend/public/
 /build/
 /resources/frontend/public/js/main.js
+/resources/frontend/public/js/cljs-runtime/
+/resources/frontend/js/cljs-runtime/
+/resources/frontend/js/main.js
+/resources/frontend/js/manifest.edn

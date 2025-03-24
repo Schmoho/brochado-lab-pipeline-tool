@@ -1,13 +1,13 @@
 (ns schmoho.dasudopit.server.handler.data
   (:require
-   [schmoho.dasudopit.biodb.afdb :as afdb]
+   [schmoho.biodb.afdb :as afdb]
    [schmoho.dasudopit.db :as db]
    [clojure.tools.logging :as log]
    [clojure.string :as str]
-   [schmoho.dasudopit.biodb.pubchem :as pubchem]
-   [schmoho.dasudopit.biodb.uniprot.api :as uniprot.api]
-   [schmoho.dasudopit.biotools.obabel :as obabel]
-   [schmoho.dasudopit.utils :as utils]))
+   [schmoho.biodb.pubchem :as pubchem]
+   [schmoho.biodb.uniprot.api :as uniprot.api]
+   [schmoho.biotools.obabel :as obabel]
+   [schmoho.utils.file :as utils]))
 
 (defn get-metadata
   [request]

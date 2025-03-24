@@ -2,7 +2,7 @@
   (:require
    [clojure.tools.logging :as log]
    [schmoho.dasudopit.pipeline.taxonomy :as pipeline.taxonomy]
-   [schmoho.dasudopit.utils :as utils]))
+   [schmoho.utils.file :as utils]))
 
 
 (defn start-msa-handler

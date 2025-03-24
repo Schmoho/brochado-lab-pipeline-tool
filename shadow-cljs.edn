@@ -25,19 +25,19 @@
   ;; running shadow - it is not an actual dependency of anything
   [org.slf4j/slf4j-nop "1.7.13" :scope "test"]]
 
-;; :dev-http
-;;  {8280 "dist"}
+:dev-http
+ {8280 "resources/frontend"}
 
  :builds
  {:app
-  {:target           #_:browser :esm
-   :output-dir       "resources/frontend/public/js"
+  {:target           :browser #_:esm
+   :output-dir       "resources/frontend/js"
    :modules          {:main {:entries [schmoho.dasudopit.client.core]
                              :init-fn schmoho.dasudopit.client.core/init}}
    #_#_:js-options   {:js-provider           :external
                       :external-index        "public/js/imports.js"
                       :external-index-format :esm}
-   :js-options       {:js-provider :import}
+   #_#_:js-options       {:js-provider :import}
    :compiler-options {:output-feature-set :es-next}
 
    :devtools {:preloads [day8.re-frame-10x.preload.react-18

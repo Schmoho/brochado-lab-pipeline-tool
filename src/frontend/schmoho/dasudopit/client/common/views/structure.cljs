@@ -3,7 +3,7 @@
    [re-com.core :as com :refer [at]]
    [reagent.core :as r]
    [schmoho.dasudopit.client.css.structure :as css]
-   [schmoho.dasudopit.client.utils :as utils]))
+   [schmoho.utils.string :as utils.str]))
 
 (defn minicard
   [header title body]
@@ -51,7 +51,7 @@
 
 (defn collapsible-card
   [heading body & {:keys [expanded? data-parent id]}]
-  (let [id            (or id (utils/rand-str))
+  (let [id            (or id (utils.str/rand-str))
         heading-id    id
         aria-controls (str id "-aria")]
     [:div {:class "card bg-light"}
@@ -72,7 +72,7 @@
 
 (defn collapsible-accordion
   [& cards]
-  (let [accordion-id (utils/rand-str)]
+  (let [accordion-id (utils.str/rand-str)]
     (->> (for [card cards :when (some? card)]
            ^{:key (first card)} [collapsible-card
                                  (first card)
@@ -85,7 +85,7 @@
 
 (defn collapsible-accordion-2
   [& cards]
-  (let [accordion-id (utils/rand-str)]
+  (let [accordion-id (utils.str/rand-str)]
     (->> (for [card cards :when (some? card)]
            ^{:key (first card)} [collapsible-card
                                  (first card)

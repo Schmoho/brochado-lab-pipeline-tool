@@ -6,7 +6,7 @@
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [schmoho.dasudopit.client.common.views.structure :as structure]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-1 :refer [part-1]]
-   [schmoho.dasudopit.client.panels.pipelines.docking.part-2 :refer [part-2]]
+   ;; [schmoho.dasudopit.client.panels.pipelines.docking.part-2 :refer [part-2]]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-3 :refer [part-3]]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-4 :refer [part-4]]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-5 :refer [part-5]]
@@ -18,8 +18,8 @@
   []
   [structure/collapsible-accordion-2
    ["1. Choose taxons and ligands" [part-1]]
-   (when @(rf/subscribe [:forms.docking.part-1/valid?])
-     ["2. Choose proteins and binding sites" [part-2]])
+   ;; (when @(rf/subscribe [:forms.docking.part-1/valid?])
+   ;;   ["2. Choose proteins and binding sites" [part-2]])
    (when @(rf/subscribe [:forms.docking.part-2/valid?])
      ["3. Preprocessing" [part-3]])
    (when @(rf/subscribe [:forms.docking.part-2/valid?])

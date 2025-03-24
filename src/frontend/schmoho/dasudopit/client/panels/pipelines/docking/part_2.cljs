@@ -43,29 +43,29 @@
            :attr     {:on-mouse-over (com/handler-fn (reset! hover? true))
                       :on-mouse-out  (com/handler-fn (reset! hover? false))}])))))
 
-(defn taxon-protein-lookup
-  [taxon]
-  (let [protein-model (rf/subscribe [:forms/by-path :docking :input-model :taxon (:id taxon) :protein])
-        protein       @(rf/subscribe [:data/protein (:id @protein-model)])
-        form-valid?   @(rf/subscribe [:forms.docking.part-2/valid?])
-        proteome      @(rf/subscribe [:data/proteome (:id taxon)])]
-    [v
-     :children
-     [[:h6 (:scientificName taxon)]
-      [widgets/protein-search
-       :proteome  proteome
-       :model     protein-model
-       :on-change #(do
-                     (rf/dispatch [::forms/set-form-data
-                                  :docking
-                                  :input-model
-                                  :taxon
-                                  (:id taxon)
-                                  :protein
-                                   %])
-                     (rf/dispatch [::http/http-get [:data :structure %]]))]
-      (when (and protein (not form-valid?))
-        [protein/protein-info->hiccup protein])]]))
+;; (defn taxon-protein-lookup
+;;   [taxon]
+;;   (let [protein-model (rf/subscribe [:forms/by-path :docking :input-model :taxon (:id taxon) :protein])
+;;         protein       @(rf/subscribe [:data/protein (:id @protein-model)])
+;;         form-valid?   @(rf/subscribe [:forms.docking.part-2/valid?])
+;;         proteome      @(rf/subscribe [:data/proteome (:id taxon)])]
+;;     [v
+;;      :children
+;;      [[:h6 (:scientificName taxon)]
+;;       [widgets/protein-search
+;;        :proteome  proteome
+;;        :model     protein-model
+;;        :on-change #(do
+;;                      (rf/dispatch [::forms/set-form-data
+;;                                   :docking
+;;                                   :input-model
+;;                                   :taxon
+;;                                   (:id taxon)
+;;                                   :protein
+;;                                    %])
+;;                      (rf/dispatch [::http/http-get [:data :structure %]]))]
+;;       (when (and protein (not form-valid?))
+;;         [protein/protein-info->hiccup protein])]]))
 
 
 (defn volcano-info
@@ -86,24 +86,24 @@
     :target "_blank"]])
 
 
-(defn part-2
-  []
-  (let [form-valid?        @(rf/subscribe [:forms.docking.part-2/valid?])
-        taxon-lookup       @(rf/subscribe [:data/taxons-map])
-        selected-taxons    (-> @(rf/subscribe [:forms.docking/input-model]) :taxon keys set)
-        proteome-searchers (->> selected-taxons
-                                (map taxon-lookup)
-                                (map
-                                 (fn [taxon]
-                                   ^{:key (:id taxon)}
-                                   [taxon-protein-lookup taxon])))]
-    [v
-     :children
-     [(when-not form-valid?
-        [:span "Please choose a protein for each taxon and press the button to get the structures."])
-      [h
-       :min-height "300px"
-       :gap "30px"
-       :children
-       (into [] proteome-searchers)]
-      [get-structures-button]]]))
+;; (defn part-2
+;;   []
+;;   (let [form-valid?        @(rf/subscribe [:forms.docking.part-2/valid?])
+;;         taxon-lookup       @(rf/subscribe [:data/taxons-map])
+;;         selected-taxons    (-> @(rf/subscribe [:forms.docking/input-model]) :taxon keys set)
+;;         proteome-searchers (->> selected-taxons
+;;                                 (map taxon-lookup)
+;;                                 (map
+;;                                  (fn [taxon]
+;;                                    ^{:key (:id taxon)}
+;;                                    [taxon-protein-lookup taxon])))]
+;;     [v
+;;      :children
+;;      [(when-not form-valid?
+;;         [:span "Please choose a protein for each taxon and press the button to get the structures."])
+;;       [h
+;;        :min-height "300px"
+;;        :gap "30px"
+;;        :children
+;;        (into [] proteome-searchers)]
+;;       [get-structures-button]]]))

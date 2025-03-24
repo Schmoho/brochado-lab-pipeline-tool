@@ -5,7 +5,7 @@
    [schmoho.dasudopit.client.common.views.forms :as common.forms]
    [schmoho.dasudopit.client.common.views.protein :as protein]
    [schmoho.dasudopit.client.common.views.widgets :as widgets]
-   [schmoho.dasudopit.client.utils :as utils]))
+   [schmoho.dasudopit.client.utils.re-frame :as utils]))
 
 (def form-model
   {:taxon   [:upload/structure :taxon]

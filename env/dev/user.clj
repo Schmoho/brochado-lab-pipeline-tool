@@ -3,10 +3,10 @@
    [clojure.java.io :as io]
    [portal.api :as p]
    [portal.viewer :as v]
-   [schmoho.dasudopit.biodb.ncbi.api :as ncbi.api]
-   [schmoho.dasudopit.biodb.uniprot.api :as uniprot.api]
+   [schmoho.biodb.ncbi.api :as ncbi.api]
+   [schmoho.biodb.uniprot.api :as uniprot.api]
    [schmoho.dasudopit.server.core :as server]
-   [schmoho.dasudopit.utils :as utils]))
+   [schmoho.utils.file :as utils]))
 
 (def server (server/start! 3001))
 (comment (.stop server))
