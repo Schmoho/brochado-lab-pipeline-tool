@@ -19,3 +19,4 @@
 /resources/public/
 /.lein-repl-history
 /frontend/public/js/main.js
+/target.bak/
