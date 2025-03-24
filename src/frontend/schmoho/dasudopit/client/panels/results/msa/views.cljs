@@ -4,9 +4,8 @@
    [clojure.string :as str]
    [re-com.core :as re-com :rename {v-box v}]
    [re-frame.core :as rf]
-   [schmoho.dasudopit.client.common.views.structure :as structure]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]
-   [schmoho.dasudopit.client.panels.results.msa.plots :as spec]
+   [schmoho.components.structure :as structure]
+   [schmoho.components.forms :as forms]
    [schmoho.dasudopit.client.routing :as routing]))
 
 (defn msa-results-panel
@@ -17,7 +16,7 @@
        :width "1550px"
        :max-width "1550px"
        :children
-       [[widgets/table
+       [[forms/table
          results
          :columns
          [{:id             :id

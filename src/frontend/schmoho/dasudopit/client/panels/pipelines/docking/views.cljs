@@ -1,10 +1,7 @@
 (ns schmoho.dasudopit.client.panels.pipelines.docking.views
   (:require
-   ["chroma-js" :as chroma]
-   ["chroma-js$default" :as chroma-default]
    [re-frame.core :as rf]
-   [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
-   [schmoho.dasudopit.client.common.views.structure :as structure]
+   [schmoho.components.structure :as structure]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-1 :refer [part-1]]
    ;; [schmoho.dasudopit.client.panels.pipelines.docking.part-2 :refer [part-2]]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-3 :refer [part-3]]

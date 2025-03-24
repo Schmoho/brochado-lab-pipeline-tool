@@ -1,0 +1,121 @@
+(ns schmoho.components.pdb
+  (:require
+   ["3dmol/build/3Dmol.js" :as threeDmol]
+   ["react" :as react]
+   [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
+   [clojure.string :as str]
+   [schmoho.components.utils.uniprot :as uniprot]
+   [schmoho.components.forms :as forms]
+   [reagent.core :as r]))
+
+(defn pdb-upload
+  [& {:keys [on-load]}]
+  [forms/file-upload
+   #(doseq [file (array-seq %)]
+      (if-not (str/ends-with? (.-name file) ".pdb")
+        (js/alert "Can only handle pdb data.")
+        (let [reader (js/FileReader.)]
+          (set! (.-onload reader)
+                (fn [_]
+                  (let [data (.-result reader)]
+                    (on-load data))))
+          (.readAsText reader file))))])
+
+;; === Structure Viewer ===
+
+(defn pdb-viewer
+  [& {:keys [objects style config on-load]}]
+  (let [ref          (react/createRef)
+        viewer-state (r/atom nil)]
+    (r/create-class
+     {:display-name "pdb-viewer"
+      :reagent-render
+      (fn [& {:keys [objects style]}]
+        (when-let [^js viewer @viewer-state]
+          (let [{:keys [spheres boxes]} objects]
+            (.removeAllShapes viewer)
+            (doseq [sphere (filter some? spheres)]
+              (when (:resi sphere)
+                (when-let [^js selected-atoms (first (.selectedAtoms viewer (clj->js {:resi (:resi sphere)})))]
+                  (.addSphere viewer (clj->js {:center {:x (.-x selected-atoms),
+                                                        :y (.-y selected-atoms)
+                                                        :z (.-z selected-atoms)}
+                                               :radius (or (:radius sphere) 4.0)
+                                               :color (:color sphere)})))))
+            (doseq [box (filter some? boxes)]
+              (.addBox viewer (clj->js box)))
+            (doto viewer
+              (.setStyle (clj->js {}) (clj->js style))
+              (.render))))
+        [:div {:class "mol-container"
+               :style {:width    "450px"
+                       :height   "450px"
+                       :position "relative"
+                       :border   "solid grey 1px"}
+               :ref   ref}
+         "Loading viewer..."])
+      :component-did-mount
+      (fn [_]
+        (when-let [node (.-current ref)]
+          (let [^js viewer (.createViewer threeDmol node (clj->js config))
+                {:keys [pdb spheres boxes]} objects]
+            (reset! viewer-state viewer)
+            (doseq [sphere (filter some? spheres)]
+              (when (:resi sphere)
+                (when-let [^js selected-atoms (first (.selectedAtoms viewer (clj->js {:resi (:resi sphere)})))]
+                  (.addSphere viewer (clj->js {:center {:x (.-x selected-atoms),
+                                                        :y (.-y selected-atoms)
+                                                        :z (.-z selected-atoms)}
+                                               :radius (or (:radius sphere) 4.0)
+                                               :color (:color sphere)})))))
+            (doseq [box (filter some? boxes)]
+              (.addBox viewer (clj->js box)))
+            (doto viewer
+              (.addModel pdb "pdb")
+              (.setStyle (clj->js {}) (clj->js style))
+              (.zoomTo)
+              (.render)
+              (.zoom 1.2 1000))
+            (when on-load
+              (on-load viewer-state)))))})))
+
+(defn protein-info->coloring-map
+  [protein-info]
+  (->> (concat (:domains protein-info)
+               (:binding-sites protein-info)
+               (:active-sites protein-info))
+       (mapcat
+        (fn [{:keys [location color]}]
+          (zipmap
+           (range (first location) (inc (second location)))
+           (repeat color))))
+       (into {})))
+
+;; === Structural Features Viewer ===
+
+(defn- protein-coloring-fn
+  [protein-info]
+  (let [coloring-map (protein-info->coloring-map protein-info)]
+    (fn [atom]
+      (or (get coloring-map (.-resi ^js atom))
+          "grey"))))
+
+(defn- protein-info->active-site-balls
+  [protein-info]
+  (->> protein-info
+       :active-sites
+       (map (fn [{:keys [location color]}]
+              {:resi location :radius 3.0 :color color}))))
+
+(defn structural-features-viewer
+  [pdb uniprot]
+  (let [protein-info      (uniprot/protein-info uniprot)
+        active-site-balls (protein-info->active-site-balls protein-info)
+        coloring-fn       (protein-coloring-fn protein-info)]
+    [h
+     :children
+     [[pdb-viewer
+       :objects {:pdb     pdb
+                 :spheres active-site-balls}
+       :style {:cartoon {:colorfunc coloring-fn}}
+       :config {:backgroundColor "white"}]]]))

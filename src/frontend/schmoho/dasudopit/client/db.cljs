@@ -1,7 +1,9 @@
-(ns schmoho.dasudopit.client.common.db
+(ns schmoho.dasudopit.client.db
   (:require
    [re-frame.core :as rf]
-   [day8.re-frame.tracing :refer-macros [fn-traced]]))
+   [re-frame.db :as rf.db]
+   [day8.re-frame.tracing :refer-macros [fn-traced]]
+   [schmoho.dasudopit.client.http :as http]))
 
 (def default-db
   {:forms
@@ -21,3 +23,8 @@
  ::initialize-db
  (fn-traced [_ _]
             default-db))
+
+(defn get-data
+  [path]
+  (when-not (get (@rf.db/app-db :queries) path)
+    (rf/dispatch [::http/http-get path])))

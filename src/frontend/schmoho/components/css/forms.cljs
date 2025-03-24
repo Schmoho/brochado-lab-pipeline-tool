@@ -1,6 +1,7 @@
-(ns schmoho.dasudopit.client.css.forms
+(ns schmoho.components.css.forms
   (:require
    [spade.core :refer-macros [defclass]]))
+
 
 (defclass form-section
   []

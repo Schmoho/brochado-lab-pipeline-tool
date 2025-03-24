@@ -5,10 +5,9 @@
    [re-frame.core :as rf]
    [reagent.core :as r]
    [reagent.dom :as rdom] ;; React 17
-   [schmoho.dasudopit.client.common.db :as db]
+   [schmoho.dasudopit.client.db :as db]
    [schmoho.dasudopit.client.config :as config]
-   [schmoho.dasudopit.client.css.core :as css]
-   [schmoho.dasudopit.client.panels.data.events]
+   [schmoho.dasudopit.client.css :as css]
    [schmoho.dasudopit.client.panels.data.ligand]
    [schmoho.dasudopit.client.panels.data.overview]
    [schmoho.dasudopit.client.panels.data.protein]

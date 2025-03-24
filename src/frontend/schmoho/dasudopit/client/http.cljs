@@ -1,8 +1,7 @@
-(ns schmoho.dasudopit.client.common.http
+(ns schmoho.dasudopit.client.http
   (:require
    [clojure.string :as str]
    [re-frame.core :as rf]
-   [re-frame.db :as rf.db]
    [day8.re-frame.http-fx]
    [ajax.core :as ajax]
    [day8.re-frame.tracing :refer-macros [fn-traced]]))

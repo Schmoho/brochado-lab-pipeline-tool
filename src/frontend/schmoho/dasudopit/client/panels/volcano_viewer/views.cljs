@@ -1,15 +1,15 @@
 (ns schmoho.dasudopit.client.panels.volcano-viewer.views
   (:require
-   [schmoho.dasudopit.client.vega-utils :as vega-utils]
+   [schmoho.components.utils.vega :as vega-utils]
    [schmoho.dasudopit.client.routing :as routing]
-   [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.views.forms :as form-views]
-   [schmoho.dasudopit.client.common.views.protein :as protein]
-   [schmoho.dasudopit.client.common.views.structure :as structure]
+   [schmoho.dasudopit.client.forms :as forms]
+   [schmoho.components.forms :as components.forms]
+   [schmoho.components.structure :as structure]
    [schmoho.dasudopit.client.panels.volcano-viewer.events :as events]
    [schmoho.dasudopit.client.panels.volcano-viewer.plots :as volcano-plots]
    [schmoho.dasudopit.client.panels.volcano-viewer.subs]
-   [schmoho.dasudopit.client.common.views.vega :as vega]
+   [schmoho.dasudopit.client.panels.volcano-viewer.utils :as volcano-utils]
+   [schmoho.components.vega :as vega]
    [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
@@ -23,7 +23,7 @@
   [volcano-form volcanos]
   [h
    :src      (at)
-   :children [[form-views/dropdown
+   :children [[components.forms/dropdown
                :model       (-> volcano-form :left :volcano)
                :placeholder "Choose a data set"
                :choices     (map (fn [v] {:id    (-> v :meta :id)
@@ -31,7 +31,7 @@
                                  (vals volcanos))
                :on-change   #(handle-select-volcano :left %)]
               [com/gap :size "1"]
-              [form-views/dropdown
+              [components.forms/dropdown
                :model       (-> volcano-form :right :volcano)
                :placeholder "Choose a data set"
                :choices     (map (fn [v] {:id    (-> v :meta :id)
@@ -45,7 +45,7 @@
     [v
      :children
      (into
-      [[form-views/info-label "Selected genes" [:div ""]]]
+      [[components.forms/info-label "Selected genes" [:div ""]]]
       (concat (->> viewer-form
                    :left
                    :click-selection
@@ -83,10 +83,10 @@
    :children
    [[v
      :children
-     [[form-views/info-label
+     [[components.forms/info-label
        "Search by gene name"
        [:div ""]]
-      [form-views/input-text
+      [components.forms/input-text
        :attr {:id "test"}]]]
     [vega/chart
      {:spec (volcano-plots/single-pan-searchable :table)
@@ -97,13 +97,13 @@
   (let [volcano-form (rf/subscribe [:forms/volcano-viewer])]
     [v
      :children
-     [[form-views/info-label
+     [[components.forms/info-label
        "Selected genes"
        [:div ""]]
       [v
        :children
        (->> table
-            (vega-utils/brushed-points
+            (volcano-utils/brushed-points
              (-> @volcano-form
                  :left
                  :brush-selection))
@@ -139,7 +139,7 @@
       :table
       {:x-label "Cefotaxime Fold Change"
        :y-label "Amikacin Fold Change"})
-     :data {:table (vega-utils/cross-data table-1 table-2)}}]])
+     :data {:table (volcano-utils/cross-data table-1 table-2)}}]])
 
 (defn handle-set-go-term-filter
   [go-filter]

@@ -1,4 +1,4 @@
-(ns schmoho.dasudopit.client.css.structure
+(ns schmoho.components.css.structure
   (:require
    [spade.core :refer-macros [defclass]]))
 

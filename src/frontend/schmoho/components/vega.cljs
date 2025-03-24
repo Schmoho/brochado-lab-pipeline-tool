@@ -1,4 +1,4 @@
-(ns schmoho.dasudopit.client.common.vega
+(ns schmoho.components.vega
   (:require [reagent.core :as r]
             ["react" :as react]
             ["react-vega" :refer [VegaLite]]

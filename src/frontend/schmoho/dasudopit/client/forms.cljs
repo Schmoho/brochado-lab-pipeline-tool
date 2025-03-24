@@ -1,4 +1,4 @@
-(ns schmoho.dasudopit.client.common.forms
+(ns schmoho.dasudopit.client.forms
   (:require
    [re-frame.core :as rf]
    [day8.re-frame.http-fx]

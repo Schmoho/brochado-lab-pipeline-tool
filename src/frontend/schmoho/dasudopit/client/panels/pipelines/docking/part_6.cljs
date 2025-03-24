@@ -1,8 +1,8 @@
 (ns schmoho.dasudopit.client.panels.pipelines.docking.part-6
   (:require
    [re-com.core :as com :rename {h-box h, v-box v}]
-   [schmoho.dasudopit.client.common.views.forms :as form-views]
-   [schmoho.dasudopit.client.common.views.vega :as vega]))
+   [schmoho.components.forms :as forms]
+   [schmoho.components.vega :as vega]))
 
 
 (defn part-6
@@ -11,7 +11,7 @@
    :children
    [[:h4 {:style {:color "darkred"}} "Dummy data for illustration"]
     [:div
-     [form-views/action-button
+     [forms/action-button
       :label "Upload"]]
     [h
      :children

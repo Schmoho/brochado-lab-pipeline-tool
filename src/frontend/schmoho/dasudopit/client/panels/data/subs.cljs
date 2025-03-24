@@ -1,6 +1,7 @@
 (ns schmoho.dasudopit.client.panels.data.subs
   (:require
-   [re-frame.core :as rf]))
+   [re-frame.core :as rf]
+   [schmoho.utils.core :refer [cool-select-keys]]))
 
 (rf/reg-sub
  ::data
@@ -32,6 +33,17 @@
  :<- [:data/taxons-map]
  (fn [taxons [_ id]]
    (get taxons id)))
+
+(rf/reg-sub
+ :data/taxon-choices
+ :<- [:data/taxons-list]
+ (fn [taxons]
+   (conj (map #(cool-select-keys
+                  %
+                  {:id    [:meta :id]
+                   :label [:meta :name]})
+               taxons)
+          {:id nil :label "-"})))
 
 ;; === Proteome ===
 
@@ -107,3 +119,4 @@
  :<- [:data/volcanos]
  (fn [volcanos [_ id]]
    (get volcanos id)))
+

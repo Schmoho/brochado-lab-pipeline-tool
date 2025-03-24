@@ -6,8 +6,8 @@
              h-box h}]
    [re-frame.core :as rf]
    [schmoho.dasudopit.client.routing :as routing]
-   [schmoho.dasudopit.client.common.views.structure :as structure]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]))
+   [schmoho.components.structure :as structure]
+   [schmoho.components.forms :as forms]))
 
 (defn docking-results-panel []
   (let [results (rf/subscribe [:results/docking])]
@@ -16,7 +16,7 @@
        :width "1550px"
        :max-width "1550px"
        :children
-       [[widgets/table
+       [[forms/table
          results
          :columns
          [{:id             :id

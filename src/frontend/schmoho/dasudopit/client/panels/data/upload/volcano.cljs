@@ -3,13 +3,10 @@
    [clojure.string :as str]
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
-   [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.views.forms :as common.forms]
-   [schmoho.dasudopit.client.common.views.structure
-    :as structure
-    :refer [card]]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]
-   [schmoho.dasudopit.client.panels.data.events :as events]))
+   [schmoho.dasudopit.client.forms :as forms]
+   [schmoho.components.forms :as components.forms]
+   [schmoho.components.structure :as structure :refer [card]]
+   [schmoho.components.uniprot :as uniprot]))
 
 (defn- handle-set-volcano-name
   [name]
@@ -19,10 +16,10 @@
   []
   [v
    :children
-   [[common.forms/info-label
+   [[components.forms/info-label
    "Required: Name"
    [:div ""]]
-   [common.forms/input-text
+   [components.forms/input-text
     :on-change #(handle-set-volcano-name %)
     :placeholder "Insert a dataset name"]]])
 
@@ -32,7 +29,7 @@
 
 (defn- csv-file-info
   []
-  [common.forms/info-label
+  [components.forms/info-label
    "Required: Volcano File"
    [:<>
     [:p.info-heading "Input Volcano File"]
@@ -54,7 +51,7 @@
   [v
    :children
    [[csv-file-info]
-    [common.forms/csv-upload :on-load #(handle-load-csv %)]]])
+    [components.forms/csv-upload :on-load #(handle-load-csv %)]]])
 
 (defn- handle-choose-taxon-for-volcano
   [taxon]
@@ -64,20 +61,21 @@
   []
   [v
    :children
-   [[common.forms/info-label
+   [[components.forms/info-label
     "Optional: Taxon"
     [:<>]]
-   [widgets/taxon-chooser
+    [uniprot/taxon-chooser
     :model (rf/subscribe [:forms/by-path :upload/volcano :meta :taxon])
-    :on-change #(handle-choose-taxon-for-volcano %)]]])
+    :on-change #(handle-choose-taxon-for-volcano %)]]]1)
 
 (defn- handle-save-volcano-button
   []
-  (rf/dispatch [::events/post-volcano]))
+  ;; (rf/dispatch [::events/post-volcano])
+  (prn "Do something."))
 
 (defn- save-volcano-button
   []
-  [common.forms/action-button
+  [components.forms/action-button
    :label "Save"
    :on-click #(handle-save-volcano-button)])
 

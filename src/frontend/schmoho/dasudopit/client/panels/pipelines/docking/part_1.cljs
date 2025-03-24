@@ -2,8 +2,8 @@
   (:require
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
-   [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.utils.re-frame :as utils]
+   [schmoho.dasudopit.client.forms :as forms]
+   [schmoho.dasudopit.client.db :as db]
    [schmoho.utils.core :refer [cool-select-keys]]))
 
 (defn ligands->choices
@@ -76,7 +76,7 @@
 (defn handle-set-taxons
   [taxons]
   (doseq [chosen-taxon taxons]
-    (utils/get-data [:data :raw :proteome chosen-taxon]))
+    (db/get-data [:data :raw :proteome chosen-taxon]))
   (rf/dispatch [::forms/update-form-data
                 :docking
                 :input-model

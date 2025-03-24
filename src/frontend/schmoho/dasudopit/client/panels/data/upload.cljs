@@ -1,9 +1,7 @@
 (ns schmoho.dasudopit.client.panels.data.upload
   (:require
    [re-com.core :as com :rename {v-box v}]
-   [schmoho.dasudopit.client.common.views.structure
-    :as structure
-    :refer [card]]
+   [schmoho.components.structure :as structure :refer [card]]
    [schmoho.dasudopit.client.panels.data.upload.ligand
     :refer [provision-ligand-form]]
    [schmoho.dasudopit.client.panels.data.upload.structure

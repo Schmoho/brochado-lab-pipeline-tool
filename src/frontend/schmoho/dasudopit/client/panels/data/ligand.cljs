@@ -5,7 +5,7 @@
    [re-com.core :as com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
-   [schmoho.dasudopit.client.common.views.structure :as structure]))
+   [schmoho.components.structure :as structure]))
 
 (defn render-prop [prop]
   (let [urn         (:urn prop)

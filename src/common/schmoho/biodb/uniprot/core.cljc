@@ -1,52 +1,8 @@
 (ns schmoho.biodb.uniprot.core
   (:require
    [clojure.string :as str]
-   [schmoho.formats.fasta :refer [->fasta]]))
-
-(defmethod ->fasta 
-  {:biodb/source :uniprot
-   :uniprot/type :uniprotkb-entry}
-  [protein]
-  (let [header
-        (str ">"
-             ({"UniProtKB unreviewed (TrEMBL)"   "tr|"
-               "UniProtKB reviewed (Swiss-Prot)" "sp|"} (:entryType protein))
-             (:primaryAccession protein)
-             (str/join " "
-                       [(:uniProtkbId protein)
-                        (-> protein :proteinDescription :recommendedName :fullName :value)
-                        (str "OS=" (-> protein :organism :scientificName))
-                        (str "OX=" (-> protein :organism :taxonId))
-                        (str "PE=" (-> protein :proteinExistence (str/split #":" 2) first))
-                        (str "GN=" (-> protein :genes first :geneName :value))
-                        (str "SV=" (-> protein :entryAudit :sequenceVersion))]))]
-    {:fasta/header header
-     :fasta/sequence (-> protein :sequence :value)}))
-
-(defmethod ->fasta 
-  {:biodb/source :uniprot
-   :uniprot/type :uniparc-entry}
-  [protein]
-  (let [header (str ">"
-                    (str/join
-                     " "
-                     [(-> protein :uniParcId)
-                      (str "status=" (if (some :active (:uniParcCrossReferences protein)) "active" "inactive"))
-                      (str/join " "
-                                (for [{:keys [database id]} (filter :active (:uniParcCrossReferences protein))]
-                                  (str database "=" id)))
-                      (str "OS="  (->> (:uniParcCrossReferences protein)
-                                       (filter :active)
-                                       (map (comp :scientificName :organism))
-                                       (filter some?)
-                                       first))
-                      (str "OX="  (->> (:uniParcCrossReferences protein)
-                                       (filter :active)
-                                       (map (comp :taxonId :organism))
-                                       (filter some?)
-                                       first))]))]
-    {:fasta/header header
-     :fasta/sequence (-> protein :sequence :value)}))
+   [schmoho.biodb.uniprot.formats]
+   [clojure.set :as set]))
 
 (defmulti domains (fn [_ protein] (meta protein)))
 
@@ -72,12 +28,6 @@
                          :name
                          str/lower-case
                          (str/includes? (str/lower-case domain-name)))))))
-
-(defn restricted-sequence
-  [feature protein]
-  (subs (-> protein :sequence :value)
-         (-> feature :location :start :value)
-         (-> feature :location :end :value)))
 
 (defmulti domain-restricted-protein (fn [_ protein] (meta protein)))
 
@@ -122,14 +72,10 @@
                       (str/includes? (str/lower-case description)
                                      (str/lower-case active-site-name)))))))
 
-(defn active-site-location
-  [active-site]
-  (let [start (-> active-site :location :start :value)
-        end(-> active-site :location :end :value)]
-    (if-not (= start end)
-      (throw (ex-info "Weird location annotation! start != end"
-                      active-site))
-      start)))
+(defn feature->location
+  [protein-feature]
+  [(-> protein-feature :location :start :value)
+   (-> protein-feature :location :end :value)])
 
 (defn go-terms-in-protein
   [protein]
@@ -161,9 +107,35 @@
                      (= go-term (:id %))))
        not-empty))
 
-(defn inactive-entry?
-  [entry]
-  (= "Inactive" (:entryType entry)))
+(defn protein-go-terms
+  [protein]
+  (->> protein
+       :uniProtKBCrossReferences
+       (filter #(= "GO" (:database %)))
+       (map (fn [go-term]
+              {:id (:id go-term)
+               :label (->> (:properties go-term)
+                           (filter #(= "GoTerm" (:key %)))
+                           first
+                           :value)}))))
+
+(defn proteome-go-terms
+  [proteome]
+  (->> proteome
+      (mapcat protein-go-terms)
+      set))
+
+(defn go-term-filtering-fn
+  [proteome go-term]
+  (let [proteome-lookup
+        (->> proteome
+             (map (juxt :primaryAccession identity))
+             (into {}))]
+    (fn [table-row]
+      (some->> table-row
+               :protein_id
+               proteome-lookup
+               (has-go-term? go-term)))))
 
 (defn proteome-lookup
   [proteome]
@@ -183,16 +155,6 @@
    (if just-take-first?
      (map (juxt first (comp first second)))
      (map identity))))
-
-(defn proteome-database-lookup-table
-  [db-name proteome & {:keys [just-take-first?]
-                       :or {just-take-first? false}}]
-  (->> proteome
-       (transduce
-        (database-lookup-xform db-name :just-take-first? just-take-first?)
-        conj
-        [])
-       (into {})))
 
 (def dois
   (comp
@@ -216,38 +178,5 @@
              (comp :journal :citation)))
    :references))
 
-
 (def protein-sequence (comp :value :sequence))
 
-(defn active-sites
-  [uniprot-record]
-  (let [uniprot-record (if (map? uniprot-record)
-                         uniprot-record
-                         (second uniprot-record))]
-    (->> uniprot-record
-         :features
-         (filter #(#{"Active site"} (:type %))))))
-
-(defn clean-protein
-  [protein]
-  (-> protein
-      (dissoc :organism)
-      (dissoc :comments)
-      (dissoc :sequence)
-      (dissoc :extraAttributes)
-      (dissoc :entryAudit)
-      (update :uniProtKBCrossReferences
-              (partial filter #(#{"AlphaFoldDB"
-                                  "KEGG"
-                                  "BioCyc"
-                                  "UniPathway"
-                                  "GO"
-                                  "InterPro"} (:database %))))
-      (update :features
-              (partial filter #(#{"Binding site"
-                                  "Active site"
-                                  "Transmembrane"
-                                  "Topological domain"
-                                  "Domain"} (:type %))))
-      (assoc :references
-             (dois+titles+journals protein))))

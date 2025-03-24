@@ -5,8 +5,8 @@
     :rename {v-box v h-box h}]
    [re-frame.core :as re-frame]
    [schmoho.dasudopit.client.routing :as routing]
-   [schmoho.dasudopit.client.common.views.structure :as structure]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]))
+   [schmoho.components.structure :as structure]
+   [schmoho.components.uniprot :as uniprot]))
 
 (defn taxons-panel []
   (let [results (re-frame/subscribe [:data/taxons-list])]
@@ -75,7 +75,7 @@
     [com/gap :size "10px"]
     [com/v-box
      :children
-     [[widgets/lineage-widget lineage]]]]])
+     [[uniprot/lineage-widget lineage]]]]])
 
 (defn single-taxon-panel
   []
@@ -88,7 +88,7 @@
      :justify :between
      :children
      [[proteome-stats]
-      #_[widgets/protein-search
+      #_[uniprot/protein-search
          :proteome proteome]
       [bug-fluff lineage]]]))
 

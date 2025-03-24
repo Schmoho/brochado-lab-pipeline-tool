@@ -2,13 +2,11 @@
   (:require
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
-   [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.http :as http]
-   [schmoho.dasudopit.client.common.views.forms :as common.forms]
-   [schmoho.dasudopit.client.common.views.structure
-    :as structure
-    :refer [minicard]]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]))
+   [schmoho.dasudopit.client.forms :as forms]
+   [schmoho.dasudopit.client.http :as http]
+   [schmoho.components.forms :as components.forms]
+   [schmoho.components.structure :as structure :refer [minicard]]
+   [schmoho.components.uniprot :as uniprot]))
 
 ;; === Subs ===
 
@@ -47,7 +45,7 @@
   (let [input-model      (rf/subscribe [:provision.taxon/input-model])]
     [v
      :children
-     [[common.forms/info-label
+     [[components.forms/info-label
        "Uniprot/NCBI Taxonomy ID"
        [:<>
         [:p.info-heading "Organism ID"]
@@ -94,15 +92,15 @@
          [[taxon-minicard taxon]
           [proteome-minicard proteome]]]
         [com/gap :size "1"]
-        [widgets/lineage-widget (:lineage taxon)]]]
-      [common.forms/action-button
+        [uniprot/lineage-widget (:lineage taxon)]]]
+      [components.forms/action-button
        :label "Save"
        :on-click #(rf/dispatch [::http/http-post [:data :taxon @input-model]])]]]))
 
 (defn- search-taxon-button
   []
   (let [input-model (rf/subscribe [:provision.taxon/input-model])]
-    [common.forms/action-button
+    [components.forms/action-button
      :label "Search"
      :on-click #(rf/dispatch [::http/http-get
                               [:data :taxon @input-model :search]])]))

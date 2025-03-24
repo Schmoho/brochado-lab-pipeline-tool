@@ -2,9 +2,9 @@
   (:require
    [re-com.core :as com :refer [at] :rename {v-box v}]
    [re-frame.core :as rf]
-   [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.http :as http]
-   [schmoho.dasudopit.client.common.views.forms :as common.forms]))
+   [schmoho.dasudopit.client.forms :as forms]
+   [schmoho.dasudopit.client.http :as http]
+   [schmoho.components.forms :as components.forms]))
 
 ;; === Subs ===
 
@@ -51,7 +51,7 @@
   (let [input-model (rf/subscribe [:provision.ligand/search-term-model])]
     [v
      :children
-     [[common.forms/info-label
+     [[components.forms/info-label
        "Pubchem Compound ID"
        [:<>
         [:p.info-heading "Compound name or Pubchem ID"]
@@ -69,7 +69,7 @@
 (defn- search-ligand-button
   []
   (let [input-model (rf/subscribe [:provision.ligand/search-term-model])]
-    [common.forms/action-button
+    [components.forms/action-button
      :label "Search"
      :on-click #(rf/dispatch [::http/http-get
                               [:data :ligand @input-model :search]])]))
@@ -110,7 +110,7 @@
                  (= @tab-model id)))
               first
               second)]
-        [common.forms/action-button
+        [components.forms/action-button
          :label "Save"
          :on-click #(rf/dispatch [::http/http-post [:data :ligand @tab-model]])]]])))
 

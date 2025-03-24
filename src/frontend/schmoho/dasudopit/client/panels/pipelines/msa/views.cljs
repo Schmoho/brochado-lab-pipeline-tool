@@ -1,15 +1,14 @@
 (ns schmoho.dasudopit.client.panels.pipelines.msa.views
   (:require
    [re-frame.core :as re-frame]
-   [reagent.core :as r]
    [re-com.core :as re-com :refer [at v-box h-box]
     :rename {v-box v
              h-box h}]
    [schmoho.dasudopit.client.routing :as routing]
-   [schmoho.dasudopit.client.css.forms :as css]
-   [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.views.forms :refer [checkbox] :as common.forms]
-   [schmoho.dasudopit.client.common.views.structure :as structure]))
+   [schmoho.components.css.forms :as css]
+   [schmoho.dasudopit.client.forms :as forms]
+   [schmoho.components.forms :refer [checkbox] :as components.forms]
+   [schmoho.components.structure :as structure]))
 
 ;; defs at the end of this file
 (declare blast-dbs)
@@ -204,7 +203,7 @@
    ["3. Configure BLAST search"     [blast-form]]
    ["4. Configure UniRef search"     [uniref-form]]
    ["5. Set domains of interest"]
-   [[common.forms/action-button
+   [[components.forms/action-button
      :label "START PIPELINE"
      :on-click #(re-frame/dispatch [::forms/start-msa!])]]])
 

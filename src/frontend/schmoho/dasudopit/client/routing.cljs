@@ -5,7 +5,7 @@
    [pushy.core :as pushy]
    [re-frame.core :as rf]
    [schmoho.dasudopit.client.panels.results.msa.events :as msa-results-events]
-   [schmoho.dasudopit.client.utils.re-frame :as utils]))
+   [schmoho.dasudopit.client.db :as db]))
 
 (defmulti panels identity)
 (defmethod panels :default [] [:div "No panel found for this route."])
@@ -84,18 +84,18 @@
    (case handler
      :routing.results/msa-results (rf/dispatch [::msa-results-events/get-msa-results])
      :routing.data/overview       (do
-                                    (utils/get-data [:data :volcano])
-                                    (utils/get-data [:data :ligand])
-                                    (utils/get-data [:data :taxon]))
-     :routing.data/taxon-entry    (utils/get-data [:data :taxon (:taxon/id route-params)])
-     :routing.data/taxon          (utils/get-data [:data :taxon])
-     :routing.data/ligand-entry   (utils/get-data [:data :ligand (:ligand/id route-params)])
-     :routing.data/ligand         (utils/get-data [:data :ligand])
-     :routing.data/upload         (utils/get-data [:data :taxon])
-     :routing/volcano-viewer      (utils/get-data [:data :volcano])
+                                    (db/get-data [:data :volcano])
+                                    (db/get-data [:data :ligand])
+                                    (db/get-data [:data :taxon]))
+     :routing.data/taxon-entry    (db/get-data [:data :taxon (:taxon/id route-params)])
+     :routing.data/taxon          (db/get-data [:data :taxon])
+     :routing.data/ligand-entry   (db/get-data [:data :ligand (:ligand/id route-params)])
+     :routing.data/ligand         (db/get-data [:data :ligand])
+     :routing.data/upload         (db/get-data [:data :taxon])
+     :routing/volcano-viewer      (db/get-data [:data :volcano])
      :routing.pipelines/docking   (do
-                                    (utils/get-data [:data :ligand])
-                                    (utils/get-data [:data :taxon]))
+                                    (db/get-data [:data :ligand])
+                                    (db/get-data [:data :taxon]))
      nil)))
 
 

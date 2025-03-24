@@ -1,13 +1,10 @@
-(ns schmoho.dasudopit.client.common.views.forms
+(ns schmoho.components.forms
   (:require
    [clojure.string :as str]
-   [goog.labs.format.csv :as csv]
-   [re-frame.core :as rf]
-   [re-com.core :as com :refer [at v-box h-box]
-    :rename {v-box v
-             h-box h}]
+   [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [reagent.core :as r]
-   [schmoho.dasudopit.client.css.forms :as css]))
+   [schmoho.components.css.forms :as css]
+   [schmoho.utils.csv :as csv]))
 
 (defn popover-wrapper
   [{:keys [popover/title
@@ -51,33 +48,6 @@
         :popover/showing? showing?}
        [?-icon-button #(swap! showing? not)]])))
 
-;; (defn help-thingie
-;;   [{:keys [title text]}]
-;;   (let [showing?       (r/atom nil)
-;;         cancel-popover #(reset! showing? false)
-;;     (fn []
-;;       [com/popover-anchor-wrapper :src (at)
-;;        :showing? (or (:help-buttons @tours/active-tour) showing?)
-;;        :position :below-center
-;;        :anchor
-;;        [com/md-icon-button
-;;         :src (at)
-;;         :style (when (:help-buttons @tours/active-tour) {:position "relative" :z-index 10})
-;;         :class (css/help-thingie)
-;;         :md-icon-name "zmdi-help-outline"
-;;         :size :smaller
-;;         :tooltip "What is meant by that?"
-;;         :on-click #(swap! showing? not)]
-;;        :popover
-;;        [com/popover-content-wrapper
-;;         :src (at)
-;;         :width            "250px"
-;;         :backdrop-opacity 0.3
-;;         :on-cancel        cancel-popover
-;;         :title            title
-;;         :close-button?    true
-;;         :body             [:span {:style {:color "brown"}} [:p text] ]]])))
-
 (defn checkbox
   [{:keys [label disabled? model on-change help-title help-text]}]
   [h
@@ -109,7 +79,6 @@
   [on-change-fn]
   (let [file-state (r/atom nil)]
     (fn []
-      (prn @file-state)
       [:div
        [:div {:class "input-group mb-3"}
         [:div {:class "custom-file"}
@@ -125,20 +94,6 @@
                   :class "custom-file-label"}
           (if @file-state (.-name (aget @file-state 0)) "Choose file")]]]])))
 
-(defn parse-csv-with-header
-  [csv-text & {:keys [numeric-fields]}]
-  (let [rows   (csv/parse csv-text)      ;; returns a vector of vectors (rows)
-        header (first rows)]
-    (->> (map #(zipmap header %) (rest rows))
-         (mapv (fn [row]
-                 (reduce
-                  (fn [row field]
-                    (update row field #(if (str/includes? % ".")
-                                         (parse-double %)
-                                         (parse-long %))))
-                  row
-                  numeric-fields))))))
-
 (defn csv-upload
   [& {:keys [on-load]}]
   [file-upload
@@ -149,27 +104,13 @@
           (set! (.-onload reader)
                 (fn [e]
                   (let [csv-text (.-result reader)
-                        data     (parse-csv-with-header
+                        data     (csv/parse-csv-with-header
                                   csv-text
                                   :numeric-fields ["log_transformed_f_statistic"
                                                    "fdr"
                                                    "effect_size"])]
                     (on-load data))))
           (.readAsText reader file))))])
-
-(defn pdb-upload
-  [& {:keys [on-load]}]
-  [file-upload
-   #(doseq [file (array-seq %)]
-      (if-not (str/ends-with? (.-name file) ".pdb")
-        (js/alert "Can only handle pdb data.")
-        (let [reader (js/FileReader.)]
-          (set! (.-onload reader)
-                (fn [_]
-                  (let [data (.-result reader)]
-                    (on-load data))))
-          (.readAsText reader file))))])
-
 
 (defn input-text
   [& {:keys [on-change placeholder attr]}]
@@ -208,3 +149,55 @@
                    (reset! model %)
                    (on-change %))
      :placeholder placeholder]))
+
+
+(defn table
+  [data & {:keys [columns on-enter-row on-leave-row]}]
+  (if (nil? @data)
+    [com/throbber :size :regular]
+    [v
+     :width "1550px"
+     :max-width "1550px"
+     :children
+     [[h
+       :children
+       [[com/simple-v-table
+         :src                       (at)
+         :model data
+         :max-width "1000px"
+         :columns
+         (mapv (fn [defaults input]
+                 (merge defaults input))
+               (map (fn [col]
+                      (assoc
+                       {:width 300
+                        :align "center"
+                        :vertical-align "middle"}
+                       :row-label-fn #((:id col) %)
+                       :header-label (name (:id col))))
+                    columns)
+               columns)
+         :row-height                35
+         :on-enter-row on-enter-row
+         :on-leave-row on-leave-row]]]]]))
+
+(defn alert
+  [& {:keys [heading body dismissible? alert-type]}]
+  [:div {:class (str "alert fade show "
+                     (case alert-type
+                       :warning "alert-warning "
+                       :danger "alert-danger "
+                       :success "alert-success "
+                       :primary "alert-primary "
+                       :secondary "alert-secondary "
+                       :info "alert-info "
+                       "alert-info ")
+                     (when dismissible? "alert-dismissible "))
+         :role "alert"}
+   [:strong heading]
+   body
+   [:button {:type "button"
+             :class "close"
+             :data-dismiss "alert"
+             :aria-label "Close"}
+    [:span {:aria-hidden "true"} "×"]]])

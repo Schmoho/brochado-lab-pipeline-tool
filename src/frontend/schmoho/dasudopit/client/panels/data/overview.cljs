@@ -1,13 +1,12 @@
 (ns schmoho.dasudopit.client.panels.data.overview
   (:require
-   [re-com.core :as com :refer [at v-box h-box]
-    :rename {v-box v h-box h}]
+   [re-com.core :as com]
    [re-frame.core :as rf]
-   [schmoho.dasudopit.client.routing :as routing]
-   [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.views.structure :as structure]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]
-   [schmoho.dasudopit.client.common.http :as http]))
+   [schmoho.components.forms :as components.forms]
+   [schmoho.components.structure :as structure]
+   [schmoho.dasudopit.client.forms :as forms]
+   [schmoho.dasudopit.client.http :as http]
+   [schmoho.dasudopit.client.routing :as routing]))
 
 (defn overview-panel []
   (let [volcanos (rf/subscribe [:data/volcanos-list])
@@ -16,7 +15,7 @@
     (fn []
       [structure/collapsible-accordion-2
        ["Volcanos"
-        [widgets/table volcanos
+        [components.forms/table volcanos
          :columns
          [{:id           :name
            :header-label "Dataset Name"
@@ -45,7 +44,7 @@
               :mouse-over-row? true
               :on-click #(rf/dispatch [::http/http-delete [:data :volcano (-> row :meta :id)]])])}]]]
        ["Taxons"
-        [widgets/table taxons
+        [components.forms/table taxons
          :columns
          [{:id           :id
            :row-label-fn (fn [row]
@@ -64,7 +63,7 @@
               :mouse-over-row? true
               :on-click #(rf/dispatch [::http/http-delete [:data :taxon (-> row :meta :id)]])])}]]]
        ["Ligands"
-        [widgets/table ligands
+        [components.forms/table ligands
          :columns
          [{:id :id
            :row-label-fn (fn [row]

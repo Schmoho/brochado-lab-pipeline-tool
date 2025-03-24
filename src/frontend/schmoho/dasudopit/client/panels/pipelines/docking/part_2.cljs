@@ -5,7 +5,7 @@
    [re-frame.core :as rf]
    [reagent.core :as r]
    [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.http :as http]
+   [schmoho.dasudopit.client.http :as http]
    [schmoho.dasudopit.client.common.views.widgets :as widgets]
    [schmoho.dasudopit.client.css.forms :as css]
    [schmoho.dasudopit.client.common.views.protein :as protein]))
@@ -66,24 +66,6 @@
 ;;                      (rf/dispatch [::http/http-get [:data :structure %]]))]
 ;;       (when (and protein (not form-valid?))
 ;;         [protein/protein-info->hiccup protein])]]))
-
-
-(defn volcano-info
-  []
-  [:<>
-   [:p.info-heading "Input Volcano File"]
-   [:p "You can upload CSV files that satisfy this schema:"]
-   [:p (str/join " | "
-                 ["effect_size"
-                  "effect_type"
-                  "log_transformed_f_statistic"
-                  "fdr"
-                  "gene_name (optional)"
-                  "protein_id (optional)"])]
-   [com/hyperlink-href :src (at)
-    :label  "Link to docs."
-    :href   ""
-    :target "_blank"]])
 
 
 ;; (defn part-2

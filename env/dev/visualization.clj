@@ -149,11 +149,6 @@
     (def kegg-proteome-pseudo
       (utils/read-file "docs/kegg-208963.edn")))
 
-  (->> uniprot-proteome-pseudo
-       (map uniprot/clean-protein)
-       (utils/write!
-        "data/raw/uniprot/proteome/208963.edn"))
-
   (cross-data
    cefotaxime-ecoli
    amikacin-ecoli)

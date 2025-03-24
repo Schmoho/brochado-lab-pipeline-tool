@@ -1,8 +1,8 @@
-(ns schmoho.dasudopit.client.common.views.structure
+(ns schmoho.components.structure
   (:require
    [re-com.core :as com :refer [at]]
    [reagent.core :as r]
-   [schmoho.dasudopit.client.css.structure :as css]
+   [schmoho.components.css.structure :as css]
    [schmoho.utils.string :as utils.str]))
 
 (defn minicard

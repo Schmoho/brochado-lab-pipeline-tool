@@ -1,9 +1,7 @@
 (ns schmoho.dasudopit.client.panels.data.protein
   (:require
-   [schmoho.dasudopit.client.routing :as routing]
-   [re-com.core :as re-com :refer [at v-box h-box]
-    :rename {v-box v
-             h-box h}]))
+   [re-com.core :as re-com :refer [at] :rename {h-box h}]
+   [schmoho.dasudopit.client.routing :as routing]))
 
 (defn single-protein-panel
   []

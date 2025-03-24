@@ -1,4 +1,4 @@
-(ns schmoho.dasudopit.client.css.core
+(ns schmoho.dasudopit.client.css
   (:require-macros
    [garden.def :refer [defcssfn]])
   (:require

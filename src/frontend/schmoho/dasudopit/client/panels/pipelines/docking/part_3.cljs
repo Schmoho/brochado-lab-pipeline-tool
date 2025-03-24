@@ -2,8 +2,8 @@
   (:require
    [re-com.core :as com :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
-   [schmoho.dasudopit.client.common.forms :as forms]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]))
+   [schmoho.dasudopit.client.forms :as forms]
+   [schmoho.components.pdb :as pdb]))
 
 (defn cutoff-label
   [taxon-id]
@@ -40,7 +40,7 @@
      :children
      [[cutoff-label taxon-id]
       [plddt-slider taxon-id]
-      [widgets/pdb-viewer
+      [pdb/pdb-viewer
        :objects {:pdb (:pdb protein-data)}
        :style {:cartoon {:colorfunc
                          (fn [atom]

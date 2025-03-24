@@ -3,7 +3,7 @@
    [re-frame.core :as rf]
    [day8.re-frame.http-fx]
    [day8.re-frame.tracing :refer-macros [fn-traced]]
-   [schmoho.dasudopit.client.common.http :as http]))
+   [schmoho.dasudopit.client.http :as http]))
 
 (rf/reg-event-fx
  ::selection

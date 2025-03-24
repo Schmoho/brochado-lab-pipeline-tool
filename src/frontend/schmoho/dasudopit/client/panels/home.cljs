@@ -2,9 +2,7 @@
   (:require
    [re-com.core :as re-com :rename {h-box h, v-box v}]
    [re-frame.core :as re-frame]
-   [schmoho.dasudopit.client.common.views.structure
-    :as structure
-    :refer [clickable-card]]
+   [schmoho.components.structure :as structure :refer [clickable-card]]
    [schmoho.dasudopit.client.routing :as routing]))
 
 (defn volcano-card
