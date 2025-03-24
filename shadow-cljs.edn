@@ -2,7 +2,7 @@
 
  :jvm-opts ["-Xmx1G"]
 
- :source-paths ["src"]
+ :source-paths ["src/frontend" "src/common"]
 
  :dependencies
  [[reagent "1.1.1"]
@@ -31,7 +31,7 @@
  :builds
  {:app
   {:target           #_:browser :esm
-   :output-dir       "public/js"
+   :output-dir       "resources/frontend/public/js"
    :modules          {:main {:entries [schmoho.dasudopit.client.core]
                              :init-fn schmoho.dasudopit.client.core/init}}
    #_#_:js-options   {:js-provider           :external

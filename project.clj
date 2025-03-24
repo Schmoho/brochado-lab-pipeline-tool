@@ -43,8 +43,8 @@
                  ;; UniProt API, used for BLAST
                  [uk.ac.ebi.uniprot/japi "1.3.3"]]
 
-  :source-paths ["src"]
-  :resource-paths ["resources"]
+  :source-paths ["src/backend" "src/common"]
+  :resource-paths ["resources/backend"]
 
   :profiles {:dev {:dependencies [[ring/ring-devel "1.9.5"]
                                   [prone "2021-04-23"]
