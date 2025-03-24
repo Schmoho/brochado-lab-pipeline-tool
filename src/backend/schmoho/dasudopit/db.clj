@@ -5,8 +5,7 @@
    [clojure.tools.logging :as log]
    [schmoho.utils.csv :as csv-utils]
    [schmoho.utils.data-cleaning :as clean]
-   [schmoho.utils.file :as utils]
-   [reitit.ring.middleware.exception :as exception]))
+   [schmoho.utils.file :as utils]))
 
 (defn- pathify
   [file]

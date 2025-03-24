@@ -85,7 +85,7 @@
             (reset! viewer-state viewer)
             #_(doseq [sphere (filter some? spheres)]
                 (.addSphere viewer (clj->js sphere)))
-            (doseq [sphere (filter some? spheres)]
+            #_(doseq [sphere (filter some? spheres)]
               #_(.addSphere viewer (clj->js sphere))
               (when (:resi sphere)
                 (when-let [^js selected-atoms (first (.selectedAtoms viewer (clj->js {:resi (:resi sphere)})))]
@@ -95,7 +95,7 @@
                                                :radius (or (:radius sphere) 4.0)
                                                :color (:color sphere)})))
                 #_(.addSphere viewer (clj->js sphere))))
-            (doseq [box (filter some? boxes)]
+            #_(doseq [box (filter some? boxes)]
               (.addBox viewer (clj->js box)))
             (doto viewer
               (.addModel pdb "pdb")

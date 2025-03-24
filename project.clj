@@ -10,7 +10,7 @@
                  "ebi-repo" {:url "https://www.ebi.ac.uk/~maven/m2repo"}}
   ;; dev-time tooling, probably not relevant in Calva or Cursive
   :plugins [[refactor-nrepl "3.10.0"]
-            [cider/cider-nrepl "0.52.0"]]
+            [cider/cider-nrepl "0.53.0"]]
   :dependencies [[org.clojure/clojure "1.12.0"]
                  [org.clojure/tools.cli "1.1.230"]
 

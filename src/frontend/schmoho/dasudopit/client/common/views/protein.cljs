@@ -141,10 +141,11 @@
      :children
      [[widgets/pdb-viewer
        :objects {:pdb     pdb
-                 :spheres active-site-balls}
-       :style {:cartoon {:colorfunc coloring-fn}}
+                 #_#_:spheres active-site-balls}
+       :style {:cartoon {:colorfunc #_coloring-fn
+                         (constantly "grey")}}
        :config {:backgroundColor "white"}]
-      [protein-info->hiccup protein-info]]]))
+      #_[protein-info->hiccup protein-info]]]))
 
 
 ;; === Taxon Protein Search ===
@@ -208,6 +209,10 @@
        :render-suggestion
        (fn [{:keys [protein-name gene-name id]}]
          [:span (str id " - " gene-name " - " protein-name)])]]]))
+
+
+;; @(rf/subscribe [:data/protein "P02919"])
+
 
 (defn taxon-protein-search
   [& {:keys [show-info? taxon protein-model on-change]

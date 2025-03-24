@@ -54,11 +54,11 @@
  :<- [:data/proteomes-list]
  (fn [proteomes [_ protein-id]]
    (->> proteomes
-        (map
+        (mapcat
          (fn [proteome]
            (filter
-            #(not= protein-id (-> % :meta :proteome-id))
-            proteome)))
+            #(= protein-id (:id %))
+            (:data proteome))))
         first)))
 
 ;; === Ligand ===

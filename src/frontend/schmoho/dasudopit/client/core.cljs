@@ -1,9 +1,10 @@
 (ns schmoho.dasudopit.client.core
   (:require
-   ["react-dom/client" :refer [createRoot]]
+   #_["react-dom/client" :refer [createRoot]] ;; React 18
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
    [reagent.core :as r]
+   [reagent.dom :as rdom] ;; React 17
    [schmoho.dasudopit.client.common.db :as db]
    [schmoho.dasudopit.client.config :as config]
    [schmoho.dasudopit.client.css.core :as css]
@@ -126,14 +127,20 @@
         (routing/panels @active-panel)]]
       #_[footer]]]))
 
+;; ;; React 18 way
+;; (defonce root
+;;   (createRoot (.getElementById js/document "app")))
 
-(defonce root
-  (createRoot (.getElementById js/document "app")))
+;; (defn ^:dev/after-load mount-root
+;;   []
+;;   (.render root (r/as-element
+;;                  [main-panel])))
 
-(defn ^:dev/after-load mount-root
-  []
-  (.render root (r/as-element
-                 [main-panel])))
+;; React 17 way
+(defn ^:dev/after-load mount-root []
+  (let [root-el (.getElementById js/document "app")]
+    (rdom/unmount-component-at-node root-el)
+    (rdom/render [main-panel] root-el)))
 
 (defn init
   []

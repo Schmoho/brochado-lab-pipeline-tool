@@ -68,4 +68,10 @@
      [[protein-name-input]
       [taxon-chooser]
       [protein-chooser]]]
-    [pdb-file-upload]]])
+    [pdb-file-upload]
+    (let [protein @(model :protein)
+          pdb     @(model :pdb)]
+      (when (and protein pdb)
+        [protein/protein-site-picker
+         pdb
+         protein]))]])
