@@ -35,13 +35,14 @@
    :uniprot/type :proteome})
 
 (def proteome-fields-of-interest
-  ["organism_id" "protein_count" "upid"])
+  ["organism_id" "protein_count" "upid" "redundantTo"])
 
 (def proteomes-entry
   (http/id-query
    (str (format "%s/proteomes/" uniprot-api-base) "%s")
    proteome-meta))
 
+#_(proteomes-entry "UP000029103") ;; redundant proteome
 #_(proteomes-entry "UP000014183")
 
 (defn proteomes-search
@@ -235,7 +236,7 @@
 (defn ref-proteomes-by-taxon-id
   [taxon-id]
   (->> (proteomes-search {:query (format "organism_id=%s AND proteome_type=\"1\"" taxon-id)
-                          :fields proteome-fields-of-interest})
+                          #_#_:fields proteome-fields-of-interest})
        (mapv #(with-meta % proteome-meta))))
 
 #_(ref-proteomes-by-taxon-id "208964")
@@ -243,7 +244,7 @@
 (defn proteomes-by-taxon-id
   [taxon-id]
   (->> (proteomes-search {:query (format "organism_id=%s" taxon-id)
-                          :fields proteome-fields-of-interest})
+                          #_#_:fields proteome-fields-of-interest})
        (mapv #(with-meta % proteome-meta))))
 
 #_(proteomes-by-taxon-id "83333")

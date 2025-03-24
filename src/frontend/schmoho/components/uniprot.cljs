@@ -9,12 +9,16 @@
 
 (defn lineage-item [item]
   [v
+   :width "200px"
    :align :center
    :class "btn btn-outline-secondary"
    :children
-   [#_[com/label :label (:rank item)]
-    [com/hyperlink-href :label (:scientificName item)
-     :href (str "https://www.uniprot.org/taxonomy/" (:taxonId item))]]])
+   [[com/hyperlink-href
+     :style {:white-space "normal"
+             :word-wrap "break-word"}
+     :label (:scientificName item)
+     :href (str "https://www.uniprot.org/taxonomy/" (:taxonId item))
+     :target "_blank"]]])
 
 (defn lineage-connector []
   [:div {:style {:display        "flex"
@@ -42,9 +46,11 @@
 ;; === Taxons ===
 
 (defn taxon-chooser
-  [& {:keys [choices on-change model required? info-body]
+  [& {:keys [choices on-change model required? info-body style width filter-box?]
       :or {required? true
-           info-body [:<>]}}]
+           info-body [:<>]
+           width "300px"
+           filter-box? true}}]
   [v
    :children
    [[forms/info-label
@@ -53,6 +59,9 @@
        "Optional: Taxon")
      info-body]
     [com/single-dropdown
+     :filter-box? filter-box?
+     :style style
+     :width width
      :choices choices
      :model model
      :on-change #(when on-change (on-change %))
@@ -74,10 +83,7 @@
       :children
       [[:p.info-heading "Organism ID"]
        [:p "You need to put in a Uniprot or NCBI Taxonomy ID. Note they are the same."]
-       [com/hyperlink-href :src (at)
-        :label  "Link to docs."
-        :href   ""
-        :target "_blank"]]]]]])
+       ]]]]])
 
 (defn- protein-search-suggestions
   [proteome]
@@ -100,27 +106,7 @@
            (take 6)
            (into [{:id nil :protein-name "-" :gene-name nil}])))))
 
-(defn- protein-search
-  [& {:keys [proteome on-change model]}]
-  (let [suggestions-for-search (protein-search-suggestions proteome)]
-    [v
-     :src      (at)
-     :children
-     [[protein-search-info]
-      [com/typeahead
-       :src (at)
-       :model model
-       :data-source suggestions-for-search
-       :placeholder (str (:protein-name @model))
-       :rigid? true
-       :change-on-blur? true
-       :on-change #(when on-change (on-change %))
-       :suggestion-to-string #(:protein-name %)
-       :render-suggestion
-       (fn [{:keys [protein-name gene-name id]}]
-         [:span (str id " - " gene-name " - " protein-name)])]]]))
 
-#_(def proteome (-> @(rf/subscribe [:data/proteome taxon]) :data))
 
 (defn- feature->hiccup
   [feature-view-data]
@@ -132,7 +118,7 @@
     [:span (:location-str feature-view-data) ":"]
     [:span (:description feature-view-data)]]])
 
-(defn protein->hiccup
+(defn protein-structural-features-overview
   [protein]
   (let [{:keys [has-afdb? domains active-sites binding-sites]} (utils/protein-info protein)]
     [v
@@ -155,16 +141,21 @@
             (or (seq (map feature->hiccup binding-sites))
                 [[:span "Not available"]])))]))
 
-(defn taxon-protein-search
-  [& {:keys [:proteome show-info? taxon protein-model on-change]
-      :or   {show-info? true}}]
-  (let [protein  (rf/subscribe [:data/protein (:id @protein-model)])]
+(defn protein-search
+  [& {:keys [proteome model on-change]}]
+  (let [suggestions-for-search (protein-search-suggestions proteome)]
     [v
      :children
-     [[:h6 (:scientificName taxon)]
-      [protein-search
-       :proteome  proteome
-       :model     protein-model
-       :on-change #(when on-change (on-change %))]
-      (when (and @protein show-info?)
-        [protein->hiccup @protein])]]))
+     [[protein-search-info]
+      [com/typeahead
+       :src (at)
+       :model                model
+       :data-source          suggestions-for-search
+       :placeholder          (str (:protein-name @model))
+       :rigid?               true
+       :change-on-blur?      true
+       :on-change            #(when on-change (on-change %))
+       :suggestion-to-string #(:protein-name %)
+       :render-suggestion
+       (fn [{:keys [protein-name gene-name id]}]
+         [:span (str id " - " gene-name " - " protein-name)])]]]))

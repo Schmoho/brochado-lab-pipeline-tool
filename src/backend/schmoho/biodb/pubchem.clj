@@ -19,7 +19,6 @@
 (defn get-compound-data-by-id
   [cid & {:keys [sdf?]
           :or {sdf? true}}]
-  (tap> cid)
   (let [sdf  (when sdf?
                (-> (http/get (str cid-prefix cid "/SDF"))
                    :body))
@@ -50,7 +49,7 @@
                       (map (comp :cid :id :id))
                       (take 3)))]
     (->> (for [cid cids]
-           [(str cid) (get-compound-data-by-id cid :sdf? false)]))))
+           (get-compound-data-by-id cid :sdf? false)))))
 
 (comment
 

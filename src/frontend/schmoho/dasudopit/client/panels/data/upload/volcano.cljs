@@ -5,27 +5,16 @@
    [re-frame.core :as rf]
    [schmoho.dasudopit.client.forms :as forms]
    [schmoho.components.forms :as components.forms]
-   [schmoho.components.structure :as structure :refer [card]]
+   [schmoho.components.structure :as structure]
    [schmoho.components.uniprot :as uniprot]))
 
-(defn- handle-set-volcano-name
-  [name]
-  (rf/dispatch [::forms/set-form-data :upload/volcano :meta :name name]))
+(def form-model
+  {:taxon   [:upload/volcano :meta :taxon]
+   :name    [:upload/volcano :meta :name]
+   :table   [:upload/volcano :table]})
 
-(defn- volcano-name-chooser
-  []
-  [v
-   :children
-   [[components.forms/info-label
-   "Required: Name"
-   [:div ""]]
-   [components.forms/input-text
-    :on-change #(handle-set-volcano-name %)
-    :placeholder "Insert a dataset name"]]])
-
-(defn- handle-load-csv
-  [table]
-  (rf/dispatch [::forms/set-form-data :upload/volcano :table table]))
+(def model (partial forms/model form-model))
+(def setter (partial forms/setter form-model))
 
 (defn- csv-file-info
   []
@@ -46,51 +35,30 @@
      :href   ""
      :target "_blank"]]])
 
-(defn- volcano-csv-chooser
-  []
-  [v
-   :children
-   [[csv-file-info]
-    [components.forms/csv-upload :on-load #(handle-load-csv %)]]])
-
-(defn- handle-choose-taxon-for-volcano
-  [taxon]
-  (rf/dispatch [::forms/set-form-data :upload/volcano :meta :taxon taxon]))
-
-(defn- volcano-taxon-chooser
-  []
-  [v
-   :children
-   [[components.forms/info-label
-    "Optional: Taxon"
-    [:<>]]
-    [uniprot/taxon-chooser
-    :model (rf/subscribe [:forms/by-path :upload/volcano :meta :taxon])
-    :on-change #(handle-choose-taxon-for-volcano %)]]]1)
-
-(defn- handle-save-volcano-button
-  []
-  ;; (rf/dispatch [::events/post-volcano])
-  (prn "Do something."))
-
-(defn- save-volcano-button
-  []
-  [components.forms/action-button
-   :label "Save"
-   :on-click #(handle-save-volcano-button)])
-
 (defn upload-volcano-form
   []
-  [card
-   "Upload volcano data"
-   ""
-   [v
-    :children
-    [[volcano-name-chooser]
-     [com/gap :size "10px"]
-     [volcano-csv-chooser]
-     [h
-      :children
-      [[volcano-taxon-chooser]
-       [com/gap :size "80px"]
-       [save-volcano-button]]]]]])
+  (let [taxon-choices @(rf/subscribe [:data/taxon-choices])
+        taxon-model   (model :taxon)]
+    [v
+     :children
+     [[components.forms/input-text
+       :width "300px"
+       :model (model :name)
+       :on-change (setter :name)
+       :placeholder "Insert a dataset name"]
+      [com/gap :size "10px"]
+      [csv-file-info]
+      [components.forms/csv-upload
+       :on-load (setter :table)]
+      [uniprot/taxon-chooser
+         :required? false
+         :choices   taxon-choices
+         :model     taxon-model
+         :on-change (setter :taxon)]
+      [structure/flex-horizontal-center
+       [components.forms/action-button
+         :label    "Save"
+         :on-click (fn handle-save-volcano-button
+                     []
+                     ;; (rf/dispatch [::events/post-volcano])
+                     (prn "Do something."))]]]]))

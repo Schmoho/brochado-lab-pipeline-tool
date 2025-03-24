@@ -6,7 +6,8 @@
    [schmoho.components.structure :as structure]
    [schmoho.dasudopit.client.forms :as forms]
    [schmoho.dasudopit.client.http :as http]
-   [schmoho.dasudopit.client.routing :as routing]))
+   [schmoho.dasudopit.client.routing :as routing]
+   [schmoho.dasudopit.client.db :as db]))
 
 (defn overview-panel []
   (let [volcanos (rf/subscribe [:data/volcanos-list])
@@ -22,19 +23,22 @@
            :row-label-fn
            (fn [row]
              [com/hyperlink
+              :style {:color "#007bff"}
               :label
               (or (-> row :meta :name not-empty)
                   (-> row :meta :id))
               :on-click
               #(do
                  (rf/dispatch [::forms/set-form-data :volcano-viewer :left :volcano (-> row :meta :id)])
+                 (db/get-data [:data :volcano (-> row :meta :id)])
                  (rf/dispatch [::routing/navigate :routing/volcano-viewer]))])}
           {:id           :taxon
            :header-label "Taxon"
            :row-label-fn
            (fn [row]
-             [:a {:href (str "taxon/" (-> row :meta :taxon))}
-              (-> row :meta :taxon)])}
+             (let [id (-> row :meta :taxon)]
+                             [:a {:href (str "https://www.uniprot.org/taxonomy/" id)
+                                  :target "_blank"} id]))}
           {:id :actions
            :header-label "Actions"
            :row-label-fn
@@ -49,7 +53,8 @@
          [{:id           :id
            :row-label-fn (fn [row]
                            (let [id (-> row :meta :id)]
-                             [:a {:href (str "taxon/" id)} id]))
+                             [:a {:href (str "https://www.uniprot.org/taxonomy/" id)
+                                  :target "_blank"} id]))
            :header-label "Taxon ID"}
           {:id           :name
            :row-label-fn (comp :name :meta)

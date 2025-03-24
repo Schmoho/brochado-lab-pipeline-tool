@@ -11,7 +11,7 @@
 (rf/reg-event-fx
  ::http-get
  (fn-traced
-  [{:keys [db]} [_ path]]
+  [{:keys [db]} [_ path  {:keys [success-event]}]]
   {:db db
    :http-xhrio
    {:method          :get
@@ -20,17 +20,25 @@
     :timeout         10000
     :format          (ajax/transit-request-format)
     :response-format (ajax/transit-response-format {:keywords? true})
-    :on-request      [::register-running-query path]
-    :on-success      [::http-get-success path]
-    :on-failure      [::http-failure path]}}))
+    :on-request      [::register-running-query :get path]
+    :on-success      (or success-event [::http-get-success path])
+    :on-failure      [::http-failure :get path]}}))
 
 (rf/reg-event-db
  ::http-get-success
  (fn-traced
   [db [_ path response]]
   (-> db
-      (assoc-in path response)
-      (assoc-in [:queries path] :done))))
+      (update-in path #(merge % response))
+      (assoc-in [:queries :get path] :done))))
+
+(rf/reg-event-db
+ ::http-get-metadata-success
+ (fn-traced
+  [db [_ path response]]
+  (-> db
+      (update-in path #(merge-with merge % response))
+      (assoc-in [:queries :get path] :done))))
 
 (rf/reg-event-fx
  ::http-post
@@ -47,9 +55,9 @@
       :timeout         10000
       :format          (ajax/transit-request-format)
       :response-format (ajax/transit-response-format {:keywords? true})
-      :on-request      [::register-running-query path]
+      :on-request      [::register-running-query :post path]
       :on-success      (or success-event [::http-post-success path])
-      :on-failure      [::http-failure path]}})))
+      :on-failure      [::http-failure :post path]}})))
 
 
 (rf/reg-event-db
@@ -57,8 +65,8 @@
  (fn-traced
   [db [_ path response]]
   (-> db
-      (assoc-in path response)
-      (assoc-in [:queries path] :done))))
+      (update-in path #(merge % response))
+      (assoc-in [:queries :post path] :done))))
 
 (rf/reg-event-fx
  ::http-delete
@@ -72,9 +80,9 @@
     :timeout         10000
     :format          (ajax/transit-request-format)
     :response-format (ajax/transit-response-format {:keywords? true})
-    :on-request      [::register-running-query path]
+    :on-request      [::register-running-query :delete path]
     :on-success      [::http-delete-success path]
-    :on-failure      [::http-failure path]}}))
+    :on-failure      [::http-failure :delete path]}}))
 
 
 (rf/reg-event-db
@@ -83,22 +91,24 @@
   [db [_ path]]
   (-> db
       (update-in (butlast path) #(dissoc % (last path)))
-      (update-in [:queries path] dissoc))))
+      (update-in [:queries :delete] dissoc path)
+      (update-in [:queries :get] dissoc path)
+      (update-in [:queries :post] dissoc path))))
 
 (rf/reg-event-db
  ::http-failure
  (fn-traced
-  [db [_ path response]]
+  [db [_ method path response]]
   (-> db
       (assoc-in [:failures path] response)
-      (assoc-in [:queries path] :failure))))
+      (assoc-in [:queries method path] :failure))))
 
 
 (rf/reg-event-db
  ::register-running-query
  (fn-traced
-  [db [_ path]]
-  (assoc-in db [:queries path] :running)))
+  [db [_ method path]]
+  (assoc-in db [:queries method path] :running)))
 
 (rf/reg-sub
  ::queries

@@ -84,18 +84,16 @@
    (case handler
      :routing.results/msa-results (rf/dispatch [::msa-results-events/get-msa-results])
      :routing.data/overview       (do
-                                    (db/get-data [:data :volcano])
-                                    (db/get-data [:data :ligand])
-                                    (db/get-data [:data :taxon]))
+                                    (db/get-metadata [:data :volcano])
+                                    (db/get-metadata [:data :ligand])
+                                    (db/get-metadata [:data :taxon]))
      :routing.data/taxon-entry    (db/get-data [:data :taxon (:taxon/id route-params)])
-     :routing.data/taxon          (db/get-data [:data :taxon])
      :routing.data/ligand-entry   (db/get-data [:data :ligand (:ligand/id route-params)])
-     :routing.data/ligand         (db/get-data [:data :ligand])
-     :routing.data/upload         (db/get-data [:data :taxon])
-     :routing/volcano-viewer      (db/get-data [:data :volcano])
+     :routing.data/upload         (db/get-metadata [:data :taxon])
+     :routing/volcano-viewer      (db/get-metadata [:data :volcano])
      :routing.pipelines/docking   (do
-                                    (db/get-data [:data :ligand])
-                                    (db/get-data [:data :taxon]))
+                                    (db/get-metadata [:data :ligand])
+                                    (db/get-metadata [:data :taxon]))
      nil)))
 
 

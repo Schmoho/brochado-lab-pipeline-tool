@@ -26,7 +26,7 @@
  :data/taxons-list
  :<- [::data]
  (fn [data]
-   (->> data :taxon vals vec)))
+   (->> data :taxon vals ((partial sort-by (comp :name :meta))) vec)))
 
 (rf/reg-sub
  :data/taxon
@@ -79,7 +79,7 @@
  :data/ligands-list
  :<- [::data]
  (fn [data]
-   (->> data :ligand vals vec)))
+   (->> data :ligand vals ((partial sort-by (comp :title :meta)))  vec)))
 
 (rf/reg-sub
  :data/ligands-map
@@ -112,7 +112,7 @@
  :data/volcanos-list
  :<- [::data]
  (fn [data]
-   (-> data :volcano vals vec)))
+   (-> data :volcano vals ((partial sort-by (comp :name :meta))) vec)))
 
 (rf/reg-sub
  :data/volcano

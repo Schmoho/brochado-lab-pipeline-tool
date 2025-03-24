@@ -28,7 +28,7 @@
  :<- [::http/queries]
  :<- [:provision.taxon/input-model]
  (fn [[queries input]]
-   (= (get queries [:data :taxon input :search])
+   (= (-> queries :get (get [:data :taxon input :search]))
       :running)))
 
 (rf/reg-sub
@@ -36,7 +36,7 @@
  :<- [:provision.taxon/input-model]
  :<- [::http/queries]
  (fn [[id queries]]
-   (get queries [:data :taxon id])))
+   (-> queries :post (get [:data :taxon id]))))
 
 ;; === Views ===
 
@@ -64,8 +64,13 @@
    "Taxon"
    [v
     :children
-    [[:p "ID: " (:id taxon)]
-     [:p "Name: " (:scientificName taxon)]
+    [[:span "ID: "
+      [:a {:href (str "https://www.uniprot.org/taxonomy/" (:id taxon))
+          :target "_blank"}
+       (:id taxon)]]
+     [:div
+      {:style {:width "300px"}}
+      [:p "Name: " (:scientificName taxon)]]
      [:p "Taxonomic rank: " (:rank taxon)]]]])
 
 (defn- proteome-minicard
@@ -74,7 +79,17 @@
    "Proteome"
    [v
     :children
-    [[:p "ID: " (:id proteome)]
+    [[:span "ID: "
+      [:a {:href (str "https://www.uniprot.org/proteome/" (:id proteome))
+          :target "_blank"}
+       (:id proteome)]]
+     (when-let [redundant (:instead-of-redundant proteome)]
+       [:span "(instead of redundant proteome "
+        [:a {:href (str "https://www.uniprot.org/proteome/" redundant)
+          :target "_blank"}
+         redundant]
+        ")"])
+     [:br]
      [:p "Type: " (:proteomeType proteome)]
      [:p "Protein count: " (:proteinCount proteome)]]]])
 
@@ -93,17 +108,7 @@
           [proteome-minicard proteome]]]
         [com/gap :size "1"]
         [uniprot/lineage-widget (:lineage taxon)]]]
-      [components.forms/action-button
-       :label "Save"
-       :on-click #(rf/dispatch [::http/http-post [:data :taxon @input-model]])]]]))
-
-(defn- search-taxon-button
-  []
-  (let [input-model (rf/subscribe [:provision.taxon/input-model])]
-    [components.forms/action-button
-     :label "Search"
-     :on-click #(rf/dispatch [::http/http-get
-                              [:data :taxon @input-model :search]])]))
+      ]]))
 
 (defn provision-taxon-form
   []
@@ -114,11 +119,25 @@
     [v
      :children
      [[taxon-id-input]
-      [search-taxon-button]
+      [h
+       :children
+       [[com/gap :size "1"]
+        (when-not @search-results
+          [structure/flex-horizontal-center
+           [components.forms/action-button
+            :label "Search"
+            :on-click #(rf/dispatch [::http/http-get
+                                     [:data :taxon @input-model :search]])]])]]
       (when (= :done @post-query-state)
         [:span "Successfully added taxon " @input-model ". Please note it can take half a minute until the proteome is available."])
       (when @search-running?
-        [com/throbber])
+        [structure/flex-horizontal-center
+         [com/throbber]])
       (when (and (not= :done @post-query-state)
                  (not-empty @search-results))
-        [taxon-previewer])]]))
+        [:<>
+         [taxon-previewer]
+         [structure/flex-horizontal-center
+          [components.forms/action-button
+           :label "Save"
+           :on-click #(rf/dispatch [::http/http-post [:data :taxon @input-model]])]]])]]))

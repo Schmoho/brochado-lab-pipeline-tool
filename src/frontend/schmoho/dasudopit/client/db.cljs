@@ -26,5 +26,9 @@
 
 (defn get-data
   [path]
-  (when-not (get (@rf.db/app-db :queries) path)
-    (rf/dispatch [::http/http-get path])))
+  (rf/dispatch [::http/http-get path]))
+
+(defn get-metadata
+  [path]
+  (rf/dispatch [::http/http-get path
+                {:success-event [::http/http-get-metadata-success path]}]))

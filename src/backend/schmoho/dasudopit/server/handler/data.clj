@@ -83,7 +83,7 @@
   ;; the param is named ID, but we'll also support search by name
   (let [search-thing (-> request :path-params :id)
         results      (try
-                       [(str search-thing) (pubchem/get-compound-data-by-id search-thing :sdf? false)]
+                       (pubchem/get-compound-data-by-id search-thing :sdf? false)
                        (catch Exception _
                          (try
                            (pubchem/search-compound-by-name search-thing)
@@ -112,18 +112,29 @@
 #_(provision-ligand {:path-params {:id "37768"}
                      :uri "/api/data/ligand/37768"})
 
+(defn proteome-for-taxon
+  [taxon]
+  (let [taxon-id (:taxonId taxon)
+        proteome (-> (if (-> taxon :statistics :referenceProteomeCount pos-int?)
+                       (uniprot.api/ref-proteomes-by-taxon-id taxon-id)
+                       (uniprot.api/proteomes-by-taxon-id taxon-id))
+                     first)]
+    (if (= "Redundant proteome" (:proteomeType proteome))
+      (with-meta (uniprot.api/proteomes-entry (:redundantTo proteome))
+        {:instead-of-redundant (:id proteome)})
+      proteome)))
+
 (defn search-taxon
   [request]
   (tap> request)
   (let [taxon-id (-> request :path-params :id)
         taxon    (uniprot.api/taxonomy-entry taxon-id {:fields uniprot.api/taxon-fields-of-interest})
-        proteome (-> (if (-> taxon :statistics :referenceProteomeCount pos-int?)
-                       (uniprot.api/ref-proteomes-by-taxon-id taxon-id)
-                       (uniprot.api/proteomes-by-taxon-id taxon-id))
-                     first)]
+        proteome (proteome-for-taxon taxon)]
     {:status 200
      :body   {:taxon    (assoc taxon :id (:taxonId taxon))
-              :proteome proteome}}))
+              :proteome (merge (select-keys proteome
+                                            [:id :proteomeType :proteinCount])
+                               (meta proteome))}}))
 
 #_(search-taxon {:path-params {:id "208964"}})
 
@@ -132,10 +143,7 @@
   (let [path          (str/replace (:uri request) "/api" "")
         taxon-id      (-> request :path-params :id)
         taxon         (uniprot.api/taxonomy-entry taxon-id {:fields "id,common_name,scientific_name,lineage,statistics"})
-        proteome      (-> (if (-> taxon :statistics :referenceProteomeCount pos-int?)
-                            (uniprot.api/ref-proteomes-by-taxon-id taxon-id)
-                            (uniprot.api/proteomes-by-taxon-id taxon-id))
-                          first)
+        proteome      (proteome-for-taxon taxon)
         taxon-dataset {:data (assoc taxon :id (str (:taxonId taxon)))
                        :meta {:id   (str (:taxonId taxon))
                               :name (:scientificName taxon)}}]
@@ -143,9 +151,10 @@
     (future (let [proteins (uniprot.api/proteins-by-proteome (:id proteome))]
               (db/upload-dataset! (str path "/proteome")
                                   {:data (map #(assoc % :id (:primaryAccession %)) proteins)
-                                   :meta {:proteome-id   (:id proteome)
-                                          :taxon-id      taxon-id
-                                          :proteome-type (:proteomeType proteome)}})
+                                   :meta (merge {:proteome-id   (:id proteome)
+                                                 :taxon-id      taxon-id
+                                                 :proteome-type (:proteomeType proteome)}
+                                                (meta proteome))})
               (log/info "Added proteome" (:id proteome) "for" taxon-id)))
     {:status 200
      :body   taxon-dataset}))

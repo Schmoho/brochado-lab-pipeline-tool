@@ -1,6 +1,6 @@
 (ns schmoho.components.structure
   (:require
-   [re-com.core :as com :refer [at]]
+   [re-com.core :as com :refer [at] :rename {v-box v h-box h}]
    [reagent.core :as r]
    [schmoho.components.css.structure :as css]
    [schmoho.utils.string :as utils.str]))
@@ -18,20 +18,22 @@
     body]])
 
 (defn card
-  [header title body & {:keys [on-click]}]
-  (let [hover?  (r/atom false)]
-    (fn []
-      [:div {:class (str "card bg-light mb-3 "
-                         (if @hover? (css/card-hover) ""))
-             :style {:width "42rem"}
-             :on-mouse-over (com/handler-fn (reset! hover? true))
-             :on-mouse-out  (com/handler-fn (reset! hover? false))
-             :on-click on-click}
-       [:div {:class "card-header"} header]
-       [:div {:class "card-body"
-              :style {:font-size "16px"}}
-        [:h5 {:class "card-title"} title]
-        body]])))
+  [& {:keys [on-click width
+           header title body]
+    :or {width "42rem"}}]
+   (let [hover?  (r/atom false)]
+     (fn []
+       [:div {:class (str "card bg-light mb-3 "
+                          (if @hover? (css/card-hover) ""))
+              :style {:width width}
+              :on-mouse-over (com/handler-fn (reset! hover? true))
+              :on-mouse-out  (com/handler-fn (reset! hover? false))
+              :on-click on-click}
+        [:div {:class "card-header"} header]
+        [:div {:class "card-body"
+               :style {:font-size "16px"}}
+         [:h5 {:class "card-title"} title]
+         body]])))
 
 (defn clickable-card
   [header title body & {:keys [on-click]}]
@@ -140,3 +142,18 @@
         [:span {:class       (css/my-carousel-control-next-icon)
                 :aria-hidden "true"}]
         [:span {:class "sr-only"} "Next"]])]))
+
+(defn flex-horizontal-center
+  [component]
+  [h
+   :children
+   [[com/gap :size "1"]
+    component
+    [com/gap :size "1"]]])
+
+(defn flex-horizontal-right
+  [component]
+  [h
+   :children
+   [[com/gap :size "1"]
+    component]])

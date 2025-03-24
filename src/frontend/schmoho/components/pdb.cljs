@@ -9,17 +9,26 @@
    [reagent.core :as r]))
 
 (defn pdb-upload
-  [& {:keys [on-load]}]
-  [forms/file-upload
-   #(doseq [file (array-seq %)]
-      (if-not (str/ends-with? (.-name file) ".pdb")
-        (js/alert "Can only handle pdb data.")
-        (let [reader (js/FileReader.)]
-          (set! (.-onload reader)
-                (fn [_]
-                  (let [data (.-result reader)]
-                    (on-load data))))
-          (.readAsText reader file))))])
+  [& {:keys [on-load required? info-body]
+      :or {required? true
+           info-body [:<>]}}]
+  [v
+   :children
+   [[forms/info-label
+     (if required?
+       "Required: Structure File"
+       "Optional: Structure File")
+     info-body]
+    [forms/file-upload
+     #(doseq [file (array-seq %)]
+        (if-not (str/ends-with? (.-name file) ".pdb")
+          (js/alert "Can only handle pdb data.")
+          (let [reader (js/FileReader.)]
+            (set! (.-onload reader)
+                  (fn [_]
+                    (let [data (.-result reader)]
+                      (on-load data))))
+            (.readAsText reader file))))]]])
 
 ;; === Structure Viewer ===
 
