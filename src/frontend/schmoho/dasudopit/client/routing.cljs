@@ -84,6 +84,7 @@
    (case handler
      :routing.results/msa-results (rf/dispatch [::msa-results-events/get-msa-results])
      :routing.data/overview       (do
+                                    (db/get-metadata [:data :structure])
                                     (db/get-metadata [:data :volcano])
                                     (db/get-metadata [:data :ligand])
                                     (db/get-metadata [:data :taxon]))

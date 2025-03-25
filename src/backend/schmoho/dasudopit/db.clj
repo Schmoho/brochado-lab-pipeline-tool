@@ -69,7 +69,7 @@
          utils/ffile-seq
          index-folder)))
 
-#_(get-dataset "/data/structure/processed/P02919/058878110")
+#_(get-dataset "/data/ligand/2244")
 
 (defn delete-dataset!
   [path]
@@ -120,7 +120,7 @@
                          :structure     "structure.pdb"
                          :docking-ready "structure.pdbqt"
                          :data          "data.edn"
-                         :png           "image.png.b64"
+                         :png           "image.b64"
                          :sdf           "structure.sdf")]
           (utils/write! (str path "/" filename)
                         data))))))

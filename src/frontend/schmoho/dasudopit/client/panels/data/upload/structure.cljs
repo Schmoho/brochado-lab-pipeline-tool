@@ -89,8 +89,8 @@
              [pdb/structural-features-viewer
               :pdb @pdb
               :uniprot @protein
-              :style {:width  "240px"
-                      :height "100%"
+              :style {:width      "240px"
+                      :height     "100%"
                       :min-height "240px"}])
            (when @protein
              [uniprot/protein-structural-features-overview @protein])]]
@@ -105,6 +105,7 @@
                          {:structure @pdb
                           :meta      {:protein (:id @protein)
                                       :name    @(model :name)
-                                      :taxon   @taxon-model}}}])]]])]]))
+                                      :taxon   @taxon-model
+                                      :source  :input}}}])]]])]]))
 
 

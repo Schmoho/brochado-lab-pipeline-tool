@@ -96,9 +96,25 @@
 ;; === Structure ===
 
 (rf/reg-sub
+ :data/structures-list
+ :<- [::data]
+ (fn [data]
+   (->> (:structure data)
+        (tree-seq map? vals)
+        (filter (fn [m]
+                  (and (map? m)
+                       (:meta m))))
+        (mapv :meta))))
+
+(rf/reg-sub
  :data/structure
- (fn [db]
-   (:structure db)))
+ :<- [::data]
+ (fn [data [_ protein-id type id]]
+   (-> data
+       :structure
+       (get protein-id)
+       (get (name type))
+       (get id))))
 
 ;; === Volcano ===
 

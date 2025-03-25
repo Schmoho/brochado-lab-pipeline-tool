@@ -62,6 +62,9 @@
                    :handler #'data-handler/update-metadata!}}]]
 
        ["/structure"
+        [""
+         {:get {:summary "Get all structures (AFDB, input and processed) for a UniProt protein ID."
+                :handler #'data-handler/get-structures-metadata}}]
         ["/:protein-id"
          [""
           {:get {:summary "Get all structures (AFDB, input and processed) for a UniProt protein ID."

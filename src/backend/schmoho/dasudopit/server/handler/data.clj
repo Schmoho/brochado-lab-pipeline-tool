@@ -7,13 +7,14 @@
    [schmoho.biodb.pubchem :as pubchem]
    [schmoho.biodb.uniprot.api :as uniprot.api]
    [schmoho.biotools.obabel :as obabel]
-   [schmoho.utils.file :as utils]))
+   [schmoho.utils.file :as utils]
+   [clojure.java.io :as io]))
 
 (defn get-metadata
   [request]
   (tap> request)
   (try
-    (let [path    (str/replace (:uri request) "/api" "")
+    (let [path    (str/replace (:uri request) "/api/" "")
           dataset (db/get-metadata path)]
       (if dataset
         {:status 200
@@ -28,22 +29,27 @@
   [request]
   (tap> request)
   (try
-    (let [path              (str/replace (:uri request) "/api" "")
-          input-dataset     (db/get-metadata (str path "/input"))
-          processed-dataset (db/get-metadata (str path "/processed"))
-          dataset (cond-> nil
-                    (not-empty input-dataset) (assoc :input input-dataset)
-                    (not-empty processed-dataset) (assoc :processed processed-dataset))]
-      (if dataset
-        {:status 200
-         :body   dataset}
-        {:status 404
-         :body   {:message "Unknown dataset."}}))
+    (let [path    (str/replace (:uri request) "/api/" "")
+          dataset (->> (utils/ffile-seq "data/structure" #_path)
+                       (filter #(and (= "meta" (utils/base-name %))
+                                     (or (str/includes? (.getPath %) "input")
+                                         (str/includes? (.getPath %) "processed"))))
+                       (map (juxt (comp
+                                   #(concat % [:meta])
+                                   #(str/split % #"/")
+                                   #(str/replace % (str path "/") "")
+                                   #(.getParent %))
+                                  utils/read-file))
+                       (reduce
+                        (fn [acc [path meta]]
+                          (assoc-in acc path meta))
+                        {}))]
+      (tap> dataset)
+      {:status 200
+       :body   dataset})
     (catch Exception e
       (log/error e)
       (throw e))))
-
-;; (get-structures-metadata {:uri "/data/structure/P02919"})
 
 (defn get-dataset
   ([request]
