@@ -15,8 +15,6 @@
   (try
     (let [path    (str/replace (:uri request) "/api" "")
           dataset (db/get-metadata path)]
-      (tap> path)
-      (tap> dataset)
       (if dataset
         {:status 200
          :body   dataset}
@@ -25,6 +23,27 @@
     (catch Exception e
       (log/error e)
       (throw e))))
+
+(defn get-structures-metadata
+  [request]
+  (tap> request)
+  (try
+    (let [path              (str/replace (:uri request) "/api" "")
+          input-dataset     (db/get-metadata (str path "/input"))
+          processed-dataset (db/get-metadata (str path "/processed"))
+          dataset (cond-> nil
+                    (not-empty input-dataset) (assoc :input input-dataset)
+                    (not-empty processed-dataset) (assoc :processed processed-dataset))]
+      (if dataset
+        {:status 200
+         :body   dataset}
+        {:status 404
+         :body   {:message "Unknown dataset."}}))
+    (catch Exception e
+      (log/error e)
+      (throw e))))
+
+;; (get-structures-metadata {:uri "/data/structure/P02919"})
 
 (defn get-dataset
   ([request]
@@ -161,3 +180,19 @@
 
 #_(provision-taxon {:path-params {:id "83333"}
                     :uri "/api/data/taxon/83333"})
+
+(defn save-structure
+  [request]
+  (let [path       (str/replace (:uri request) "/api" "")
+        protein-id (-> request :path-params :protein-id)
+        id         (str (random-uuid))
+        dataset    (-> request
+                       :body-params
+                       (assoc-in [:meta :id] id))]
+    (try
+      (db/upload-dataset! (str path "/" id) dataset)
+      (catch Exception e
+        (prn e)
+        (throw e)))
+    {:status 200
+     :body   {id dataset}}))

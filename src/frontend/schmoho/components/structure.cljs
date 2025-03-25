@@ -6,15 +6,15 @@
    [schmoho.utils.string :as utils.str]))
 
 (defn minicard
-  [header title body]
+  [header body]
   [:div {:class "card bg-light mb-3 "
-         :style {:font-size "14px"}}
-   [:div {:class "card-header"
-           :style {:font-size "14px"}} header]
+         :style {:font-size "14px"
+                 :height "100%"}}
+   (when header
+     [:div {:class "card-header"
+           :style {:font-size "14px"}} header])
    [:div {:class "card-body"
-           :style {:font-size "14px"}}
-    [:h5 {:class "card-title"
-           :style {:font-size "14px"}} title]
+          :style {:font-size "14px"}}
     body]])
 
 (defn card

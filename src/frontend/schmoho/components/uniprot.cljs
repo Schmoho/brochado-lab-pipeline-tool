@@ -2,6 +2,7 @@
   (:require
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [schmoho.components.forms :as forms]
+   [schmoho.components.structure :refer [minicard]]
    [schmoho.components.utils.uniprot :as utils]
    [re-frame.core :as rf]))
 
@@ -82,8 +83,7 @@
       :src (at)
       :children
       [[:p.info-heading "Organism ID"]
-       [:p "You need to put in a Uniprot or NCBI Taxonomy ID. Note they are the same."]
-       ]]]]])
+       [:p "You need to put in a Uniprot or NCBI Taxonomy ID. Note they are the same."]]]]]])
 
 (defn- protein-search-suggestions
   [proteome]
@@ -108,38 +108,58 @@
 
 
 
+(defn- color-rect
+  [color]
+  [:div {:style {:width "10px"
+                 :height "10px"
+                 :background-color color
+                 :border "1px solid grey"}}])
+
 (defn- feature->hiccup
   [feature-view-data]
   [h
    :gap "5px"
+   :style {:white-space "pre"}
+   :align :center
    :children
-   [[:div {:style {:width "10px" :height "10px" :background-color (:color feature-view-data)}}]
-    [:span "at residue(s)"]
-    [:span (:location-str feature-view-data) ":"]
-    [:span (:description feature-view-data)]]])
+   [[color-rect (:color feature-view-data)]
+    #_[:span "at residue(s)"]
+    [:span {:style {:font-family "monospace"}} (:location-str feature-view-data) ":"]
+    [:span {:style {:white-space "normal"}}
+     (:description feature-view-data)]]])
 
 (defn protein-structural-features-overview
   [protein]
   (let [{:keys [has-afdb? domains active-sites binding-sites]} (utils/protein-info protein)]
-    [v
-     :gap "5px"
-     :children
-     (concat
-      [[h
-        :gap "5px"
-        :children
-        [[:span "AlphaFold structure available"]
-         (when has-afdb?
-           [:i {:class "zmdi zmdi-check"}])]]]
-      (into [[:h6 "Domains"]]
-            (or (seq (map feature->hiccup domains))
-                [[:span "Not available"]]))
-      (into [[:h6 "Active Sites"]]
-            (or (seq (map feature->hiccup active-sites))
-                [[:span "Not available"]]))
-      (into [[:h6 "Binding Sites"]]
-            (or (seq (map feature->hiccup binding-sites))
-                [[:span "Not available"]])))]))
+    [minicard
+     "Structural Features"
+     [v
+      :style {:font-size "12px"}
+      :children
+      (concat
+       [[h
+         :gap "5px"
+         :align :center
+         :justify :end
+         :children
+         [[:span {:class "badge badge-secondary"} "AlphaFold structure available"]
+          (if has-afdb?
+            [:i {:class "zmdi zmdi-check-circle"
+                 :style {:color "green"}}]
+            [:i {:class "zmdi zmdi-block"
+                 :style {:color "red"}}])]]]
+       [[:h6 "Domains"]]
+       [[v
+         :children
+         (into []
+               (or (seq (map feature->hiccup domains))
+                   [[:span "Not available"]]))]]
+       (into [[:h6 "Active Sites"]]
+             (or (seq (map feature->hiccup active-sites))
+                 [[:span "Not available"]]))
+       (into [[:h6 "Binding Sites"]]
+             (or (seq (map feature->hiccup binding-sites))
+                 [[:span "Not available"]])))]]))
 
 (defn protein-search
   [& {:keys [proteome model on-change]}]

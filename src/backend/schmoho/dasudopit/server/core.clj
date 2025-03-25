@@ -48,8 +48,8 @@
        ["/volcano"
         [""
          {:get  {:summary "Get all volcanos metadata."
-                ;; using vars (#') allows to update the handler
-                ;; and have the changes immediately be reflected in a REPL
+                 ;; using vars (#') allows to update the handler
+                 ;; and have the changes immediately be reflected in a REPL
                  :handler #'data-handler/get-metadata}
           :post {:summary "Add a volcano dataset"
                  :handler #'data-handler/upload-dataset!}}]
@@ -64,23 +64,32 @@
        ["/structure"
         ["/:protein-id"
          [""
-          #_{:get {:summary "Get all structures (AFDB, input and processed) for a UniProt protein ID."
-                   :handler #'data-handler/get-all-structures-for-protein-id}}]
+          {:get {:summary "Get all structures (AFDB, input and processed) for a UniProt protein ID."
+                 :handler #'data-handler/get-structures-metadata}}]
          ["/afdb"
           {:get {:summary "Get AFDB PDB for a UniProt ID."
                  :handler
                  (partial data-handler/get-dataset
                           data-handler/provision-afdb-structure)}}]
-         ["/input/:id"
-          {:get    {:summary "Get user input PDB for UUID."
-                    :handler #'data-handler/get-dataset}
-           :delete {:summary "Delete a user input PDB."
-                    :handler #'data-handler/delete-dataset!}}]
-         ["/processed/:id"
-          {:get    {:summary "Get processed PDB for UUID."
-                    :handler #'data-handler/get-dataset}
-           :delete {:summary "Delete a processed structure."
-                    :handler #'data-handler/delete-dataset!}}]]]
+         ["/input"
+          [""
+           {:post {:summary "Save an input structure."
+                   :handler #'data-handler/save-structure}}]
+          ["/:id"
+           {:get    {:summary "Get user input PDB for UUID."
+                     :handler #'data-handler/get-dataset}
+            :delete {:summary "Delete a user input PDB."
+                     :handler #'data-handler/delete-dataset!}}]]
+         
+         ["/processed"
+          [""
+           {:post {:summary "Save an input structure."
+                   :handler #'data-handler/save-structure}}]
+          ["/:id"
+           {:get    {:summary "Get processed PDB for UUID."
+                     :handler #'data-handler/get-dataset}
+            :delete {:summary "Delete a processed structure."
+                     :handler #'data-handler/delete-dataset!}}]]]]
 
        ["/ligand"
         [""
@@ -136,10 +145,10 @@
      :exception pretty/exception
      :data      {:coercion   reitit.coercion.spec/coercion
                  :muuntaja   m/instance
-                 #_(m/create
-                    (assoc-in m/default-options
-                              [:formats "application/transit+json" :encoder-opts :handlers]
-                              {Instant (transit/write-handler "inst" #(.toString %))}))
+                 #_          (m/create
+                              (assoc-in m/default-options
+                                        [:formats "application/transit+json" :encoder-opts :handlers]
+                                        {Instant (transit/write-handler "inst" #(.toString %))}))
                  :middleware [swagger/swagger-feature
                               #(wrap-cors % :access-control-allow-origin [#".*"]
                                           :access-control-allow-methods [:get :put :post :delete])

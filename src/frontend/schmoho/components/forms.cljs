@@ -76,27 +76,25 @@
         [stuff]]]]])
 
 (defn file-upload
-  [on-change-fn]
-  (let [file-state (r/atom nil)]
-    (fn []
-      [:div
-       [:div {:class "input-group mb-3"}
-        [:div {:class "custom-file"}
-         [:input {:type  "file"
-                  :id    "inputGroupFile01"
-                  :class "custom-file-input"
-                  :on-change
-                  (fn [e]
-                    (let [files (-> e .-target .-files)]
-                      (reset! file-state files)
-                      (on-change-fn files)))}]
-         [:label {:for   "inputGroupFile01"
-                  :class "custom-file-label"}
-          (if @file-state (.-name (aget @file-state 0)) "Choose file")]]]])))
+  [label on-change-fn]
+  [:div
+   [:div {:class "input-group mb-3"}
+    [:div {:class "custom-file"}
+     [:input {:type  "file"
+              :id    "inputGroupFile01"
+              :class "custom-file-input"
+              :on-change
+              (fn [e]
+                (let [files (-> e .-target .-files)]
+                  (on-change-fn files)))}]
+     [:label {:for   "inputGroupFile01"
+              :class "custom-file-label"}
+      (or label "Choose file")]]]])
 
 (defn csv-upload
-  [& {:keys [on-load]}]
+  [& {:keys [on-load label]}]
   [file-upload
+   label
    #(doseq [file (array-seq %)]
       (if-not (str/ends-with? (.-name file) ".csv")
         (js/alert "Can only handle CSV data.")
@@ -134,17 +132,22 @@
      :width width]]])
 
 (defn action-button
-  [& {:keys [label on-click style]
-      :or {style {:width "200px"}}}]
+  [& {:keys [label on-click style disabled?]
+      :or {style {:width "200px"}
+           disabled? false}}]
   (let [hover? (r/atom false)]
-    (fn []
+    (fn [& {:keys [label on-click style disabled?]
+            :or {style {:width "200px"}
+                 disabled? false}}]
       [com/button
        :src      (at)
+       :disabled? disabled?
        :label    label
        :class    (css/rectangle-button)
        :on-click #(when on-click
                     (on-click %))
-       :style    (merge {:background-color (if @hover? "#0072bb" "#4d90fe")}
+       :style    (merge {:background-color
+                         (if @hover? "#0072bb" "#4d90fe")}
                         style)
        :attr     {:on-mouse-over (com/handler-fn (reset! hover? true))
                   :on-mouse-out  (com/handler-fn (reset! hover? false))}])))

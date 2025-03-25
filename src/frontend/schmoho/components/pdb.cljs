@@ -9,7 +9,7 @@
    [reagent.core :as r]))
 
 (defn pdb-upload
-  [& {:keys [on-load required? info-body]
+  [& {:keys [on-load required? info-body label]
       :or {required? true
            info-body [:<>]}}]
   [v
@@ -20,6 +20,7 @@
        "Optional: Structure File")
      info-body]
     [forms/file-upload
+     label
      #(doseq [file (array-seq %)]
         (if-not (str/ends-with? (.-name file) ".pdb")
           (js/alert "Can only handle pdb data.")
@@ -27,13 +28,13 @@
             (set! (.-onload reader)
                   (fn [_]
                     (let [data (.-result reader)]
-                      (on-load data))))
+                      (on-load (.-name file) data))))
             (.readAsText reader file))))]]])
 
 ;; === Structure Viewer ===
 
 (defn pdb-viewer
-  [& {:keys [objects style config on-load]}]
+  [& {:keys [css objects style config on-load]}]
   (let [ref          (react/createRef)
         viewer-state (r/atom nil)]
     (r/create-class
@@ -56,13 +57,19 @@
             (doto viewer
               (.setStyle (clj->js {}) (clj->js style))
               (.render))))
-        [:div {:class "mol-container"
-               :style {:width    "450px"
-                       :height   "450px"
-                       :position "relative"
-                       :border   "solid grey 1px"}
-               :ref   ref}
-         "Loading viewer..."])
+        [:div
+         {:style (merge {:width    "350px"
+                         :height   "350px"
+                         :position "relative"
+                         :border   "solid #cccccc 1px"}
+                        css)}
+         [:div {:class "mol-container"
+                :style {:width    "100%"
+                        :height   "100%"
+                        :padding "4px"
+                        :position "relative"}
+                :ref   ref}
+          "Loading viewer..."]])
       :component-did-mount
       (fn [_]
         (when-let [node (.-current ref)]
@@ -117,13 +124,14 @@
               {:resi location :radius 3.0 :color color}))))
 
 (defn structural-features-viewer
-  [pdb uniprot]
+  [& {:keys [style pdb uniprot]}]
   (let [protein-info      (uniprot/protein-info uniprot)
         active-site-balls (protein-info->active-site-balls protein-info)
         coloring-fn       (protein-coloring-fn protein-info)]
     [h
      :children
      [[pdb-viewer
+       :css style
        :objects {:pdb     pdb
                  :spheres active-site-balls}
        :style {:cartoon {:colorfunc coloring-fn}}

@@ -1,5 +1,7 @@
 (ns schmoho.components.utils.uniprot
   (:require
+   [goog.string :as gstring]
+   [goog.string.format]
    [schmoho.biodb.uniprot.core :as uniprot]
    [schmoho.utils.color :as color]))
 
@@ -8,15 +10,20 @@
   (map
    (fn [domain color]
      (assoc domain :color color))
-   (sort-by :description features)
+   (sort-by :location features)
    (palette-fn (count features))))
+
+(defn left-pad [s total-length]
+  (gstring/format (str "%0" total-length "s") s))
 
 (defn- location-str
   [feature]
   (let [[start end] (uniprot/feature->location feature)]
     (if (= start end)
-      start
-      (str start " - " end))))
+      (left-pad (str start) 3)
+      (str  (left-pad (str start) 3)
+            " - "
+            (left-pad (str end) 3)))))
 
 (defn protein-info
   [protein]
