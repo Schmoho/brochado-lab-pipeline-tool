@@ -20,40 +20,49 @@
 (def model (partial forms/model form-model))
 (def setter (partial forms/setter form-model))
 
+(defn protein-preview-modal
+  []
+  (let [active-preview @(model :active-preview)
+        preview-type   @(model :preview-type)]
+    (when (and active-preview
+               (= preview-type :protein))
+      [com/modal-panel
+       :backdrop-on-click #((setter :active-preview) nil)
+       :child
+       (let [active-protein    @(rf/subscribe [:data/protein (:protein active-preview)])
+             protein-structure @(rf/subscribe [:data/structure
+                                               (:protein active-preview)
+                                               (name (:source active-preview))
+                                               (:id active-preview)])]
+         (if-not active-protein
+           [com/throbber]
+           [h
+            :children
+            [[pdb/structural-features-viewer
+              :pdb (:structure protein-structure)
+              :uniprot active-protein]
+             [uniprot/protein-structural-features-overview active-protein]]]))])))
+
+(defn ligand-preview-modal
+  []
+  (let [active-preview @(model :active-preview)
+        preview-type   @(model :preview-type)]
+    (when (and active-preview
+               (= preview-type :ligand))
+      (let [ligand @(rf/subscribe [:data/ligand (-> active-preview :meta :cid)])]
+        [com/modal-panel
+         :backdrop-on-click #((setter :active-preview) nil)
+         :child
+         [pubchem/ligand-viewer ligand]]))))
 
 (defn overview-panel []
-  (let [structures     (rf/subscribe [:data/structures-list])
-        volcanos       (rf/subscribe [:data/volcanos-list])
-        taxons         (rf/subscribe [:data/taxons-list])
-        ligands        (rf/subscribe [:data/ligands-list])
-        active-preview @(model :active-preview)
-        preview-type   @(model :preview-type)]
-    [:<>
-     (when (and active-preview
-                (= preview-type :protein))
-       [com/modal-panel
-        :backdrop-on-click #((setter :active-preview) nil)
-        :child
-        (let [active-protein    @(rf/subscribe [:data/protein (:protein active-preview)])
-              protein-structure @(rf/subscribe [:data/structure
-                                                (:protein active-preview)
-                                                (name (:source active-preview))
-                                                (:id active-preview)])]
-          (if-not active-protein
-            [com/throbber]
-            [h
-             :children
-             [[pdb/structural-features-viewer
-               :pdb (:structure protein-structure)
-               :uniprot active-protein]
-              [uniprot/protein-structural-features-overview active-protein]]]))])
-     (when (and active-preview
-                (= preview-type :ligand))
-       (let [ligand @(rf/subscribe [:data/ligand (-> active-preview :meta :cid)])]
-         [com/modal-panel
-          :backdrop-on-click #((setter :active-preview) nil)
-          :child
-          [pubchem/ligand-viewer ligand]]))
+  [:<>
+   [protein-preview-modal]
+   [ligand-preview-modal]
+   (let [structures     (rf/subscribe [:data/structures-list])
+         volcanos       (rf/subscribe [:data/volcanos-list])
+         taxons         (rf/subscribe [:data/taxons-list])
+         ligands        (rf/subscribe [:data/ligands-list])]
      [structure/collapsible-accordion-2
       ["Structures"
        [components.forms/table structures
@@ -187,7 +196,7 @@
              #(do
                 (db/get-data [:data :ligand (-> row :meta :cid)])
                 ((setter :active-preview) row)
-                ((setter :preview-type) :ligand))])}]]]]]))
+                ((setter :preview-type) :ligand))])}]]]])])
 
 
 

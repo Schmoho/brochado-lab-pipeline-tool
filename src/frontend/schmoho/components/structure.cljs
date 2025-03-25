@@ -19,7 +19,7 @@
 
 (defn card
   [& {:keys [on-click width
-           header title body]
+             header title body]
     :or {width "42rem"}}]
    (let [hover?  (r/atom false)]
      (fn []
@@ -76,11 +76,12 @@
   [& cards]
   (let [accordion-id (utils.str/rand-str)]
     (->> (for [card cards :when (some? card)]
-           ^{:key (first card)} [collapsible-card
-                                 (first card)
-                                 (second card)
-                                 :data-parent
-                                 (str "#" accordion-id)])
+           ^{:key (first card)}
+           [collapsible-card
+            (first card)
+            (second card)
+            :data-parent
+            (str "#" accordion-id)])
          (into [:div {:class "accordion",
                       :id accordion-id
                       :style {:width "1200px"}}]))))
@@ -94,7 +95,7 @@
                                  (second card)])
          (into [:div {:class "accordion",
                       :id accordion-id
-                      :style {:width "1200px"}}]))))
+                      :style {:width "100%"}}]))))
 
 (defn header
   [& {:keys [label]}]

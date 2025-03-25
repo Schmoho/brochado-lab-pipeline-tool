@@ -67,7 +67,7 @@
   (let [params    @(re-frame/subscribe [::routing/active-route-params])
         results   @(re-frame/subscribe [:data/ligand (:ligand/id  params)])
         json-data (:json results)
-        png       (:png results)
+        png       (:image results)
         img-src   (str "data:image/png;base64," png)]
     [v
      :gap "20px"

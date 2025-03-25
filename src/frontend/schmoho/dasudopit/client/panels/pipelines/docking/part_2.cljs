@@ -4,11 +4,34 @@
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
    [reagent.core :as r]
-   [schmoho.dasudopit.client.common.forms :as forms]
+   [schmoho.dasudopit.client.forms :as forms]
    [schmoho.dasudopit.client.http :as http]
-   [schmoho.dasudopit.client.common.views.widgets :as widgets]
-   [schmoho.dasudopit.client.css.forms :as css]
-   [schmoho.dasudopit.client.common.views.protein :as protein]))
+   [schmoho.components.css.forms :as css]))
+
+;; (defn taxon-protein-lookup
+;;   [taxon]
+;;   (let [protein-model (rf/subscribe [:forms/by-path :docking :input-model :taxon (:id taxon) :protein])
+;;         protein       @(rf/subscribe [:data/protein (:id @protein-model)])
+;;         form-valid?   @(rf/subscribe [:forms.docking.part-2/valid?])
+;;         proteome      @(rf/subscribe [:data/proteome (:id taxon)])]
+;;     [v
+;;      :children
+;;      [[:h6 (:scientificName taxon)]
+;;       [widgets/protein-search
+;;        :proteome  proteome
+;;        :model     protein-model
+;;        :on-change #(do
+;;                      (rf/dispatch [::forms/set-form-data
+;;                                   :docking
+;;                                   :input-model
+;;                                   :taxon
+;;                                   (:id taxon)
+;;                                   :protein
+;;                                    %])
+;;                      (rf/dispatch [::http/http-get [:data :structure %]]))]
+;;       (when (and protein (not form-valid?))
+;;         [protein/protein-info->hiccup protein])]]))
+
 
 (defn handle-get-structures-click-fn
   [selected-proteins selected-taxons]
@@ -43,49 +66,25 @@
            :attr     {:on-mouse-over (com/handler-fn (reset! hover? true))
                       :on-mouse-out  (com/handler-fn (reset! hover? false))}])))))
 
-;; (defn taxon-protein-lookup
-;;   [taxon]
-;;   (let [protein-model (rf/subscribe [:forms/by-path :docking :input-model :taxon (:id taxon) :protein])
-;;         protein       @(rf/subscribe [:data/protein (:id @protein-model)])
-;;         form-valid?   @(rf/subscribe [:forms.docking.part-2/valid?])
-;;         proteome      @(rf/subscribe [:data/proteome (:id taxon)])]
-;;     [v
-;;      :children
-;;      [[:h6 (:scientificName taxon)]
-;;       [widgets/protein-search
-;;        :proteome  proteome
-;;        :model     protein-model
-;;        :on-change #(do
-;;                      (rf/dispatch [::forms/set-form-data
-;;                                   :docking
-;;                                   :input-model
-;;                                   :taxon
-;;                                   (:id taxon)
-;;                                   :protein
-;;                                    %])
-;;                      (rf/dispatch [::http/http-get [:data :structure %]]))]
-;;       (when (and protein (not form-valid?))
-;;         [protein/protein-info->hiccup protein])]]))
-
-
-;; (defn part-2
-;;   []
-;;   (let [form-valid?        @(rf/subscribe [:forms.docking.part-2/valid?])
-;;         taxon-lookup       @(rf/subscribe [:data/taxons-map])
-;;         selected-taxons    (-> @(rf/subscribe [:forms.docking/input-model]) :taxon keys set)
-;;         proteome-searchers (->> selected-taxons
-;;                                 (map taxon-lookup)
-;;                                 (map
-;;                                  (fn [taxon]
-;;                                    ^{:key (:id taxon)}
-;;                                    [taxon-protein-lookup taxon])))]
-;;     [v
-;;      :children
-;;      [(when-not form-valid?
-;;         [:span "Please choose a protein for each taxon and press the button to get the structures."])
-;;       [h
-;;        :min-height "300px"
-;;        :gap "30px"
-;;        :children
-;;        (into [] proteome-searchers)]
-;;       [get-structures-button]]]))
+(defn part-2
+  []
+  #_(let [form-valid?        @(rf/subscribe [:forms.docking.part-2/valid?])
+        taxon-lookup       @(rf/subscribe [:data/taxons-map])
+        selected-taxons    (-> @(rf/subscribe [:forms.docking/input-model]) :taxon keys set)
+        proteome-searchers (->> selected-taxons
+                                (map taxon-lookup)
+                                (map
+                                 (fn [taxon]
+                                   ^{:key (:id taxon)}
+                                   [taxon-protein-lookup taxon])))]
+    [v
+     :children
+     [(when-not form-valid?
+        [:span "Please choose a protein for each taxon and press the button to get the structures."])
+      [h
+       :min-height "300px"
+       :gap "30px"
+       :children
+       (into [] proteome-searchers)]
+      [get-structures-button]]])
+  [get-structures-button])

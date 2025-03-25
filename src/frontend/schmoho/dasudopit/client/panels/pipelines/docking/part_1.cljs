@@ -6,22 +6,6 @@
    [schmoho.dasudopit.client.db :as db]
    [schmoho.utils.core :refer [cool-select-keys]]))
 
-(defn ligands->choices
-  [ligands]
-  (->> ligands
-       (mapv #(cool-select-keys
-               %
-               [[:label :name]
-                [:id [:json :id :id :cid]]]))))
-
-(defn taxons->choices
-  [taxons]
-  (->> taxons
-       (mapv #(cool-select-keys
-               %
-               [[:label :scientificName]
-                [:id :id]]))))
-
 (defn ligand-multi-choice
   "Reagent component"
   [& {:keys [choices on-change model]}]
@@ -37,7 +21,7 @@
      :model         model
      :on-change     #(when on-change
                        (on-change %))
-     :width         "450px"
+     :width         "47.5%"
      :left-label    "Available ligands"
      :right-label   "Selected ligands"
      :placeholder   "Select at least one ligand."
@@ -54,11 +38,11 @@
        :size :large
        :style {:width "410px"}]]]
     [com/multi-select :src (at)
+     :width         "47.5%"
      :choices       choices
      :model         model
      :on-change     #(when on-change
                        (on-change %))
-     :width         "450px"
      :left-label    "Available taxons"
      :right-label   "Selected taxons"
      :placeholder   "Select some taxons."
@@ -91,12 +75,13 @@
 
 (defn part-1
   []
-  (let [taxons       @(rf/subscribe [:data/taxons-list])
-        ligands      @(rf/subscribe [:data/ligands-list])
+  (let [taxons       @(rf/subscribe [:data/taxon-choices])
+        ligands      @(rf/subscribe [:data/ligand-choices])
         form-valid?  @(rf/subscribe [:forms.docking.part-1/valid?])
         taxon-model  (rf/subscribe [:forms.docking.part-1/taxon-model])
         ligand-model (rf/subscribe [:forms.docking.part-1/ligand-model])]
     [v
+     :width "100%"
      :children
      [(when-not form-valid?
         [:span "Please choose at least one taxon and ligand."])
@@ -104,11 +89,11 @@
        :src      (at)
        :children
        [[taxon-multi-choice
-         :choices   (taxons->choices taxons)
+         :choices   taxons
          :model     taxon-model
          :on-change #(handle-set-taxons %)]
-        [com/gap :size "50px"]
+        [com/gap :size "1"]
         [ligand-multi-choice
-         :choices   (ligands->choices ligands)
+         :choices   ligands
          :model     ligand-model
          :on-change #(handle-set-ligands %)]]]]]))

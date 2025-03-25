@@ -120,7 +120,7 @@
                          :structure     "structure.pdb"
                          :docking-ready "structure.pdbqt"
                          :data          "data.edn"
-                         :png           "image.b64"
+                         :image         "image.b64"
                          :sdf           "structure.sdf")]
           (utils/write! (str path "/" filename)
                         data))))))

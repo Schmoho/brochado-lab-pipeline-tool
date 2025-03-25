@@ -37,13 +37,15 @@
 (rf/reg-sub
  :data/taxon-choices
  :<- [:data/taxons-list]
- (fn [taxons]
-   (conj (map #(cool-select-keys
-                  %
-                  {:id    [:meta :id]
-                   :label [:meta :name]})
-               taxons)
-          {:id nil :label "-"})))
+ (fn [taxons [_ optional?]]
+   (let [choices (map #(cool-select-keys
+                        %
+                        {:id    [:meta :id]
+                         :label [:meta :name]})
+                      taxons)]
+     (if optional?
+       (conj choices {:id nil :label "-"})
+       choices))))
 
 ;; === Proteome ===
 
@@ -92,6 +94,17 @@
  :<- [:data/ligands-map]
  (fn [ligands [_ id]]
    (get ligands id)))
+
+
+(rf/reg-sub
+ :data/ligand-choices
+ :<- [:data/ligands-list]
+ (fn [ligands]
+   (->> ligands
+        (mapv #(cool-select-keys
+                %
+                {:label [:meta :title]
+                 :id    [:meta :cid]})))))
 
 ;; === Structure ===
 

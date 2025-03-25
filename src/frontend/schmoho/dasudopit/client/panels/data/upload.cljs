@@ -17,20 +17,19 @@
   [v
    :gap "20px"
    :children
-   [#_[card
+   [[card
      :header "Upload volcano data"
      :body [upload-volcano-form]]
-    #_[card
+    [card
      :header "Provision Ligand via Pubchem"
      :body [provision-ligand-form]]
-    #_[card
+    [card
      :header "Provision Organism via Uniprot"
      :body [provision-taxon-form]]
-    #_[card
+    [card
      :width "100%"
      :header "Upload protein structure"
-       :body]
-    [upload-structure-form]]])
+     :body [upload-structure-form]]]])
 
 (defmethod routing/panels :routing.data/upload [] [upload-data-panel])
 (defmethod routing/header :routing.data/upload []

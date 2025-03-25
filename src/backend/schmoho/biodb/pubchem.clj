@@ -18,7 +18,7 @@
 
 (defn get-compound-data-by-id
   [cid & {:keys [sdf?]
-          :or {sdf? true}}]
+          :or   {sdf? true}}]
   (let [sdf  (when sdf?
                (-> (http/get (str cid-prefix cid "/SDF"))
                    :body))
@@ -34,7 +34,7 @@
                  :body
                  utils/encode-base64)]
     (cond-> {:meta json
-             :png  png}
+             :image png}
       sdf (assoc :sdf sdf))))
 
 
@@ -54,7 +54,7 @@
 (comment
 
   (-> (get-compound-data-by-id "5742673")
-      (update :png utils/encode-base64)
+      (update :image utils/encode-base64)
       (->> (utils/write!
             "data/raw/pubchem/compound/5742673.edn")))
 

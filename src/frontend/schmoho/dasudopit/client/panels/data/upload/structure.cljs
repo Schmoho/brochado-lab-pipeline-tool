@@ -42,7 +42,7 @@
   (let [taxon-model   (model :taxon)
         protein-model (model :protein)
         pdb           (model :pdb)
-        taxon-choices @(rf/subscribe [:data/taxon-choices])
+        taxon-choices @(rf/subscribe [:data/taxon-choices :optional])
         protein       (rf/subscribe [:data/protein (:id @protein-model)])
         proteome      (-> @(rf/subscribe [:data/proteome @taxon-model]) :data)
         form-valid?   @(rf/subscribe [:upload.structure/form-valid?])
