@@ -39,3 +39,7 @@
    :border-radius "0px"
    :padding       "10px 10px"
    :margin        "5px 0px"})
+
+(defclass suggestions
+  []
+  {:z-index "10"})

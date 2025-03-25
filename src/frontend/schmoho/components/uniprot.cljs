@@ -2,6 +2,7 @@
   (:require
    [re-com.core :as com :refer [at] :rename {h-box h, v-box v}]
    [schmoho.components.forms :as forms]
+   [schmoho.components.css.forms :as css.forms]
    [schmoho.components.structure :refer [minicard]]
    [schmoho.components.utils.uniprot :as utils]
    [re-frame.core :as rf]))
@@ -178,4 +179,10 @@
        :suggestion-to-string #(:protein-name %)
        :render-suggestion
        (fn [{:keys [protein-name gene-name id]}]
-         [:span (str id " - " gene-name " - " protein-name)])]]]))
+         [:span (str id " - " gene-name " - " protein-name)])
+       :parts {:suggestions-container {:style {:z-index "10"
+                                               :background-color "white"}
+                                       :class (css.forms/suggestions)}
+               :suggestion            {:style {:z-index "10"
+                                               :background-color "white"}
+                                       :class (css.forms/suggestions)}}]]]))
