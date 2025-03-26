@@ -30,7 +30,7 @@
        :backdrop-on-click #((setter :active-preview) nil)
        :child
        (let [active-protein    @(rf/subscribe [:data/protein (:protein active-preview)])
-             protein-structure @(rf/subscribe [:data/structure
+             protein-structure @(rf/subscribe [:data/structure-by-type
                                                (:protein active-preview)
                                                (name (:source active-preview))
                                                (:id active-preview)])]

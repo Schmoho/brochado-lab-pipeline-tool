@@ -122,6 +122,14 @@
 (rf/reg-sub
  :data/structure
  :<- [::data]
+ (fn [data [_ protein-id]]
+   (-> data
+       :structure
+       (get protein-id))))
+
+(rf/reg-sub
+ :data/structure-by-type
+ :<- [::data]
  (fn [data [_ protein-id type id]]
    (-> data
        :structure

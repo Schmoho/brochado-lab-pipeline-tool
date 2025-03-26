@@ -212,3 +212,21 @@
              :data-dismiss "alert"
              :aria-label "Close"}
     [:span {:aria-hidden "true"} "×"]]])
+
+
+(defn eliding-label
+  [label]
+  (if (< 50 (count label))
+    [:h6 (str (subs label 0 50) "...")]
+    [:h6 (str label)]))
+
+(defn pill-badge
+  [& {:keys [label true?]}]
+  [h
+   :children
+   [[:span {:class "badge badge-secondary"} label]
+    (if true?
+      [:i {:class "zmdi zmdi-check-circle"
+           :style {:color "green"}}]
+      [:i {:class "zmdi zmdi-block"
+           :style {:color "red"}}])]])

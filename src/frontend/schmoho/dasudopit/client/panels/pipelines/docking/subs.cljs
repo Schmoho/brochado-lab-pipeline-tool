@@ -19,21 +19,21 @@
 ;; === Part 1 ===
 
 (rf/reg-sub
- :forms.docking.part-1/taxon-model
+ :forms.docking.provide-data/taxon-model
  :<- [:forms.docking/input-model]
  (fn [form]
    (-> form :taxon keys set)))
 
 (rf/reg-sub
- :forms.docking.part-1/ligand-model
+ :forms.docking.provide-data/ligand-model
  :<- [:forms.docking/input-model]
  (fn [form]
    (-> form :ligand set)))
 
 (rf/reg-sub
- :forms.docking.part-1/valid?
- :<- [:forms.docking.part-1/taxon-model]
- :<- [:forms.docking.part-1/ligand-model]
+ :forms.docking.provide-data/valid?
+ :<- [:forms.docking.provide-data/taxon-model]
+ :<- [:forms.docking.provide-data/ligand-model]
  (fn [[taxon ligand]]
    (and (not-empty taxon)
         (not-empty ligand)
@@ -43,7 +43,7 @@
 ;; === Part 2 ===
 
 (rf/reg-sub
- :forms.docking.part-2/selected-protein-for-taxon-resolved
+ :forms.docking.choose-binding-sites/selected-protein-for-taxon-resolved
  :<- [:forms.docking/input-model]
  :<- [:data/proteomes]
  (fn
@@ -57,7 +57,7 @@
 
 
 (rf/reg-sub
- :forms.docking.part-2/valid?
+ :forms.docking.choose-binding-sites/valid?
  :<- [:forms.docking/input-model]
  :<- [:data/structures]
  (fn [[input-model structures]]
@@ -67,7 +67,7 @@
 
 
 ;; (rf/reg-sub
-;;  :forms.docking.part-2/show-modal?
+;;  :forms.docking.choose-binding-sites/show-modal?
 ;;  :<- [:forms.docking/input-model]
 ;;  (fn [input-model]
 ;;    (let [show-modal? (->> input-model :taxon vals (map (comp :id :protein)))]

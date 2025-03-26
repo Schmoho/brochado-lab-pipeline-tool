@@ -130,12 +130,17 @@
      (:description feature-view-data)]]])
 
 (defn protein-structural-features-overview
-  [protein]
+  [protein & {:keys [badges]}]
   (let [{:keys [has-afdb? domains active-sites binding-sites]} (utils/protein-info protein)]
     [minicard
-     "Structural Features"
+     [h
+      :children
+      [[:span "Structural Features"]
+       [com/gap :size "1"]
+       [:a {:href (str "https://www.uniprot.org/uniprotkb/" (:id protein)) :target "_blank"} (:id protein)]]]
      [v
       :style {:font-size "12px"}
+      :gap "5px"
       :children
       (concat
        [[h
@@ -143,12 +148,15 @@
          :align :center
          :justify :end
          :children
-         [[:span {:class "badge badge-secondary"} "AlphaFold structure available"]
-          (if has-afdb?
-            [:i {:class "zmdi zmdi-check-circle"
-                 :style {:color "green"}}]
-            [:i {:class "zmdi zmdi-block"
-                 :style {:color "red"}}])]]]
+         (into [[h
+                 :children
+                 [[:span {:class "badge badge-secondary"} "AlphaFold structure available"]
+                  (if has-afdb?
+                    [:i {:class "zmdi zmdi-check-circle"
+                         :style {:color "green"}}]
+                    [:i {:class "zmdi zmdi-block"
+                         :style {:color "red"}}])]]]
+               badges)]]
        [[:h6 "Domains"]]
        [[v
          :children

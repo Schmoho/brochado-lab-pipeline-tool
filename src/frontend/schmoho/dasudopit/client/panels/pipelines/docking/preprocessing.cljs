@@ -1,4 +1,4 @@
-(ns schmoho.dasudopit.client.panels.pipelines.docking.part-3
+(ns schmoho.dasudopit.client.panels.pipelines.docking.preprocessing
   (:require
    [re-com.core :as com :rename {h-box h, v-box v}]
    [re-frame.core :as rf]
@@ -49,7 +49,7 @@
                              "yellow"))}}
        :config {:backgroundColor "white"}]]]))
 
-(defn part-3
+(defn preprocessing-form
   []
   (let [viewers
         (->> @(rf/subscribe [:forms.docking/input-model])

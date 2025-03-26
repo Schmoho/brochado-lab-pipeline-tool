@@ -2,9 +2,9 @@
   (:require
    [re-frame.core :as rf]
    [schmoho.components.structure :as structure]
-   [schmoho.dasudopit.client.panels.pipelines.docking.part-1 :refer [part-1]]
-   [schmoho.dasudopit.client.panels.pipelines.docking.part-2 :refer [part-2]]
-   [schmoho.dasudopit.client.panels.pipelines.docking.part-3 :refer [part-3]]
+   [schmoho.dasudopit.client.panels.pipelines.docking.provide-data :refer [provide-data-form]]
+   [schmoho.dasudopit.client.panels.pipelines.docking.choose-binding-sites :refer [choose-binding-sites-form]]
+   [schmoho.dasudopit.client.panels.pipelines.docking.preprocessing :refer [preprocessing-form]]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-4 :refer [part-4]]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-5 :refer [part-5]]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-6 :refer [part-6]]
@@ -14,16 +14,16 @@
 (defn docking-panel
   []
   [structure/collapsible-accordion-2
-   ["1. Choose taxons and ligands" [part-1]]
-   (when @(rf/subscribe [:forms.docking.part-1/valid?])
-     ["2. Choose proteins and binding sites" [part-2]])
-   #_(when @(rf/subscribe [:forms.docking.part-2/valid?])
-     ["3. Preprocessing" [part-3]])
-   #_(when @(rf/subscribe [:forms.docking.part-2/valid?])
+   ["1. Provide and choose data" [provide-data-form]]
+   #_(when @(rf/subscribe [:forms.docking.choose-binding-sites/valid?])
+     ["2. Preprocessing" [preprocessing-form]])
+   #_(when @(rf/subscribe [:forms.docking.provide-data/valid?])
+     ["2. Choose proteins and binding sites" [choose-binding-sites-form]])
+   #_(when @(rf/subscribe [:forms.docking.choose-binding-sites/valid?])
      ["4. Choose target site" [part-4]])
-   #_(when @(rf/subscribe [:forms.docking.part-2/valid?])
+   #_(when @(rf/subscribe [:forms.docking.choose-binding-sites/valid?])
      ["5. Download docking data" [part-5]])
-   #_(when @(rf/subscribe [:forms.docking.part-2/valid?])
+   #_(when @(rf/subscribe [:forms.docking.choose-binding-sites/valid?])
      ["6. Upload docking results" [part-6]])])
 
 (defmethod routing/panels :routing.pipelines/docking [] [docking-panel])
