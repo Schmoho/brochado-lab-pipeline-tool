@@ -175,7 +175,10 @@
     (db/upload-dataset! path taxon-dataset)
     (future (let [proteins (uniprot.api/proteins-by-proteome (:id proteome))]
               (db/upload-dataset! (str path "/proteome")
-                                  {:data (map #(assoc % :id (:primaryAccession %)) proteins)
+                                  {:data (let [proteome (map #(assoc % :id (:primaryAccession %)) proteins)]
+                                           (zipmap
+                                            (map :id proteome)
+                                            proteome))
                                    :meta (merge {:proteome-id   (:id proteome)
                                                  :taxon-id      taxon-id
                                                  :proteome-type (:proteomeType proteome)}

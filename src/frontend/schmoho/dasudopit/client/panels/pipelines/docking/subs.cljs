@@ -1,44 +1,78 @@
 (ns schmoho.dasudopit.client.panels.pipelines.docking.subs
   (:require
-   [re-frame.core :as rf]))
+   [re-frame.core :as rf]
+   [schmoho.dasudopit.client.forms :as forms]))
 
 ;; === Top Level ===
 
 (rf/reg-sub
- :forms/docking
- :<- [:forms/all-forms]
+ ::form
+ :<- [::forms/all-forms]
  (fn [forms]
    (:docking forms)))
 
-(rf/reg-sub
- :forms.docking/input-model
- :<- [:forms/docking]
- (fn [form]
-   (:input-model form)))
+;; (rf/reg-sub
+;;  :forms.docking/input-model
+;;  :<- [:forms/docking]
+;;  (fn [form]
+;;    (:input-model form)))
 
 ;; === Part 1 ===
 
 (rf/reg-sub
- :forms.docking.provide-data/taxon-model
- :<- [:forms.docking/input-model]
+ ::selected-taxons-model
+ :<- [::form]
  (fn [form]
    (-> form :taxon keys set)))
 
 (rf/reg-sub
- :forms.docking.provide-data/ligand-model
- :<- [:forms.docking/input-model]
+ :selected-ligands-model
+ :<- [::form]
  (fn [form]
    (-> form :ligand set)))
 
 (rf/reg-sub
- :forms.docking.provide-data/valid?
+ ::selected-structures-model
+ :<- [:forms/by-path :docking]
  :<- [:forms.docking.provide-data/taxon-model]
- :<- [:forms.docking.provide-data/ligand-model]
- (fn [[taxon ligand]]
-   (and (not-empty taxon)
+ (fn [[form taxon-model]]
+   (or (:tab form)
+       (-> taxon-model first))))
+
+(rf/reg-sub
+ :form.docking.provide-data/tabbed-taxon-model
+ :<- [:forms.docking.provide-data/tab-model]
+ :<- [:data/taxons-map]
+ (fn [[tab-model taxons]]
+   (get taxons tab-model)))
+
+(rf/reg-sub
+ ::current-protein
+ :<- [::form]
+ (fn [form [_ taxon]]
+   (let [taxon-id (-> taxon :meta :id)]
+     (-> form :taxon (get taxon-id) :protein))))
+
+(rf/reg-sub
+ :forms.docking.provide-data/current-protein-structure
+ :<- [:forms.docking.provide-data/tab-model]
+ :<- [:forms/by-path :docking :input-model :taxon]
+ :<- [:data/structures-map]
+ (fn [[tab taxons-input structures]]
+   (let [protein (get-in taxons-input [tab :protein])
+         structure (get structures (:id protein))]
+     structure)))
+
+(rf/reg-sub
+ ::provided-data-valid?
+ ;; :<- [::taxon-model]
+ ;; :<- [::ligand-model]
+ (fn [_]
+   #_(and (not-empty taxon)
         (not-empty ligand)
         (some? taxon)
-        (some? ligand))))
+        (some? ligand))
+   true))
 
 ;; === Part 2 ===
 

@@ -31,13 +31,13 @@
 ;; === Subs ===
 
 (rf/reg-sub
- :forms/all-forms
+ ::all-forms
  (fn [db _]
    (-> db :forms)))
 
 (rf/reg-sub
  :forms/by-path
- :<- [:forms/all-forms]
+ :<- [::all-forms]
  (fn [forms [_ & path]]
    (get-in forms path)))
 

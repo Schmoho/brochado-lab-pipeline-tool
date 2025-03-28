@@ -158,3 +158,17 @@
    :children
    [[com/gap :size "1"]
     component]])
+
+(defn vertical-bar-tabs
+  [& {:keys [model tabs on-change style id-fn label-fn]}]
+  (let [buttons (->> tabs
+                     (map (fn [stuff]
+                            [:button
+                             {:type "button"
+                              :style style
+                              :class "btn btn-secondary"
+                              :on-click #(on-change (id-fn stuff))}
+                             (subs (label-fn stuff) 0 30)])))]
+    (into [:div {:class "btn-group-vertical"
+                 :style style}]
+          buttons)))

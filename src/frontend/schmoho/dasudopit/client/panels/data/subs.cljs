@@ -68,12 +68,27 @@
  :<- [:data/proteomes-list]
  (fn [proteomes [_ protein-id]]
    (->> proteomes
-        (mapcat
-         (fn [proteome]
-           (filter
-            #(= protein-id (:id %))
-            (:data proteome))))
+        (map (comp
+              (fn [proteome]
+                (get proteome protein-id))
+              :data))
         first)))
+
+(rf/reg-sub
+ :data/protein-choices
+ :<- [:data/structures-map]
+ (fn [structures [_ protein-id]]
+   (let [structure (get structures protein-id)
+         _         (prn structure)
+         choices   (->> structure
+                        (mapcat
+                         (fn [[group stuff]]
+                           (map (fn [[_ {:keys [meta]}]]
+                                  {:group group
+                                   :id    meta
+                                   :label (str (:name meta))})
+                                stuff))))]
+     choices)))
 
 ;; === Ligand ===
 
@@ -107,6 +122,12 @@
                  :id    [:meta :cid]})))))
 
 ;; === Structure ===
+
+(rf/reg-sub
+ :data/structures-map
+ :<- [::data]
+ (fn [data]
+   (:structure data)))
 
 (rf/reg-sub
  :data/structures-list

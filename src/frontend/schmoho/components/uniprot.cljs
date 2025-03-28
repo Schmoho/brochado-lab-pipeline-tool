@@ -91,15 +91,15 @@
   (fn [s]
     (let [fragment (re-pattern (str "(?i)" (or s "")))]
       (->> proteome
-           (keep (fn [protein]
+           :data
+           (keep (fn [[protein-id protein]]
                    (let [gene-name    (or (-> protein :genes first :geneName :value)
                                           (-> protein :genes first :orderedLocusNames :value)
                                           "-")
                          protein-name (or (-> protein :proteinDescription :recommendedName :fullName :value)
                                           (-> protein :proteinDescription :submissionNames first :fullName :value)
                                           "-")
-                         protein-id   (or (-> protein :primaryAccession)
-                                          "-")]
+                         protein-id   (or protein-id "-")]
                      (when (or (re-find fragment gene-name)
                                (re-find fragment protein-name)
                                (re-find fragment protein-id))

@@ -153,15 +153,26 @@
                   :on-mouse-out  (com/handler-fn (reset! hover? false))}])))
 
 (defn dropdown
-  [& {:keys [choices on-change placeholder model]}]
+  [& {:keys [choices on-change placeholder model info-body label style width required?]
+      :or   {required? true
+             label     ""
+             info-body [:<>]}}]
   (let [model (or model (r/atom nil))]
-    [com/single-dropdown
-     :model model
-     :choices choices
-     :on-change #(do
-                   (reset! model %)
-                   (on-change %))
-     :placeholder placeholder]))
+    [v
+     :children
+     [[info-label
+       (str (if required?
+              "Required: "
+              "Optional: ")
+            label)
+       info-body]    
+      [com/single-dropdown
+       :model model
+       :choices choices
+       :on-change #(do
+                     (reset! model %)
+                     (on-change %))
+       :placeholder placeholder]]]))
 
 
 (defn table

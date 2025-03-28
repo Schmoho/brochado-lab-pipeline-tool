@@ -4,6 +4,7 @@
    [re-frame.core :as rf]
    [day8.re-frame.http-fx]
    [ajax.core :as ajax]
+   [schmoho.utils.walk :refer [deep-merge]]
    [day8.re-frame.tracing :refer-macros [fn-traced]]))
 
 (def base-api "http://localhost:3001/api")
@@ -29,7 +30,7 @@
  (fn-traced
   [db [_ path response]]
   (-> db
-      (update-in path #(merge % response))
+      (update-in path #(deep-merge % response))
       (assoc-in [:queries :get path] :done))))
 
 (rf/reg-event-db
@@ -65,7 +66,7 @@
  (fn-traced
   [db [_ path response]]
   (-> db
-      (update-in path #(merge % response))
+      (update-in path #(deep-merge % response))
       (assoc-in [:queries :post path] :done))))
 
 (rf/reg-event-fx
