@@ -8,7 +8,6 @@
 
 (defn ligand-viewer
   [ligand]
-  (prn ligand)
   (let [{:keys [meta image]} ligand]
     [v
      :align :center

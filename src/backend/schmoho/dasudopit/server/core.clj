@@ -68,7 +68,7 @@
         ["/:protein-id"
          [""
           {:get {:summary "Get all structures (AFDB, input and processed) for a UniProt protein ID."
-                 :handler #'data-handler/get-structures-metadata}}]
+                 :handler #'data-handler/get-single-structures-metadata}}]
          ["/afdb"
           {:get {:summary "Get AFDB PDB for a UniProt ID."
                  :handler

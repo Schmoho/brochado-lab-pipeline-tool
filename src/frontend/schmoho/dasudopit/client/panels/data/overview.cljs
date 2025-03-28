@@ -67,7 +67,10 @@
       ["Structures"
        [components.forms/table structures
         :columns
-        [{:id           :protein
+        [{:id           :name
+          :header-label "Name"
+          :row-label-fn :name}
+         {:id           :protein
           :header-label "Uniprot ID"
           :row-label-fn
           (fn [row]
@@ -106,14 +109,14 @@
                               (:id row)])
                 ((setter :active-preview) row)
                 ((setter :preview-type) :protein))])}
-         #_{:id           :actions
+         {:id           :actions
             :header-label "Actions"
             :row-label-fn
             (fn [row]
               [com/row-button
                :md-icon-name "zmdi-delete"
                :mouse-over-row? true
-               :on-click #(rf/dispatch [::http/http-delete [:data :structure (-> row :meta :id)]])])}]]]
+               :on-click #(rf/dispatch [::http/http-delete [:data :structure (:protein row) :input (:id row)]])])}]]]
       ["Volcanos"
        [components.forms/table volcanos
         :columns

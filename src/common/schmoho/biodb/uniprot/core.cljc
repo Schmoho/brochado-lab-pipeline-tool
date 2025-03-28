@@ -180,3 +180,8 @@
 
 (def protein-sequence (comp :value :sequence))
 
+(defn has-afdb?
+  [protein]
+  (->> (:uniProtKBCrossReferences protein)
+       (filter #(= "AlphaFoldDB" (:database %)))
+       seq))

@@ -12,16 +12,18 @@
    [schmoho.components.forms :as component.forms]
    [schmoho.components.structure :as structure]
    [clojure.string :as str]
-   [reagent.core :as r]))
+   [reagent.core :as r]
+   [schmoho.components.pdb :as pdb]))
 
 
 (def form-model
-  {:taxons          [:docking :selected-taxons]
-   :current-taxon   [:docking :current-taxon]
-   :ligands         [:docking :selected-ligands]
-   :proteins        [:docking :selected-proteins]
-   :current-protein [:docking :current-protein]
-   :structures      [:docking :selected-structures]})
+  {:taxons            [:docking :selected-taxons]
+   :current-taxon     [:docking :current-taxon]
+   :ligands           [:docking :selected-ligands]
+   :proteins          [:docking :selected-proteins]
+   :current-protein   [:docking :current-protein]
+   :structures        [:docking :selected-structures]
+   :current-structure [:docking :current-structure]})
 
 (def model (partial forms/model form-model))
 (def setter (partial forms/setter form-model))
@@ -75,69 +77,90 @@
 
 
 (defn protein-choice-component
-  [proteome]
+  []
   (let [taxon                (model :current-taxon)
-        protein-model        (model :current-protein)
-        structure            (rf/subscribe [:data/structure (:id @protein-model)])
-        input-structures     (get @structure "input")
-        processed-structures (get @structure "processed")]
-    [v
-     :gap "10px"
-     :children
-     [[uniprot/protein-search
-       :proteome  proteome
-       :model     protein-model
-       :on-change #(do
-                     (when (some? %)
-                       (rf/dispatch [::forms/set-form-data
-                                     :docking
-                                     :current-protein
-                                     (-> proteome :data (get (:id %)))])
-                       (rf/dispatch [::forms/update-form-data
-                                     :docking
-                                     :selected-proteins
-                                     (fn [selected-proteins]
-                                       (merge {@taxon %}))])
-                       (rf/dispatch [::forms/update-form-data
-                                     :docking
-                                     :selected-structures
-                                     (fn [selected-structures]
-                                       (dissoc selected-structures @taxon))]))
-                     (when (:id @protein-model)
-                       (db/get-data [:data :structure (:id @protein-model)])))]
-      (when @protein-model
-        [h
+        taxons-lookup        (rf/subscribe [:data/taxons-map])
+        protein-model        (model :current-protein)]
+    (fn []
+      (let [structure            (rf/subscribe [:data/structure (:id @protein-model)])
+            input-structures     (get @structure "input")
+            processed-structures (get @structure "processed")
+            proteome (-> @taxons-lookup (get @taxon) :proteome)]
+        [v
+         :gap "10px"
          :children
-         [[uniprot/protein-structural-features-overview
-           @protein-model
-           :badges
-           [(let [input-structures-count (count input-structures)]
-              [component.forms/pill-badge
-               :label (str "User-provided structures"
-                           (when (pos-int? input-structures-count) (str ": " input-structures-count)))
-               :true? (pos-int? input-structures-count)])
-            (let [processed-structures-count (count processed-structures)]
-              [component.forms/pill-badge
-               :label (str "Pre-processed structures"
-                           (when (pos-int? processed-structures-count) (str ": " processed-structures-count)))
-               :true? (pos-int? processed-structures-count)])]]]])]]))
+         [[uniprot/protein-search
+           :proteome  proteome
+           :model     protein-model
+           :on-change #(do
+                         (let [proteome (-> @taxons-lookup (get @taxon) :proteome)]
+                           (when (some? %)
+                             (rf/dispatch [::forms/set-form-data
+                                           :docking
+                                           :current-protein
+                                           (-> proteome :data (get (:id %)))])
+                             (rf/dispatch [::forms/update-form-data
+                                           :docking
+                                           :selected-proteins
+                                           (fn [selected-proteins]
+                                             (merge selected-proteins {@taxon %}))])
+                             #_(rf/dispatch [::forms/update-form-data
+                                           :docking
+                                           :selected-structures
+                                           (fn [selected-structures]
+                                             (dissoc selected-structures @taxon))])))
+                         (when (:id @protein-model)
+                           (db/get-data [:data :structure (:id @protein-model)])))]
+          (when @protein-model
+            [h
+             :children
+             [[uniprot/protein-structural-features-overview
+               @protein-model
+               :badges
+               [(let [input-structures-count (count input-structures)]
+                  [component.forms/pill-badge
+                   :label (str "User-provided structures"
+                               (when (pos-int? input-structures-count) (str ": " input-structures-count)))
+                   :true? (pos-int? input-structures-count)])
+                (let [processed-structures-count (count processed-structures)]
+                  [component.forms/pill-badge
+                   :label (str "Pre-processed structures"
+                               (when (pos-int? processed-structures-count) (str ": " processed-structures-count)))
+                   :true? (pos-int? processed-structures-count)])]]]])]]))))
+
+(defn handle-set-structure
+  [structure taxon-model]
+  (do
+    ((setter :current-structure) structure)
+    (rf/dispatch [::forms/update-form-data
+                  :docking
+                  :selected-structures
+                  (fn [selected-structures]
+                    (merge selected-structures {taxon-model structure}))])
+    (let [source (name (:source structure))]
+      (if (= "afdb" source)
+        (db/get-data [:data :structure (:protein structure) source])
+        (db/get-data [:data :structure (:protein structure) source (:id structure)])))))
 
 (defn structure-choice-component
   []
-  (let [taxon-model          (model :current-taxon)
-        protein-model        (model :current-protein)
-        model                (r/atom nil)
-        choices              @(rf/subscribe [:data/protein-choices (:id @protein-model)])]
-    #_[v
+  (let [taxon-model       (model :current-taxon)
+        protein-model     (model :current-protein)
+        structure-model   (model :current-structure)
+        choices           @(rf/subscribe [:data/structure-choices @protein-model])
+        current-structure @(rf/subscribe [::subs/current-structure-data])]
+    [v
      :children
      [[component.forms/dropdown
        :label "Structure"
-       :model model
+       :model structure-model
        :choices choices
-       :on-change #(reset! model %)
+       :on-change #(handle-set-structure % @taxon-model)
        :placeholder "Choose a protein structure"]
-      [:p {:style {:white-space "pre"}}
-       (with-out-str (pprint/pprint choices))]]]))
+      (when current-structure)
+      [pdb/structural-features-viewer
+       :pdb (:structure current-structure)
+       :uniprot @protein-model]]]))
 
 (defn taxon-protein-lookup-tab-bar
   [taxons]
@@ -150,25 +173,30 @@
      :label-fn (comp :name :meta)
      :style {:max-width "250px"
              :width     "250px"}
-     :on-change (setter :current-taxon)
+     :on-change #(do
+                   ((setter :current-taxon) %)
+                   ((setter :current-protein) (@(model :proteins) %))
+                   ((setter :current-structure) (@(model :structures) %)) )
      :tabs taxons]]])
 
 (defn taxon-sub-component
   [taxons current-taxon]
-  [h
-   :gap "10px"
-   :children
-   [[taxon-protein-lookup-tab-bar taxons]
-    [v
+  (fn [taxons current-taxon]
+    [h
+     :gap "10px"
      :children
-     [[structure/flex-horizontal-center
-       [component.forms/eliding-label (-> current-taxon :meta :name)]]
-      [h
+     [[taxon-protein-lookup-tab-bar taxons]
+      [v
        :children
-       [[protein-choice-component (:proteome current-taxon)]
-        [:div
-         {:style {:width "100%"}}
-         [structure-choice-component]]]]]]]])
+       [[structure/flex-horizontal-center
+         [component.forms/eliding-label (-> current-taxon :meta :name)]]
+        [h
+         :children
+         [[protein-choice-component]
+          (when @(model :current-protein)
+            [:div
+            {:style {:width "100%"}}
+            [structure-choice-component]])]]]]]]))
 
 (defn handle-set-ligands
   [ligands]
@@ -180,6 +208,7 @@
 (defn handle-set-taxons
   [taxons]
   (doseq [chosen-taxon taxons]
+    
     (db/get-data [:data :taxon chosen-taxon :proteome]))
   (rf/dispatch [::forms/set-form-data
                 :docking
@@ -230,7 +259,7 @@
           (when selected-taxons
             [taxon-sub-component selected-taxons (@taxons-lookup @current-taxon) ]))]])))
 
-#_(-> @re-frame.db/app-db :data :structure)
+#_(-> @re-frame.db/app-db :forms :docking)
 ;; (db/get-data [:data :structure "P02918"])
 ;; "P0A9Q9"
 ;; "P02919"

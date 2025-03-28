@@ -157,22 +157,19 @@
       :or   {required? true
              label     ""
              info-body [:<>]}}]
-  (let [model (or model (r/atom nil))]
-    [v
-     :children
-     [[info-label
-       (str (if required?
-              "Required: "
-              "Optional: ")
-            label)
-       info-body]    
-      [com/single-dropdown
-       :model model
-       :choices choices
-       :on-change #(do
-                     (reset! model %)
-                     (on-change %))
-       :placeholder placeholder]]]))
+  [v
+   :children
+   [[info-label
+     (str (if required?
+            "Required: "
+            "Optional: ")
+          label)
+     info-body]    
+    [com/single-dropdown
+     :model model
+     :choices choices
+     :on-change #(when on-change (on-change %))
+     :placeholder placeholder]]])
 
 
 (defn table

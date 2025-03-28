@@ -17,13 +17,10 @@
      {:use-blast? false}}
     :docking {}}})
 
-;; @re-frame.db/app-db
-
 (rf/reg-event-db
  ::initialize-db
  (fn-traced [_ _]
             default-db))
-
 (defn get-data
   [path]
   (rf/dispatch [::http/http-get path]))

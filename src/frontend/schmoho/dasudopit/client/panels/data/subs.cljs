@@ -1,7 +1,8 @@
 (ns schmoho.dasudopit.client.panels.data.subs
   (:require
    [re-frame.core :as rf]
-   [schmoho.utils.core :refer [cool-select-keys]]))
+   [schmoho.utils.core :refer [cool-select-keys]]
+   [schmoho.biodb.uniprot.core :as uniprot]))
 
 (rf/reg-sub
  ::data
@@ -68,27 +69,33 @@
  :<- [:data/proteomes-list]
  (fn [proteomes [_ protein-id]]
    (->> proteomes
-        (map (comp
-              (fn [proteome]
-                (get proteome protein-id))
-              :data))
+        (keep (comp
+               (fn [proteome]
+                 (get proteome protein-id))
+               :data))
         first)))
 
+#_@(rf/subscribe [:data/structures-map])
+
 (rf/reg-sub
- :data/protein-choices
+ :data/structure-choices
  :<- [:data/structures-map]
- (fn [structures [_ protein-id]]
-   (let [structure (get structures protein-id)
-         _         (prn structure)
+ (fn [structures [_ protein]]
+   (let [structure (get structures (:id protein))
          choices   (->> structure
                         (mapcat
                          (fn [[group stuff]]
-                           (map (fn [[_ {:keys [meta]}]]
-                                  {:group group
-                                   :id    meta
-                                   :label (str (:name meta))})
-                                stuff))))]
+                           (if (:meta stuff)
+                             [{:group group
+                               :id    (:meta stuff)
+                               :label (-> stuff :meta :name)}]
+                             (map (fn [[_ {:keys [meta]}]]
+                                    {:group group
+                                     :id    meta
+                                     :label (str (:name meta))})
+                                  stuff)))))]
      choices)))
+
 
 ;; === Ligand ===
 

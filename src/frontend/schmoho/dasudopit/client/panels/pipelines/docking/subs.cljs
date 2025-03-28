@@ -3,6 +3,8 @@
    [re-frame.core :as rf]
    [schmoho.dasudopit.client.forms :as forms]))
 
+#_(-> @re-frame.db/app-db :data :structure)
+
 ;; === Top Level ===
 
 (rf/reg-sub
@@ -20,48 +22,19 @@
 ;; === Part 1 ===
 
 (rf/reg-sub
- ::selected-taxons-model
- :<- [::form]
- (fn [form]
-   (-> form :taxon keys set)))
-
-(rf/reg-sub
- :selected-ligands-model
- :<- [::form]
- (fn [form]
-   (-> form :ligand set)))
-
-(rf/reg-sub
- ::selected-structures-model
- :<- [:forms/by-path :docking]
- :<- [:forms.docking.provide-data/taxon-model]
- (fn [[form taxon-model]]
-   (or (:tab form)
-       (-> taxon-model first))))
-
-(rf/reg-sub
- :form.docking.provide-data/tabbed-taxon-model
- :<- [:forms.docking.provide-data/tab-model]
- :<- [:data/taxons-map]
- (fn [[tab-model taxons]]
-   (get taxons tab-model)))
-
-(rf/reg-sub
- ::current-protein
- :<- [::form]
- (fn [form [_ taxon]]
-   (let [taxon-id (-> taxon :meta :id)]
-     (-> form :taxon (get taxon-id) :protein))))
-
-(rf/reg-sub
- :forms.docking.provide-data/current-protein-structure
- :<- [:forms.docking.provide-data/tab-model]
- :<- [:forms/by-path :docking :input-model :taxon]
+ ::current-structure-data
  :<- [:data/structures-map]
- (fn [[tab taxons-input structures]]
-   (let [protein (get-in taxons-input [tab :protein])
-         structure (get structures (:id protein))]
-     structure)))
+ :<- [::form]
+ (fn [[structures form]]
+   (let [current-structure (:current-structure form)
+         source            (some-> (:source current-structure)
+                                   name)]
+     (if-not (= "afdb" source)
+       (get-in structures [(:protein current-structure)
+                           source
+                           (:id current-structure)])
+       (get-in structures [(:protein current-structure)
+                           source])))))
 
 (rf/reg-sub
  ::provided-data-valid?

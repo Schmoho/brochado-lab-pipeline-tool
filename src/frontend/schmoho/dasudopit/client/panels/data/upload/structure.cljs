@@ -35,7 +35,7 @@
  :<- [::http/queries]
  :<- [:forms/by-path :upload/structure :protein]
  (fn [[queries protein]]
-   (-> queries :post (get [:data :structure (:id protein) :input]))))
+   (-> queries :post (get [:data :structure (:id protein) "input"]))))
 
 (defn upload-structure-form
   []
@@ -44,7 +44,7 @@
         pdb           (model :pdb)
         taxon-choices @(rf/subscribe [:data/taxon-choices])
         protein       (rf/subscribe [:data/protein (:id @protein-model)])
-        proteome      (-> @(rf/subscribe [:data/proteome @taxon-model]) :data)
+        proteome      @(rf/subscribe [:data/proteome @taxon-model])
         form-valid?   @(rf/subscribe [:upload.structure/form-valid?])
         query-state   @(rf/subscribe [:upload.structure/post-query-state])]
     [v
@@ -100,7 +100,7 @@
            :label "Save"
            :on-click #(rf/dispatch
                        [::http/http-post
-                        [:data :structure (:id @protein) :input]
+                        [:data :structure (:id @protein) "input"]
                         {:params
                          {:structure @pdb
                           :meta      {:protein (:id @protein)
@@ -109,3 +109,5 @@
                                       :source  :input}}}])]]])]]))
 
 
+
+#_(-> @re-frame.db/app-db :data :taxon (get "208963") :proteome :data (get "A0A0H2ZHP9"))

@@ -30,7 +30,7 @@
   (tap> request)
   (try
     (let [path    (str/replace (:uri request) "/api/" "")
-          dataset (->> (utils/ffile-seq "data/structure" #_path)
+          dataset (->> (utils/ffile-seq path)
                        (filter #(and (= "meta" (utils/base-name %))
                                      (or (str/includes? (.getPath %) "input")
                                          (str/includes? (.getPath %) "processed"))))
@@ -51,6 +51,37 @@
       (log/error e)
       (throw e))))
 
+(defn get-single-structures-metadata
+  [request]
+  (tap> request)
+  (try
+    (let [protein-id (-> request :path-params :protein-id)
+          path       (str/replace (:uri request) "/api/" "")
+          dataset    (->> (utils/ffile-seq path)
+                       (filter #(and (= "meta" (utils/base-name %))
+                                     (or (str/includes? (.getPath %) "input")
+                                         (str/includes? (.getPath %) "processed"))))
+                       (map (juxt (comp
+                                   #(concat % [:meta])
+                                   #(str/split % #"/")
+                                   #(str/replace % (str path "/") "")
+                                   #(.getParent %))
+                                  utils/read-file))
+                       (reduce
+                        (fn [acc [path meta]]
+                          (assoc-in acc path meta))
+                        {}))
+          dataset    (if-not (get dataset "afdb")
+                       (let [afdb-meta (:meta (afdb/get-pdb protein-id))]
+                         (assoc dataset "afdb" {:meta afdb-meta}))
+                       dataset)]
+      (tap> dataset)
+      {:status 200
+       :body   dataset})
+    (catch Exception e
+      (log/error e)
+      (throw e))))
+
 (defn get-dataset
   ([request]
    (tap> request)
@@ -62,15 +93,18 @@
        {:status 404
         :body   {:message "Unknown dataset."}})))
   ([provisioning-fn request]
+   (prn "provis arc")
    (tap> request)
    (let [path    (str/replace (:uri request) "/api" "")
-         dataset (db/get-dataset path)]
+         dataset (not-empty (db/get-dataset path))]
      (if dataset
        {:status 200
         :body   dataset}
-       {:status 200
-        :body   (provisioning-fn (:path-params request)
-                               path)}))))
+       (let [provisioning-result (provisioning-fn (:path-params request) path)]
+         (prn "provisioning" (keys provisioning-result))
+         {:status 200
+          :body   provisioning-result})))))
+
 
 (defn delete-dataset!
   [request]
@@ -100,7 +134,8 @@
 (defn provision-afdb-structure
   [{:keys [protein-id]} path]
   (let [data (afdb/get-pdb protein-id)]
-    (db/upload-dataset! path data)))
+    (db/upload-dataset! path data)
+    data))
 
 (defn search-ligand
   [request]

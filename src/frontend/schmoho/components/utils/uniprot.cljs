@@ -43,9 +43,7 @@
         domains       (features-with-colors (get by-type "Domain") color/green-yellow-palette)
         active-sites  (features-with-colors (get by-type "Active site") color/red-palette)
         binding-sites (features-with-colors (get by-type "Binding site") color/purple-palette)
-        has-afdb?     (->> (:uniProtKBCrossReferences protein)
-                           (filter #(= "AlphaFoldDB" (:database %)))
-                           seq)]
+        has-afdb?     (uniprot/has-afdb? protein)]
     {:domains       domains
      :active-sites  active-sites
      :binding-sites binding-sites
