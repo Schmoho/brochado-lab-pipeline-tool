@@ -5,7 +5,8 @@
    [schmoho.components.css.forms :as css.forms]
    [schmoho.components.structure :refer [minicard]]
    [schmoho.components.utils.uniprot :as utils]
-   [re-frame.core :as rf]))
+   [re-frame.core :as rf]
+   [schmoho.biodb.uniprot.core :as uniprot]))
 
 ;; === Lineage ===
 
@@ -180,7 +181,7 @@
        :src (at)
        :model                model
        :data-source          suggestions-for-search
-       :placeholder          (str (:protein-name @model))
+       :placeholder          (uniprot/protein-name @model)
        :rigid?               true
        :change-on-blur?      true
        :on-change            #(when on-change (on-change %))

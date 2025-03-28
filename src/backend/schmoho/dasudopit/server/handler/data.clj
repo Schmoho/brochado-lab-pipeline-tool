@@ -93,7 +93,6 @@
        {:status 404
         :body   {:message "Unknown dataset."}})))
   ([provisioning-fn request]
-   (prn "provis arc")
    (tap> request)
    (let [path    (str/replace (:uri request) "/api" "")
          dataset (not-empty (db/get-dataset path))]
@@ -101,7 +100,6 @@
        {:status 200
         :body   dataset}
        (let [provisioning-result (provisioning-fn (:path-params request) path)]
-         (prn "provisioning" (keys provisioning-result))
          {:status 200
           :body   provisioning-result})))))
 

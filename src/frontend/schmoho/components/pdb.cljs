@@ -34,7 +34,7 @@
 ;; === Structure Viewer ===
 
 (defn pdb-viewer
-  [& {:keys [css objects style config on-load]}]
+  [& {:keys [css objects style config on-load structure-reload?]}]
   (let [ref          (react/createRef)
         viewer-state (r/atom nil)]
     (r/create-class
@@ -42,7 +42,13 @@
       :reagent-render
       (fn [& {:keys [objects style]}]
         (when-let [^js viewer @viewer-state]
-          (let [{:keys [spheres boxes]} objects]
+          (let [{:keys [spheres boxes pdb]} objects]
+            (when structure-reload?
+              (doto viewer
+                (.removeAllModels)
+                (.addModel pdb "pdb")
+                (.zoomTo)
+                (.zoom 1.2 1000)))
             (.removeAllShapes viewer)
             (doseq [sphere (filter some? spheres)]
               (when (:resi sphere)
@@ -51,7 +57,7 @@
                                                         :y (.-y selected-atoms)
                                                         :z (.-z selected-atoms)}
                                                :radius (or (:radius sphere) 4.0)
-                                               :color (:color sphere)})))))
+                                               :color  (:color sphere)})))))
             (doseq [box (filter some? boxes)]
               (.addBox viewer (clj->js box)))
             (doto viewer
@@ -66,14 +72,14 @@
          [:div {:class "mol-container"
                 :style {:width    "100%"
                         :height   "100%"
-                        :padding "4px"
+                        :padding  "4px"
                         :position "relative"}
                 :ref   ref}
           "Loading viewer..."]])
       :component-did-mount
       (fn [_]
         (when-let [node (.-current ref)]
-          (let [^js viewer (.createViewer threeDmol node (clj->js config))
+          (let [^js viewer                  (.createViewer threeDmol node (clj->js config))
                 {:keys [pdb spheres boxes]} objects]
             (reset! viewer-state viewer)
             (doseq [sphere (filter some? spheres)]
@@ -83,7 +89,7 @@
                                                         :y (.-y selected-atoms)
                                                         :z (.-z selected-atoms)}
                                                :radius (or (:radius sphere) 4.0)
-                                               :color (:color sphere)})))))
+                                               :color  (:color sphere)})))))
             (doseq [box (filter some? boxes)]
               (.addBox viewer (clj->js box)))
             (doto viewer
@@ -124,7 +130,7 @@
               {:resi location :radius 3.0 :color color}))))
 
 (defn structural-features-viewer
-  [& {:keys [style pdb uniprot]}]
+  [& {:keys [style pdb uniprot structure-reload?]}]
   (let [protein-info      (uniprot/protein-info uniprot)
         active-site-balls (protein-info->active-site-balls protein-info)
         coloring-fn       (protein-coloring-fn protein-info)]
@@ -132,6 +138,7 @@
      :children
      [[pdb-viewer
        :css style
+       :structure-reload? structure-reload?
        :objects {:pdb     pdb
                  :spheres active-site-balls}
        :style {:cartoon {:colorfunc coloring-fn}}

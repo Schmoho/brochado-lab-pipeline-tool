@@ -21,7 +21,6 @@
    :current-taxon     [:docking :current-taxon]
    :ligands           [:docking :selected-ligands]
    :proteins          [:docking :selected-proteins]
-   :current-protein   [:docking :current-protein]
    :structures        [:docking :selected-structures]
    :current-structure [:docking :current-structure]})
 
@@ -75,17 +74,16 @@
      :required? true
      :filter-box? false]))
 
-
 (defn protein-choice-component
   []
-  (let [taxon                (model :current-taxon)
-        taxons-lookup        (rf/subscribe [:data/taxons-map])
-        protein-model        (model :current-protein)]
+  (let [taxon         (model :current-taxon)
+        taxons-lookup (rf/subscribe [:data/taxons-map])
+        protein-model (rf/subscribe [::subs/current-protein-data])]
     (fn []
       (let [structure            (rf/subscribe [:data/structure (:id @protein-model)])
             input-structures     (get @structure "input")
             processed-structures (get @structure "processed")
-            proteome (-> @taxons-lookup (get @taxon) :proteome)]
+            proteome             (-> @taxons-lookup (get @taxon) :proteome)]
         [v
          :gap "10px"
          :children
@@ -95,20 +93,11 @@
            :on-change #(do
                          (let [proteome (-> @taxons-lookup (get @taxon) :proteome)]
                            (when (some? %)
-                             (rf/dispatch [::forms/set-form-data
-                                           :docking
-                                           :current-protein
-                                           (-> proteome :data (get (:id %)))])
                              (rf/dispatch [::forms/update-form-data
                                            :docking
                                            :selected-proteins
                                            (fn [selected-proteins]
-                                             (merge selected-proteins {@taxon %}))])
-                             #_(rf/dispatch [::forms/update-form-data
-                                           :docking
-                                           :selected-structures
-                                           (fn [selected-structures]
-                                             (dissoc selected-structures @taxon))])))
+                                             (merge selected-proteins {@taxon %}))])))
                          (when (:id @protein-model)
                            (db/get-data [:data :structure (:id @protein-model)])))]
           (when @protein-model
@@ -131,7 +120,6 @@
 (defn handle-set-structure
   [structure taxon-model]
   (do
-    ((setter :current-structure) structure)
     (rf/dispatch [::forms/update-form-data
                   :docking
                   :selected-structures
@@ -145,22 +133,22 @@
 (defn structure-choice-component
   []
   (let [taxon-model       (model :current-taxon)
-        protein-model     (model :current-protein)
-        structure-model   (model :current-structure)
+        protein-model     (rf/subscribe [::subs/current-protein-data])
         choices           @(rf/subscribe [:data/structure-choices @protein-model])
         current-structure @(rf/subscribe [::subs/current-structure-data])]
     [v
      :children
      [[component.forms/dropdown
        :label "Structure"
-       :model structure-model
+       :model (:meta current-structure)
        :choices choices
        :on-change #(handle-set-structure % @taxon-model)
        :placeholder "Choose a protein structure"]
-      (when current-structure)
-      [pdb/structural-features-viewer
-       :pdb (:structure current-structure)
-       :uniprot @protein-model]]]))
+      (when current-structure
+        [pdb/structural-features-viewer
+         :structure-reload? true
+         :pdb (:structure current-structure)
+         :uniprot @protein-model])]]))
 
 (defn taxon-protein-lookup-tab-bar
   [taxons]
@@ -193,7 +181,7 @@
         [h
          :children
          [[protein-choice-component]
-          (when @(model :current-protein)
+          (when @(rf/subscribe [::subs/current-protein-data])
             [:div
             {:style {:width "100%"}}
             [structure-choice-component]])]]]]]]))

@@ -1,7 +1,8 @@
 (ns schmoho.dasudopit.client.panels.pipelines.docking.subs
   (:require
    [re-frame.core :as rf]
-   [schmoho.dasudopit.client.forms :as forms]))
+   [schmoho.dasudopit.client.forms :as forms]
+   [schmoho.dasudopit.client.panels.data.subs :as subs]))
 
 #_(-> @re-frame.db/app-db :data :structure)
 
@@ -22,11 +23,28 @@
 ;; === Part 1 ===
 
 (rf/reg-sub
+ ::current-protein-data
+ :<- [::subs/data]
+ :<- [::form]
+ (fn [[data form]]
+   (let [current-taxon    (:current-taxon form)
+         selected-protein (-> form :selected-proteins (get current-taxon) :id)]
+     (-> data
+         :taxon
+         (get current-taxon)
+         :proteome
+         :data
+         (get selected-protein)))))
+
+(-> @(rf/subscribe [::form]) :current-taxon)
+
+(rf/reg-sub
  ::current-structure-data
  :<- [:data/structures-map]
  :<- [::form]
  (fn [[structures form]]
-   (let [current-structure (:current-structure form)
+   (let [current-taxon     (:current-taxon form)
+         current-structure (-> form :selected-structures (get current-taxon))
          source            (some-> (:source current-structure)
                                    name)]
      (if-not (= "afdb" source)

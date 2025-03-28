@@ -185,3 +185,18 @@
   (->> (:uniProtKBCrossReferences protein)
        (filter #(= "AlphaFoldDB" (:database %)))
        seq))
+
+
+(defn protein-name
+  [protein]
+  (or (-> protein
+          :proteinDescription
+          :recommendedName
+          :fullName
+          :value)
+       (-> protein
+          :proteinDescription
+          :submissionNames
+          first
+          :fullName
+          :value)))
