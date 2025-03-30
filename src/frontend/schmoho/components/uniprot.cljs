@@ -6,7 +6,8 @@
    [schmoho.components.structure :refer [minicard]]
    [schmoho.components.utils.uniprot :as utils]
    [re-frame.core :as rf]
-   [schmoho.biodb.uniprot.core :as uniprot]))
+   [schmoho.biodb.uniprot.core :as uniprot]
+   [reagent.core :as r]))
 
 ;; === Lineage ===
 
@@ -119,16 +120,24 @@
 
 (defn- feature->hiccup
   [feature-view-data]
-  [h
-   :gap "5px"
-   :style {:white-space "pre"}
-   :align :center
-   :children
-   [[color-rect (:color feature-view-data)]
-    #_[:span "at residue(s)"]
-    [:span {:style {:font-family "monospace"}} (:location-str feature-view-data) ":"]
-    [:span {:style {:white-space "normal"}}
-     (:description feature-view-data)]]])
+  (let [info  [h
+               :gap "5px"
+               :style {:white-space "pre"}
+               :align :center
+               :children
+               [
+                [color-rect (:color feature-view-data)]
+                #_[:span "at residue(s)"]
+                [:span {:style {:font-family "monospace"}} (:location-str feature-view-data) ":"]
+                [:span {:style {:white-space "normal"}}
+                 (:description feature-view-data)]]]]
+    (if-let [checkbox (:checkbox feature-view-data)]
+      (let [model (r/atom nil)]
+        [com/checkbox
+        :model model
+        :on-change #(swap! model not)
+        :label info])
+      info)))
 
 (defn protein-structural-features-overview
   [protein & {:keys [badges]}]
@@ -158,12 +167,9 @@
                     [:i {:class "zmdi zmdi-block"
                          :style {:color "red"}}])]]]
                badges)]]
-       [[:h6 "Domains"]]
-       [[v
-         :children
-         (into []
+       (into [[:h6 "Domains"]]
                (or (seq (map feature->hiccup domains))
-                   [[:span "Not available"]]))]]
+                   [[:span "Not available"]]))
        (into [[:h6 "Active Sites"]]
              (or (seq (map feature->hiccup active-sites))
                  [[:span "Not available"]]))

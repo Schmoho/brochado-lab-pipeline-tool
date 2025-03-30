@@ -8,17 +8,18 @@
    [schmoho.dasudopit.client.panels.pipelines.docking.part-4 :refer [part-4]]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-5 :refer [part-5]]
    [schmoho.dasudopit.client.panels.pipelines.docking.part-6 :refer [part-6]]
-   [schmoho.dasudopit.client.routing :as routing]))
+   [schmoho.dasudopit.client.routing :as routing]
+   [schmoho.dasudopit.client.panels.pipelines.docking.subs :as subs]))
 
 
 (defn docking-panel
   []
   [structure/collapsible-accordion-2
    ["1. Provide and choose data" [provide-data-form]]
-   #_(when @(rf/subscribe [:forms.docking.choose-binding-sites/valid?])
+   (when @(rf/subscribe [::subs/provided-data-valid?])
      ["2. Preprocessing" [preprocessing-form]])
-   #_(when @(rf/subscribe [:forms.docking.provide-data/valid?])
-     ["2. Choose proteins and binding sites" [choose-binding-sites-form]])
+   (when @(rf/subscribe [::subs/provided-data-valid?])
+     ["3. Choose target sites" [choose-binding-sites-form]])
    #_(when @(rf/subscribe [:forms.docking.choose-binding-sites/valid?])
      ["4. Choose target site" [part-4]])
    #_(when @(rf/subscribe [:forms.docking.choose-binding-sites/valid?])

@@ -70,11 +70,11 @@
     [com/gap :src (at) :size "40px"]
     [navbar-link "Volcano Viewer" :routing/volcano-viewer]
     [com/gap :src (at) :size "40px"]
-    [navbar-link "Taxonomic Protein Comparison" :routing.pipelines/msa]
-    [navbar-link "Results" :routing.results/msa]
-    [com/gap :src (at) :size "40px"]
     [navbar-link  "Comparative Docking" :routing.pipelines/docking]
-    [navbar-link "Results" :routing.results/docking]]])
+    [navbar-link "Results" :routing.results/docking]
+    [com/gap :src (at) :size "40px"]
+    [navbar-link "Taxonomic Protein Comparison" :routing.pipelines/msa]
+    [navbar-link "Results" :routing.results/msa]]])
 
 (defn footer
   []

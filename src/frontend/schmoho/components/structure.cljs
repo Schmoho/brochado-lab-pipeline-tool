@@ -166,7 +166,9 @@
                             [:button
                              {:type "button"
                               :style style
-                              :class "btn btn-secondary"
+                              :class (if (= @model (id-fn stuff))
+                                       "btn btn-primary"
+                                       "btn btn-secondary")
                               :on-click #(on-change (id-fn stuff))}
                              (subs (label-fn stuff) 0 30)])))]
     (into [:div {:class "btn-group-vertical"

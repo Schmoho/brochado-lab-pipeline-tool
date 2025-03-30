@@ -2,7 +2,8 @@
   (:require
    [re-frame.core :as rf]
    [schmoho.dasudopit.client.forms :as forms]
-   [schmoho.dasudopit.client.panels.data.subs :as subs]))
+   [schmoho.dasudopit.client.panels.data.subs :as subs]
+   [clojure.string :as str]))
 
 #_(-> @re-frame.db/app-db :data :structure)
 
@@ -14,13 +15,7 @@
  (fn [forms]
    (:docking forms)))
 
-;; (rf/reg-sub
-;;  :forms.docking/input-model
-;;  :<- [:forms/docking]
-;;  (fn [form]
-;;    (:input-model form)))
-
-;; === Part 1 ===
+;; === Provide Data ===
 
 (rf/reg-sub
  ::current-protein-data
@@ -36,7 +31,6 @@
          :data
          (get selected-protein)))))
 
-(-> @(rf/subscribe [::form]) :current-taxon)
 
 (rf/reg-sub
  ::current-structure-data
@@ -45,77 +39,66 @@
  (fn [[structures form]]
    (let [current-taxon     (:current-taxon form)
          current-structure (-> form :selected-structures (get current-taxon))
+         current-protein   (-> form :selected-proteins (get current-taxon) :id)
          source            (some-> (:source current-structure)
                                    name)]
-     (if-not (= "afdb" source)
-       (get-in structures [(:protein current-structure)
-                           source
-                           (:id current-structure)])
-       (get-in structures [(:protein current-structure)
-                           source])))))
+     (when (= (:protein current-structure) current-protein)
+       (if-not (= "afdb" source)
+         (get-in structures [(:protein current-structure)
+                             source
+                             (:id current-structure)])
+         (get-in structures [(:protein current-structure)
+                             source]))))))
+
 
 (rf/reg-sub
  ::provided-data-valid?
- ;; :<- [::taxon-model]
- ;; :<- [::ligand-model]
- (fn [_]
-   #_(and (not-empty taxon)
-        (not-empty ligand)
-        (some? taxon)
-        (some? ligand))
-   true))
+ :<- [::form]
+ (fn [form]
+   (let [taxa       (:selected-taxons form)
+         proteins   (:selected-proteins form)
+         structures (:selected-structures form)]
+     (and (not-empty taxa)
+          (every? #(-> proteins (get %) some?) taxa)
+          (every? #(-> structures (get %) some?) taxa)
+          true))))
 
-;; === Part 2 ===
+#_(-> @(rf/subscribe [::form]) :current-taxon)
 
-(rf/reg-sub
- :forms.docking.choose-binding-sites/selected-protein-for-taxon-resolved
- :<- [:forms.docking/input-model]
- :<- [:data/proteomes]
- (fn
-   [[input-model proteomes] [_ taxon-id]]
-   (let [selected-protein (-> input-model :taxon (get taxon-id) :protein)
-         proteome         (get proteomes taxon-id)
-         proteome (zipmap
-                   (map :primaryAccession proteome)
-                   proteome)]
-     (get proteome selected-protein))))
-
+;; === Preprocessing ===
 
 (rf/reg-sub
- :forms.docking.choose-binding-sites/valid?
- :<- [:forms.docking/input-model]
- :<- [:data/structures]
- (fn [[input-model structures]]
-   (let [protein-ids (->> input-model :taxon vals (map (comp :id :protein)))]
-     (and (every? some? (map #(get structures %) protein-ids))
-          (pos? (count protein-ids))))))
-
-
-;; (rf/reg-sub
-;;  :forms.docking.choose-binding-sites/show-modal?
-;;  :<- [:forms.docking/input-model]
-;;  (fn [input-model]
-;;    (let [show-modal? (->> input-model :taxon vals (map (comp :id :protein)))]
-;;      (and (every? some? (map #(get structures %) protein-ids))
-;;           (pos? (count protein-ids))))))
-
-;; === Part 4 ===
+ ::plddt-cutoff
+ :<- [::form]
+ (fn [form]
+   (or (let [taxon-id (:current-taxon form)]
+      (-> form
+          :plddt-cutoffs
+          (get taxon-id)))
+       80)))
 
 (rf/reg-sub
- :forms.docking.part-4/plddt-cutoff
- :<- [:forms.docking/input-model]
- (fn [input-model [_ taxon-id]]
-   (-> input-model
-       :taxon
-       (get taxon-id)
-       :plddt-cutoff)))
-
-(rf/reg-sub
- :forms.docking.part-4/plddt-viewer
- :<- [:forms.docking/input-model]
- (fn [input-model [_ taxon-id]]
-   (-> input-model
-       :taxon
-       (get taxon-id)
-       :viewer
-       :plddt)))
+ ::plddt-cutoff-indices
+ :<- [::current-structure-data]
+ :<- [::plddt-cutoff]
+ (fn [[structure cutoff]]
+   (when-let [pdb (:structure structure)]
+     (let [first-atom    (str/index-of pdb "ATOM")
+           last-atom-end (+ (str/last-index-of pdb "ATOM") 80)
+           atoms         (subs pdb first-atom last-atom-end)
+           atoms         (->> (str/split-lines atoms)
+                              (map #(str/split % #"\s+")))]
+       {:start (or (some-> (drop-while #(or (> 10 (count %))
+                                            (>= cutoff (nth % 10)))
+                                       atoms)
+                           first
+                           (nth 5)
+                           parse-long)
+                   90000)
+        :end (or (some-> (drop-while #(or (> 10 (count %))
+                                          (>= cutoff (nth % 10)))
+                                     (reverse atoms))
+                         first
+                         (nth 5)
+                         parse-long)
+                 0)}))))

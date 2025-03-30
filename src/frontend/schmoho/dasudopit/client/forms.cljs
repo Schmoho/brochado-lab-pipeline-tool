@@ -44,12 +44,12 @@
 ;; === Utils ===
 
 (defn model
-  [form-model k]
+  [form-model k & args]
   (let [path (get form-model k)]
-    (rf/subscribe (into [:forms/by-path] path))))
+    (rf/subscribe (into [:forms/by-path] (concat path args)))))
 
 (defn setter
-  [form-model k]
+  [form-model k & args]
   (let [path (get form-model k)]
-    #(rf/dispatch (conj (into [::set-form-data] path)
+    #(rf/dispatch (conj (into [::set-form-data] (concat path args))
                         %))))

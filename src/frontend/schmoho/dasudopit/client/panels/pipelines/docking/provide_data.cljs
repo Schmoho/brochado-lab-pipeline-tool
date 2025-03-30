@@ -157,14 +157,12 @@
    :align :start
    :children
    [[structure/vertical-bar-tabs
+     :model (model :current-taxon)
      :id-fn (comp :id :meta)
      :label-fn (comp :name :meta)
      :style {:max-width "250px"
              :width     "250px"}
-     :on-change #(do
-                   ((setter :current-taxon) %)
-                   ((setter :current-protein) (@(model :proteins) %))
-                   ((setter :current-structure) (@(model :structures) %)) )
+     :on-change (setter :current-taxon)
      :tabs taxons]]])
 
 (defn taxon-sub-component
@@ -183,8 +181,8 @@
          [[protein-choice-component]
           (when @(rf/subscribe [::subs/current-protein-data])
             [:div
-            {:style {:width "100%"}}
-            [structure-choice-component]])]]]]]]))
+             {:style {:width "100%"}}
+             [structure-choice-component]])]]]]]]))
 
 (defn handle-set-ligands
   [ligands]
@@ -246,8 +244,3 @@
         (let [selected-taxons  (->> @taxon-model (map @taxons-lookup) not-empty)]
           (when selected-taxons
             [taxon-sub-component selected-taxons (@taxons-lookup @current-taxon) ]))]])))
-
-#_(-> @re-frame.db/app-db :forms :docking)
-;; (db/get-data [:data :structure "P02918"])
-;; "P0A9Q9"
-;; "P02919"

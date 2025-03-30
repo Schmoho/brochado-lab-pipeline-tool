@@ -35,15 +35,17 @@
 
 (defn pdb-viewer
   [& {:keys [css objects style config on-load structure-reload?]}]
-  (let [ref          (react/createRef)
-        viewer-state (r/atom nil)]
+  (let [ref               (react/createRef)
+        viewer-state      (r/atom nil)
+        current-structure (r/atom nil)]
     (r/create-class
      {:display-name "pdb-viewer"
       :reagent-render
       (fn [& {:keys [objects style]}]
         (when-let [^js viewer @viewer-state]
           (let [{:keys [spheres boxes pdb]} objects]
-            (when structure-reload?
+            (when (and structure-reload? (not= pdb @current-structure))
+              (reset! current-structure pdb)
               (doto viewer
                 (.removeAllModels)
                 (.addModel pdb "pdb")
@@ -98,6 +100,7 @@
               (.zoomTo)
               (.render)
               (.zoom 1.2 1000))
+            (reset! current-structure pdb)
             (when on-load
               (on-load viewer-state)))))})))
 

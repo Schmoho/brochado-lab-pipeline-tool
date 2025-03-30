@@ -28,3 +28,17 @@
  (fn-traced
   [db [_ response]]
   (-> db (update-in [:data :input :structure] #(merge % response)))))
+
+
+(rf/reg-event-db
+ ::set-current-taxon-plddt
+ (fn-traced
+  [db [_ plddt]]
+  (let [form          (-> db :forms :docking)
+        current-taxon (:current-taxon form)]
+    (assoc-in db
+              [:forms
+               :docking
+               :plddt-cutoffs
+               current-taxon]
+              plddt))))
