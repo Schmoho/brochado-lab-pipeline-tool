@@ -87,6 +87,7 @@
           :children
           [(when (and #_@protein @pdb)
              [pdb/structural-features-viewer
+              :structure-reload? true
               :pdb @pdb
               :uniprot @protein
               :style {:width      "240px"

@@ -74,15 +74,19 @@
 (defn delete-dataset!
   [path]
   (try
-    (let [path  (if (str/starts-with? path "/")
+    (let [path    (if (str/starts-with? path "/")
                   (subs path 1)
                   path)
-          _     (when-not (str/starts-with? path "data")
+          _       (when-not (str/starts-with? path "data")
                   (throw (ex-info "Probably not deleting what you want."
                                   {:path path})))
-          files (reverse (file-seq (io/file path)))]
+          files   (distinct (reverse (utils/ffile-seq (io/file path))))
+          folders (distinct (reverse (file-seq (io/file path))))]
       (doseq [f files]
         (log/info "Delete file" (.getPath f))
+        (io/delete-file f))
+      (doseq [f folders]
+        (log/info "Delete folder" (.getPath f))
         (io/delete-file f)))
     (catch Exception e
       (log/error e)
