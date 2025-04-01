@@ -124,10 +124,17 @@
 (defn upload-dataset!
   [request]
   (let [path    (str/replace (:uri request) "/api" "")
-        dataset (-> request :body-params)]
-    (db/upload-dataset! path dataset)
+        id         (str (random-uuid))
+        dataset    (-> request
+                       :body-params
+                       (assoc-in [:meta :id] id))]
+    (try
+      (db/upload-dataset! (str path "/" id) dataset)
+      (catch Exception e
+        (prn e)
+        (throw e)))
     {:status 200
-     :body   {:message "Dataset created."}}))
+     :body   {id dataset}}))
 
 (defn provision-afdb-structure
   [{:keys [protein-id]} path]

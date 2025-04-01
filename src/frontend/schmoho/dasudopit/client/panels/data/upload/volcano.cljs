@@ -6,15 +6,30 @@
    [schmoho.dasudopit.client.forms :as forms]
    [schmoho.components.forms :as components.forms]
    [schmoho.components.structure :as structure]
-   [schmoho.components.uniprot :as uniprot]))
+   [schmoho.components.uniprot :as uniprot]
+   [schmoho.dasudopit.client.http :as http]))
 
 (def form-model
-  {:taxon   [:upload/volcano :meta :taxon]
-   :name    [:upload/volcano :meta :name]
-   :table   [:upload/volcano :table]})
+  {:taxon             [:upload/volcano :meta :taxon]
+   :name              [:upload/volcano :meta :name]
+   :table             [:upload/volcano :table]
+   :file-upload-label [:upload/volcano :file-upload-label]})
 
 (def model (partial forms/model form-model))
 (def setter (partial forms/setter form-model))
+
+(rf/reg-sub
+ :upload.volcano/save-running?
+ :<- [::http/queries]
+ (fn [queries]
+   (= (-> queries :post (get [:data :volcano]))
+      :running)))
+
+(rf/reg-sub
+ :upload.volcano/post-save-state
+ :<- [::http/queries]
+ (fn [queries]
+   (-> queries :post (get [:data :volcano]))))
 
 (defn- csv-file-info
   []
@@ -37,8 +52,10 @@
 
 (defn upload-volcano-form
   []
-  (let [taxon-choices @(rf/subscribe [:data/taxon-choices])
-        taxon-model   (model :taxon)]
+  (let [taxon-choices   @(rf/subscribe [:data/taxon-choices])
+        taxon-model     (model :taxon)
+        save-running?   (rf/subscribe [:upload.volcano/save-running?])
+        post-save-state (rf/subscribe [:upload.volcano/post-save-state])]
     [v
      :children
      [[components.forms/input-text
@@ -49,16 +66,27 @@
       [com/gap :size "10px"]
       [csv-file-info]
       [components.forms/csv-upload
-       :on-load (setter :table)]
+       :label @(model :file-upload-label)
+       :on-load #(do
+                   ((setter :file-upload-label) %1)
+                   ((setter :table) %2))]
       [uniprot/taxon-chooser
-         :required? false
-         :choices   taxon-choices
-         :model     taxon-model
-         :on-change (setter :taxon)]
-      [structure/flex-horizontal-center
-       [components.forms/action-button
-         :label    "Save"
-         :on-click (fn handle-save-volcano-button
-                     []
-                     ;; (rf/dispatch [::events/post-volcano])
-                     (prn "Do something."))]]]]))
+       :required? false
+       :choices   taxon-choices
+       :model     taxon-model
+       :on-change (setter :taxon)]
+      (when @save-running?
+        [structure/flex-horizontal-center
+         [com/throbber :size :large]])
+      (when (not @save-running?)
+        [structure/flex-horizontal-center
+         [components.forms/action-button
+          :label    "Save"
+          :on-click (fn handle-save-volcano-button
+                      [_]
+                      (rf/dispatch [::http/http-post [:data :volcano]
+                                    {:params {:meta  {:name  @(model :name)
+                                                      :taxon @(model :taxon)}
+                                              :table @(model :table)}}]))]])
+      (when (= :done @post-save-state)
+        [:span "Successfully added dataset."])]]))

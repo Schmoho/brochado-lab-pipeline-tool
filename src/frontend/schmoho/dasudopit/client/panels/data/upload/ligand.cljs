@@ -124,7 +124,7 @@
         tab-model         (rf/subscribe [:provision.ligand/tab-model])
         search-results    (rf/subscribe [:provision.ligand/search-result])
         search-running?   (rf/subscribe [:provision.ligand/search-running?])
-        save-running?   (rf/subscribe [:provision.ligand/save-running?])
+        save-running?     (rf/subscribe [:provision.ligand/save-running?])
         post-save-state   (rf/subscribe [:provision.ligand/post-save-state])
         post-search-state (rf/subscribe [:provision.ligand/post-search-state])]
     [v

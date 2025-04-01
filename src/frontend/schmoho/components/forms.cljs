@@ -107,7 +107,7 @@
                                   :numeric-fields ["log_transformed_f_statistic"
                                                    "fdr"
                                                    "effect_size"])]
-                    (on-load data))))
+                    (on-load (.-name file) data))))
           (.readAsText reader file))))])
 
 (defn input-text

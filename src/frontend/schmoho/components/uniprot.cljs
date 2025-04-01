@@ -140,8 +140,20 @@
       info)))
 
 (defn protein-structural-features-overview
-  [protein & {:keys [badges]}]
-  (let [{:keys [has-afdb? domains active-sites binding-sites]} (utils/protein-info protein)]
+  [protein & {:keys [badges
+                     domain-click-handler
+                     domain-click-model
+                     active-site-click-handler
+                     active-site-click-model]}]
+  (let [{:keys [has-afdb? domains active-sites binding-sites]} (utils/protein-info protein)
+        domains
+        (->> domains
+             (map (fn [domain] (assoc domain :domain-click-handler domain-click-handler)))
+             (map (fn [domain] (assoc domain :domain-click-model domain-click-model))))
+        active-sites
+        (->> active-sites
+             (map (fn [active-site] (assoc active-site :active-site-click-handler active-site-click-handler)))
+             (map (fn [active-site] (assoc active-site :active-site-click-model active-site-click-model))))]
     [minicard
      [h
       :children

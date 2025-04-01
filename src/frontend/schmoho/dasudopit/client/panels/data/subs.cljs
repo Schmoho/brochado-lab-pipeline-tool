@@ -144,7 +144,8 @@
         (tree-seq map? vals)
         (filter (fn [m]
                   (and (map? m)
-                       (:meta m))))
+                       (:meta m)
+                       (not= :afdb (-> m :meta :source)))))
         (mapv :meta))))
 
 (rf/reg-sub
