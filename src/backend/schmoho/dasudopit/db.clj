@@ -80,14 +80,14 @@
           _       (when-not (str/starts-with? path "data")
                   (throw (ex-info "Probably not deleting what you want."
                                   {:path path})))
-          files   (distinct (reverse (utils/ffile-seq (io/file path))))
-          folders (distinct (reverse (file-seq (io/file path))))]
+          files   (distinct (reverse (utils/ffile-seq (io/file path))))]
       (doseq [f files]
         (log/info "Delete file" (.getPath f))
         (io/delete-file f))
-      (doseq [f folders]
-        (log/info "Delete folder" (.getPath f))
-        (io/delete-file f)))
+      (let [folders (distinct (reverse (file-seq (io/file path))))]
+        (doseq [f folders]
+         (log/info "Delete folder" (.getPath f))
+         (io/delete-file f))))
     (catch Exception e
       (log/error e)
       (throw e))))
