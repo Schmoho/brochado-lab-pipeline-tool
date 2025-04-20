@@ -2,7 +2,8 @@
   (:require
    [clojure.string :as str]
    [schmoho.biodb.uniprot.formats]
-   [clojure.set :as set]))
+   [clojure.set :as set]
+   #?(:clj [cheshire.core :as json])))
 
 (defmulti domains (fn [_ protein] (meta protein)))
 
@@ -200,3 +201,12 @@
           first
           :fullName
           :value)))
+
+;; (def u (:results (json/parse-string (slurp "uniprotkb_mrcB_2025_04_07.json") true)))
+
+;; (update-vals
+;;  (group-by (comp #(let [n 10]
+;;                     (if (> (count %) n)
+;;                       (nth % n)
+;;                       (last %))) :lineage) (map :organism u))
+;;  count)

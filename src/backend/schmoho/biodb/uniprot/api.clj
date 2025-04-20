@@ -1,12 +1,15 @@
 (ns schmoho.biodb.uniprot.api
   (:require
    [schmoho.utils.walk :as utils]
+   [schmoho.utils.file :as file-utils]
    [schmoho.biodb.http :as http]
    [camel-snake-kebab.core :as csk]
    [cheshire.core :as json]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
-   [clj-http.client :as clj-http.client]))
+   [clj-http.client :as clj-http.client]
+   [clojure.java.io :as io]
+   [fast-edn.core :as edn]))
 
 (def uniprot-api-base "https://rest.uniprot.org")
 
@@ -336,3 +339,150 @@
 ;;                         get-inactive-record-via-parc!
 ;;                         second)))
 ;;        (into {})))
+
+
+(def base-api "https://www.ebi.ac.uk/interpro/api")
+
+(defn get-interpro-entry
+  [interpro-accession]
+  (-> (http/get (str base-api (format "/entry/interpro/%s" interpro-accession)))
+      :body
+      (json/parse-string)
+      (update-keys keyword)
+      (update :metadata #(update-keys % csk/->kebab-case-keyword))))
+
+
+;; (and (->> (json/parse-string (slurp "json.json") true)
+;;           (mapv (comp (fn [accession]
+;;                         (let [entry (get-interpro-entry accession)]
+;;                           (spit (str "interpro/" accession)
+;;                                 entry))) :accession :metadata)))
+;;      nil)
+
+
+(defn flatten-record [record]
+  (reduce-kv (fn [m k v]
+               (if (map? v)
+                 ;; For a nested map, prefix its keys.
+                 (merge m (into {} (map (fn [[nk nv]]
+                                          [(str (name k) "_" (name nk)) nv])
+                                        v)))
+                 (assoc m k v)))
+             {}
+             record))
+
+(def flattened
+  (->> (file-utils/ffile-seq (io/file "interpro"))
+      (map (comp
+            flatten-record
+            (fn [f]
+              (let [ip (edn/read-string (slurp f))]
+                (-> ip :metadata :counters))))))
+  )
+
+
+;; Transform the list of wide maps into a single long-format vector of maps
+(def long-format-data
+  (->> (mapcat (fn [single-map] ; Process each map in the input list
+                 (map (fn [[category-key value]] ; Process each key-value pair within that map
+                        {:category (name category-key) ; The key becomes the category identifier
+                         :value value})              ; The value is the observed value
+                      single-map))
+               flattened)
+       (filter #(pos-int? (:value %)))))
+
+(def faceted-histogram-spec
+  {:$schema "https://vega.github.io/schema/vega-lite/v5.json"
+   :description "Faceted histograms showing the distribution of values for each category across multiple observations."
+   :title "Distribution of Values per Category"
+   :data {:values long-format-data} ; Use the transformed long-format data
+
+   ;; Faceting: Create columns based on the 'category' field
+   :facet {:column {:field "category"
+                    :type "nominal"
+                    :title "Category"
+                    ;; Optional: Sort the columns/facets if needed
+                    ; :sort ["structures" "proteins" "proteomes" ...] ; Explicit order
+                    ; :sort {:op "count"} ; Sort by number of non-null values (less useful here)
+                    :header {:titleOrient "bottom" :labelOrient "top"} ; Adjust header placement
+                   }}
+
+   :spec { ;; Define the plot specification for EACH individual facet
+     ;:width 150 ; Adjust width of each individual subplot
+     ;:height 150 ; Adjust height of each individual subplot
+     :mark "bar" ; Use bars for the histogram
+
+     :encoding {
+       :x {:field "value" ; The values within each category go on the X axis
+           :type "quantitative"
+           ;; Bin the quantitative values to create the histogram bars
+           :bin {:maxbins 15} ; Adjust maxbins based on data range and desired granularity
+           :title "Value"} ; Title for the X axis within each facet
+
+       :y {:aggregate "count" ; The Y axis shows the frequency (count) of items in each bin
+           :type "quantitative"
+           :title "Frequency"} ; Title for the Y axis (count of observations)
+
+       :tooltip [ ; Tooltip to show details on hover
+         {:field "category" :type "nominal"} ; Show the category for the facet
+         {:field "value" :bin true :type "quantitative" :title "Value Range"} ; Show the bin range
+         {:aggregate "count" :type "quantitative" :title "Frequency"} ; Show the count in the bin
+         ]
+       } ; End encoding
+     } ; End spec for each facet
+
+   ;; Resolve independent scales for axes if necessary
+   ;; Useful if value ranges differ significantly between categories
+   :resolve {:scale {:y "independent"  ; Each facet gets its own Y-axis scale
+                     :x "independent" ; Uncomment if X-axis ranges also vary wildly
+                    }}
+
+   ;; Optional: Configure overall layout
+   :config {
+       ;:view {:stroke nil} ; Remove outer borders from facets
+       :facet {:spacing 15} ; Adjust spacing between facets
+       }
+   })
+
+(spit "lol.json" (json/generate-string faceted-histogram-spec {:pretty true}))
+
+(defn histogram-spec [field-name values]
+  {:$schema "https://vega.github.io/schema/vega-lite/v5.json"
+   :description (str "Histogram of " field-name)
+   :data {:values values}
+   :mark "bar"
+   :encoding {:x {:field field-name
+                  :bin true
+                  :type "quantitative"}
+              :y {:aggregate "count"
+                  :type "quantitative"}}})
+
+(def fields-to-plot
+  ["structures"
+   "domain_architectures"
+   "proteomes"
+   "taxa"
+   "subfamilies"
+   "interactions"
+   "matches"
+   "sets"
+   "proteins"
+   "pathways"
+   "structural_models_alphafold"]) 
+
+(def vega-specs
+  (into {}
+        (for [field fields-to-plot]
+          ;; Extract the data for each field.
+          ;; If you need only the field value for each record:
+          (let [field-data (map #(select-keys % [field]) flattened)]
+            [field (histogram-spec field field-data)]))))
+
+#_(spit
+ "proteins.json"
+ (json/generate-string (get vega-specs "proteins") {:pretty true}))
+
+(->> flattened
+     (map #(get % "proteins"))
+     #_(apply max)
+     )
