@@ -7,7 +7,9 @@
         (fn [[new-key kaccessor]]
           [new-key (if (coll? kaccessor)
                      (reduce (fn [acc kac]
-                               (kac acc))
+                               (if (string? kac)
+                                 (get acc kac)
+                                 (kac acc)))
                              m
                              kaccessor)
                      (kaccessor m))]))

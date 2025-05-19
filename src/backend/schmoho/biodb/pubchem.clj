@@ -37,7 +37,6 @@
              :image png}
       sdf (assoc :sdf sdf))))
 
-
 (defn search-compound-by-name
   [name-str]
   (let [cids (-> (http/get (format "%s/%s/JSON"

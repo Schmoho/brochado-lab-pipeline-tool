@@ -22,6 +22,7 @@
    :ligands           [:docking :selected-ligands]
    :proteins          [:docking :selected-proteins]
    :structures        [:docking :selected-structures]
+   :binding-sites     [:docking :selected-binding-sites]
    :current-structure [:docking :current-structure]})
 
 (def model (partial forms/model form-model))
@@ -74,11 +75,14 @@
      :required? true
      :filter-box? false]))
 
+#_(model :binding-sites)
+
 (defn protein-choice-component
   []
-  (let [taxon         (model :current-taxon)
-        taxons-lookup (rf/subscribe [:data/taxons-map])
-        protein-model (rf/subscribe [::subs/current-protein-data])]
+  (let [taxon              (model :current-taxon)
+        taxons-lookup      (rf/subscribe [:data/taxons-map])
+        protein-model      (rf/subscribe [::subs/current-protein-data])
+        binding-site-model (rf/subscribe [::subs/current-binding-site])]
     (fn []
       (let [structure            (rf/subscribe [:data/structure (:id @protein-model)])
             input-structures     (get @structure "input")
@@ -101,21 +105,31 @@
                          (when (:id @protein-model)
                            (db/get-data [:data :structure (:id @protein-model)])))]
           (when @protein-model
-            [h
-             :children
-             [[uniprot/protein-structural-features-overview
-               @protein-model
-               :badges
-               [(let [input-structures-count (count input-structures)]
-                  [component.forms/pill-badge
-                   :label (str "User-provided structures"
-                               (when (pos-int? input-structures-count) (str ": " input-structures-count)))
-                   :true? (pos-int? input-structures-count)])
-                (let [processed-structures-count (count processed-structures)]
-                  [component.forms/pill-badge
-                   :label (str "Pre-processed structures"
-                               (when (pos-int? processed-structures-count) (str ": " processed-structures-count)))
-                   :true? (pos-int? processed-structures-count)])]]]])]]))))
+            (let [model (r/atom {})]
+              [h
+               :children
+               [[uniprot/protein-structural-features-overview
+                 @protein-model
+                 :active-site-click-handler
+                 #(rf/dispatch [::forms/update-form-data
+                                :docking
+                                :selected-binding-sites
+                                (fn [selected-binding-sites]
+                                  (merge selected-binding-sites
+                                         {@taxon %}))])
+                 :active-site-click-model
+                 binding-site-model
+                 :badges
+                 [(let [input-structures-count (count input-structures)]
+                    [component.forms/pill-badge
+                     :label (str "User-provided structures"
+                                 (when (pos-int? input-structures-count) (str ": " input-structures-count)))
+                     :true? (pos-int? input-structures-count)])
+                  (let [processed-structures-count (count processed-structures)]
+                    [component.forms/pill-badge
+                     :label (str "Pre-processed structures"
+                                 (when (pos-int? processed-structures-count) (str ": " processed-structures-count)))
+                     :true? (pos-int? processed-structures-count)])]]]]))]]))))
 
 (defn handle-set-structure
   [structure taxon-model]

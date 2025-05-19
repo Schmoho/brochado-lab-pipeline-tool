@@ -15,6 +15,8 @@
  (fn [forms]
    (:docking forms)))
 
+
+
 ;; === Provide Data ===
 
 (rf/reg-sub
@@ -30,7 +32,6 @@
          :proteome
          :data
          (get selected-protein)))))
-
 
 (rf/reg-sub
  ::current-structure-data
@@ -50,6 +51,16 @@
          (get-in structures [(:protein current-structure)
                              source]))))))
 
+(rf/reg-sub
+ ::current-binding-site
+ :<- [::form]
+ (fn [form]
+   (let [current-taxon          (:current-taxon form)]
+     (-> form :selected-binding-sites (get current-taxon)))))
+
+;; (-> @re-frame.db/app-db :forms :docking :current-taxon)
+
+;; (rf/subscribe ::form)
 
 (rf/reg-sub
  ::provided-data-valid?

@@ -13,6 +13,8 @@
    [schmoho.components.uniprot :as uniprot]
    [schmoho.components.pubchem :as pubchem]))
 
+#_@re-frame.db/app-db
+
 (def form-model
   {:active-preview [:data/overview :active-preview]
    :preview-type   [:data/overview :preview-type]})

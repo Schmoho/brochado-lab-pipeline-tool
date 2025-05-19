@@ -4,7 +4,8 @@
   ;; this serves to copy the packaged output from Vite for compilation
   ;; :prep-tasks [["run" "-m" "build/copy-dist-to-public"]]
   ;; check out portal https://github.com/djblue/portal?tab=readme-ov-file#demo
-  :repl-options {:nrepl-middleware [portal.nrepl/wrap-portal]}
+  :repl-options {#_#_:nrepl-middleware [portal.nrepl/wrap-portal]
+                 :timeout 120000}
   ;; for downloading the Java BLAST service
   :repositories {"ebi"      {:url "https://www.ebi.ac.uk/uniprot/artifactory/public"}
                  "ebi-repo" {:url "https://www.ebi.ac.uk/~maven/m2repo"}}
@@ -13,7 +14,8 @@
             [cider/cider-nrepl "0.53.0"]]
   :dependencies [[org.clojure/clojure "1.12.0"]
                  [org.clojure/tools.cli "1.1.230"]
-
+                 [babashka/fs "0.5.25"]
+                 
                  [org.clojure/tools.logging "1.3.0"]
                  [ch.qos.logback/logback-classic "1.5.7"]
 
@@ -44,12 +46,12 @@
                  [uk.ac.ebi.uniprot/japi "1.3.3"]]
 
   :source-paths ["src/backend" "src/common"]
-  :resource-paths ["resources/backend"]
+  :resource-paths ["resources"]
 
   :profiles {:dev {:dependencies [[ring/ring-devel "1.9.5"]
                                   [prone "2021-04-23"]
                                   [djblue/portal "0.58.5"]
-                                  [metasoarous/oz "1.6.0-alpha36"]]
+                                  #_[metasoarous/oz "1.6.0-alpha36"]]
                    :source-paths ["env/dev"]
                    :env          {:dev true}
                    :repl-options {:init-ns user}}

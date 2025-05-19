@@ -120,9 +120,9 @@
 
 (defn- feature->hiccup
   [feature-view-data]
-  (let [info  [h
+  (let [info [h
                :gap "5px"
-               :style {:white-space "pre"}
+              :style {:white-space "pre"}
                :align :center
                :children
                [
@@ -131,13 +131,15 @@
                 [:span {:style {:font-family "monospace"}} (:location-str feature-view-data) ":"]
                 [:span {:style {:white-space "normal"}}
                  (:description feature-view-data)]]]]
-    (if-let [checkbox (:checkbox feature-view-data)]
-      (let [model (r/atom nil)]
-        [com/checkbox
-        :model model
-        :on-change #(swap! model not)
-        :label info])
-      info)))
+    (let [handler (:click-handler feature-view-data)
+          model   (:click-model feature-view-data)]
+      (if (and handler model)
+        [com/radio-button
+         :model model
+         :value (:location feature-view-data)
+         :on-change handler
+         :label info]
+        info))))
 
 (defn protein-structural-features-overview
   [protein & {:keys [badges
@@ -148,12 +150,12 @@
   (let [{:keys [has-afdb? domains active-sites binding-sites]} (utils/protein-info protein)
         domains
         (->> domains
-             (map (fn [domain] (assoc domain :domain-click-handler domain-click-handler)))
-             (map (fn [domain] (assoc domain :domain-click-model domain-click-model))))
+             (map (fn [domain] (assoc domain :click-handler domain-click-handler)))
+             (map (fn [domain] (assoc domain :click-model domain-click-model))))
         active-sites
         (->> active-sites
-             (map (fn [active-site] (assoc active-site :active-site-click-handler active-site-click-handler)))
-             (map (fn [active-site] (assoc active-site :active-site-click-model active-site-click-model))))]
+             (map (fn [active-site] (assoc active-site :click-handler active-site-click-handler)))
+             (map (fn [active-site] (assoc active-site :click-model active-site-click-model))))]
     [minicard
      [h
       :children

@@ -26,12 +26,12 @@
   [org.slf4j/slf4j-nop "1.7.13" :scope "test"]]
 
 :dev-http
- {8280 "resources/frontend"}
+ {8280 "resources/public"}
 
  :builds
  {:app
   {:target           :browser #_:esm
-   :output-dir       "resources/frontend/js"
+   :output-dir       "resources/public/js"
    :modules          {:main {:entries [schmoho.dasudopit.client.core]
                              :init-fn schmoho.dasudopit.client.core/init}}
    #_#_:js-options   {:js-provider           :external

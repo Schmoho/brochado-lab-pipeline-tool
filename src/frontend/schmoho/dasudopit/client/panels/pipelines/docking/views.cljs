@@ -19,7 +19,7 @@
    (when @(rf/subscribe [::subs/provided-data-valid?])
      ["2. Preprocessing" [preprocessing-form]])
    (when @(rf/subscribe [::subs/provided-data-valid?])
-     ["3. Choose target sites" [choose-binding-sites-form]])
+     ["3. Docking" [choose-binding-sites-form]])
    #_(when @(rf/subscribe [:forms.docking.choose-binding-sites/valid?])
      ["4. Choose target site" [part-4]])
    #_(when @(rf/subscribe [:forms.docking.choose-binding-sites/valid?])

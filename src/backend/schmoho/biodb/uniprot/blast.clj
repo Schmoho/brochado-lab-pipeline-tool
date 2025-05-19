@@ -2,7 +2,7 @@
   (:import (uk.ac.ebi.uniprot.dataservice.client ServiceFactory Client)
            (uk.ac.ebi.uniprot.dataservice.client.uniprot UniProtService)
            (uk.ac.ebi.uniprot.dataservice.client.alignment.blast BlastInput BlastInput$Builder BlastService BlastResult)
-           (uk.ac.ebi.uniprot.dataservice.client.alignment.blast.input DatabaseOption)))
+           (uk.ac.ebi.uniprot.dataservice.client.alignment.blast.input DatabaseOption ExpectationOption)))
 
 (defn alignment->clj
   [alignment]
@@ -75,6 +75,7 @@
         input         (-> (BlastInput$Builder.
                            (database->enum database)
                            query-sequence)
+                          (.withExpectation ExpectationOption/ONE_EXPONENT_MINUS_THREE)
                           (.build))
         result        (.runBlast blast-service input)]
     (.stop blast-service)

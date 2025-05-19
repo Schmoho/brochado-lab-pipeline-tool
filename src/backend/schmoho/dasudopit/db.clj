@@ -5,11 +5,12 @@
    [clojure.tools.logging :as log]
    [schmoho.utils.csv :as csv-utils]
    [schmoho.utils.data-cleaning :as clean]
-   [schmoho.utils.file :as utils]))
+   [schmoho.utils.file :as utils]
+   [babashka.fs :as fs]))
 
 (defn- pathify
   [file]
-  (let [segments (-> file (.getPath) (str/split #"/"))]
+  (let [segments (->> file fs/components (map str))]
     (conj (mapv keyword (butlast segments))
           (keyword (utils/base-name (last segments))))))
 

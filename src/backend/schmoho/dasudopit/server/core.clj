@@ -140,7 +140,11 @@
       ["/pipelines"
        ["/msa"
         {:post {:summary "Start taxonomic comparison pipeline."
-                :handler #'pipelines-handler/start-msa-handler}}]]]
+                :handler #'pipelines-handler/start-msa-handler}}]
+       ["/docking"
+        ["/run"
+         {:post {:summary "Provide data to prepare a docking run."
+                 :handler #'pipelines-handler/start-docking}}]]]]
      ["/" {:get serve-index}]]
     {:conflicts (constantly nil)
      ;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
