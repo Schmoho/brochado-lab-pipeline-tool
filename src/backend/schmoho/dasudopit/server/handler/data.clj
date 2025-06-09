@@ -8,7 +8,8 @@
    [schmoho.biodb.uniprot.api :as uniprot.api]
    [schmoho.biotools.obabel :as obabel]
    [schmoho.utils.file :as utils]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io]
+   [babashka.fs :as fs]))
 
 (defn get-metadata
   [request]
@@ -24,6 +25,8 @@
     (catch Exception e
       (log/error e)
       (throw e))))
+
+(def request {:uri "/api/data/structure/P02919"})
 
 (defn get-structures-metadata
   [request]
@@ -58,14 +61,15 @@
     (let [protein-id (-> request :path-params :protein-id)
           path       (str/replace (:uri request) "/api/" "")
           dataset    (->> (utils/ffile-seq path)
-                       (filter #(and (= "meta" (utils/base-name %))
+                       (filter #(and (str/includes? (fs/file-name %) "meta")
                                      (or (str/includes? (.getPath %) "input")
                                          (str/includes? (.getPath %) "processed"))))
                        (map (juxt (comp
                                    #(concat % [:meta])
-                                   #(str/split % #"/")
-                                   #(str/replace % (str path "/") "")
-                                   #(.getParent %))
+                                   (partial drop-while (into #{} (str/split path #"/")))
+                                   (partial map fs/file-name)
+                                   fs/components
+                                   fs/parent)
                                   utils/read-file))
                        (reduce
                         (fn [acc [path meta]]

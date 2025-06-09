@@ -203,12 +203,11 @@
   (rf/dispatch [::forms/set-form-data
                 :docking
                 :selected-ligands
-                ligands]))
+                (set ligands)]))
 
 (defn handle-set-taxons
   [taxons]
-  (doseq [chosen-taxon taxons]
-    
+  (doseq [chosen-taxon taxons]   
     (db/get-data [:data :taxon chosen-taxon :proteome]))
   (rf/dispatch [::forms/set-form-data
                 :docking
@@ -250,11 +249,12 @@
           [com/gap :size "1"]
           [ligand-multi-choice
            :choices   @ligands
-           :id-fn (comp :cid :meta)
-           :label-fn (comp :title :meta)
+           :id-fn     (comp :cid :meta)
+           :label-fn  (comp :title :meta)
            :model     ligand-model
            :on-change #(handle-set-ligands %)]]]
         
-        (let [selected-taxons  (->> @taxon-model (map @taxons-lookup) not-empty)]
+        (let [selected-taxons (->> @taxon-model (map @taxons-lookup) not-empty)]
           (when selected-taxons
             [taxon-sub-component selected-taxons (@taxons-lookup @current-taxon) ]))]])))
+

@@ -40,7 +40,8 @@
 
 (defn parse-pdb-line
   [index-map line]
-  (let [record-type  (subs line 0 6)
+  (let [line (pad-to-80 line)
+        record-type  (subs line 0 6)
         trimmed-type (str/trim record-type)
         fields       (get index-map trimmed-type)]
     (if fields
@@ -108,10 +109,13 @@
    (defmethod filter-tail-regions java.io.File
      [filter-fn pdb]
      (let [intermediate-file (utils/create-temp-file "pdb")]
-       (->> (file-seq pdb)
+       (->> (slurp pdb)
+            (str/split-lines)
             (filter-tail-regions filter-fn)
             (str/join "\n")
-            (spit intermediate-file)))))
+            (spit intermediate-file))
+       intermediate-file)))
+
 #?(:clj
    (defmethod filter-tail-regions java.lang.String
      [filter-fn pdb]

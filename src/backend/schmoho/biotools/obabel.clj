@@ -70,3 +70,32 @@
    "results/51e4e6fa-eac0-4a2c-9490-3252a785dd6a/A0A0H2ZHP9-hydro.pdb")
 
 
+(defmulti charge! type)
+
+(defmethod charge! java.util.List
+  [pdb]
+  (->> (str/join "\n" pdb)
+       charge!
+       str/split-lines))
+
+(defmethod charge! java.lang.String
+  [pdb]
+  (let [input-file (utils/create-temp-file "pdb")]
+    (spit input-file pdb)
+    (slurp (charge! input-file))))
+
+(defmethod charge! java.io.File
+  [pdb]
+  (log/info "obabel hydrogens" pdb)
+  (let [output-file (utils/create-temp-file "pdb")
+        {:keys [exit _out err]
+         :as   return}
+        (sh/sh "obabel" (.getAbsolutePath pdb) "-O" (.getAbsolutePath output-file) "--partialcharge" "gasteiger")]
+    (if (or (not= 0 exit)
+            (and (not-empty err)
+                 (str/includes? err "Open Babel Error")))
+      (throw (ex-info (str "Error when using OBabel: " err)
+                      {:path-to-input-pdb  (.getAbsolutePath pdb)
+                       :return             return}))
+      output-file)))
+

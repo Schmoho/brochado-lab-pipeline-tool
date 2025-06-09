@@ -1,0 +1,449 @@
+{:selected-taxons #{"83333"},
+ :cut? {"83333" true},
+ :plddt-cutoffs {"83333" 76},
+ :selected-ligands ("5742673"),
+ :current-taxon "83333",
+ :hydrogenate? {"83333" false},
+ :selected-proteins
+ {"83333"
+  {:features
+   [{:type "Topological domain",
+     :location
+     {:start {:value 1, :modifier "EXACT"},
+      :end {:value 63, :modifier "EXACT"}},
+     :description "Cytoplasmic",
+     :evidences [{:evidenceCode "ECO:0000305"}]}
+    {:type "Transmembrane",
+     :location
+     {:start {:value 64, :modifier "EXACT"},
+      :end {:value 87, :modifier "EXACT"}},
+     :description
+     "Helical; Signal-anchor for type II membrane protein",
+     :evidences [{:evidenceCode "ECO:0000305"}]}
+    {:type "Topological domain",
+     :location
+     {:start {:value 88, :modifier "EXACT"},
+      :end {:value 844, :modifier "EXACT"}},
+     :description "Periplasmic",
+     :evidences [{:evidenceCode "ECO:0000305"}]}
+    {:type "Region",
+     :location
+     {:start {:value 1, :modifier "EXACT"},
+      :end {:value 60, :modifier "EXACT"}},
+     :description "Disordered",
+     :evidences
+     [{:evidenceCode "ECO:0000256", :source "SAM", :id "MobiDB-lite"}]}
+    {:type "Region",
+     :location
+     {:start {:value 88, :modifier "EXACT"},
+      :end {:value 250, :modifier "EXACT"}},
+     :description "Membrane association"}
+    {:type "Region",
+     :location
+     {:start {:value 109, :modifier "EXACT"},
+      :end {:value 200, :modifier "EXACT"}},
+     :description "UvrB domain 2 homolog"}
+    {:type "Region",
+     :location
+     {:start {:value 195, :modifier "EXACT"},
+      :end {:value 367, :modifier "EXACT"}},
+     :description "Transglycosylase"}
+    {:type "Region",
+     :location
+     {:start {:value 444, :modifier "EXACT"},
+      :end {:value 736, :modifier "EXACT"}},
+     :description "Transpeptidase"}
+    {:type "Region",
+     :location
+     {:start {:value 793, :modifier "EXACT"},
+      :end {:value 835, :modifier "EXACT"}},
+     :description "Disordered",
+     :evidences
+     [{:evidenceCode "ECO:0000256", :source "SAM", :id "MobiDB-lite"}]}
+    {:type "Active site",
+     :location
+     {:start {:value 233, :modifier "EXACT"},
+      :end {:value 233, :modifier "EXACT"}},
+     :description "Proton donor; for transglycosylase activity",
+     :evidences
+     [{:evidenceCode "ECO:0000305", :source "PubMed", :id "10564478"}]}
+    {:type "Active site",
+     :location
+     {:start {:value 510, :modifier "EXACT"},
+      :end {:value 510, :modifier "EXACT"}},
+     :description
+     "Acyl-ester intermediate; for transpeptidase activity",
+     :evidences
+     [{:evidenceCode "ECO:0000269",
+       :source "PubMed",
+       :id "10564478"}]}],
+   :primaryAccession "P02919",
+   :proteinExistence "1: Evidence at protein level",
+   :comments
+   [{:texts
+     [{:value "Cell wall biogenesis; peptidoglycan biosynthesis"}],
+     :commentType "PATHWAY"}
+    {:texts
+     [{:evidences
+       [{:evidenceCode "ECO:0000269",
+         :source "PubMed",
+         :id "19458048"}],
+       :value
+       "The UvrB domain 2 homolog region (UB2H domain) is important for interaction with MltA"}],
+     :commentType "DOMAIN"}
+    {:texts
+     [{:evidences [{:evidenceCode "ECO:0000305"}],
+       :value
+       "In the N-terminal section; belongs to the glycosyltransferase 51 family"}],
+     :commentType "SIMILARITY"}
+    {:texts
+     [{:evidences [{:evidenceCode "ECO:0000305"}],
+       :value
+       "In the C-terminal section; belongs to the transpeptidase family"}],
+     :commentType "SIMILARITY"}],
+   :entryType "UniProtKB reviewed (Swiss-Prot)",
+   :genes
+   [{:geneName {:value "mrcB"},
+     :synonyms [{:value "pbpF"} {:value "ponB"}],
+     :orderedLocusNames
+     [{:evidences
+       [{:evidenceCode "ECO:0000312",
+         :source "EMBL",
+         :id "AAC73260.1"}],
+       :value "b0149"}
+      {:value "JW0145"}]}],
+   :extraAttributes {:uniParcId "UPI0000168005"},
+   :uniProtKBCrossReferences
+   [{:database "PDB",
+     :id "3FWL",
+     :properties
+     [{:key "Method", :value "X-ray"}
+      {:key "Resolution", :value "3.09 A"}
+      {:key "Chains", :value "A=58-804"}]}
+    {:database "PDB",
+     :id "3VMA",
+     :properties
+     [{:key "Method", :value "X-ray"}
+      {:key "Resolution", :value "2.16 A"}
+      {:key "Chains", :value "A=58-804"}]}
+    {:database "PDB",
+     :id "5FGZ",
+     :properties
+     [{:key "Method", :value "X-ray"}
+      {:key "Resolution", :value "2.85 A"}
+      {:key "Chains", :value "A=58-804"}]}
+    {:database "PDB",
+     :id "5HL9",
+     :properties
+     [{:key "Method", :value "X-ray"}
+      {:key "Resolution", :value "2.70 A"}
+      {:key "Chains", :value "A=58-804"}]}
+    {:database "PDB",
+     :id "5HLA",
+     :properties
+     [{:key "Method", :value "X-ray"}
+      {:key "Resolution", :value "2.36 A"}
+      {:key "Chains", :value "A=58-804"}]}
+    {:database "PDB",
+     :id "5HLB",
+     :properties
+     [{:key "Method", :value "X-ray"}
+      {:key "Resolution", :value "2.42 A"}
+      {:key "Chains", :value "A=58-804"}]}
+    {:database "PDB",
+     :id "5HLD",
+     :properties
+     [{:key "Method", :value "X-ray"}
+      {:key "Resolution", :value "2.31 A"}
+      {:key "Chains", :value "A=58-804"}]}
+    {:database "PDB",
+     :id "6FZK",
+     :properties
+     [{:key "Method", :value "NMR"}
+      {:key "Resolution", :value "-"}
+      {:key "Chains", :value "A=108-200"}]}
+    {:database "PDB",
+     :id "6G5R",
+     :properties
+     [{:key "Method", :value "NMR"}
+      {:key "Resolution", :value "-"}
+      {:key "Chains", :value "A=108-200"}]}
+    {:database "PDB",
+     :id "6YN0",
+     :properties
+     [{:key "Method", :value "X-ray"}
+      {:key "Resolution", :value "2.40 A"}
+      {:key "Chains", :value "A=58-804"}]}
+    {:database "PDB",
+     :id "7LQ6",
+     :properties
+     [{:key "Method", :value "EM"}
+      {:key "Resolution", :value "3.28 A"}
+      {:key "Chains", :value "A=58-804"}]}
+    {:database "AlphaFoldDB",
+     :id "P02919",
+     :properties [{:key "Description", :value "-"}]}
+    {:database "DrugBank",
+     :id "DB01602",
+     :properties [{:key "GenericName", :value "Bacampicillin"}]}
+    {:database "DrugBank",
+     :id "DB00578",
+     :properties [{:key "GenericName", :value "Carbenicillin"}]}
+    {:database "DrugBank",
+     :id "DB09319",
+     :properties [{:key "GenericName", :value "Carindacillin"}]}
+    {:database "DrugBank",
+     :id "DB01414",
+     :properties [{:key "GenericName", :value "Cefacetrile"}]}
+    {:database "DrugBank",
+     :id "DB01327",
+     :properties [{:key "GenericName", :value "Cefazolin"}]}
+    {:database "DrugBank",
+     :id "DB01413",
+     :properties [{:key "GenericName", :value "Cefepime"}]}
+    {:database "DrugBank",
+     :id "DB00671",
+     :properties [{:key "GenericName", :value "Cefixime"}]}
+    {:database "DrugBank",
+     :id "DB00274",
+     :properties [{:key "GenericName", :value "Cefmetazole"}]}
+    {:database "DrugBank",
+     :id "DB01328",
+     :properties [{:key "GenericName", :value "Cefonicid"}]}
+    {:database "DrugBank",
+     :id "DB01329",
+     :properties [{:key "GenericName", :value "Cefoperazone"}]}
+    {:database "DrugBank",
+     :id "DB01331",
+     :properties [{:key "GenericName", :value "Cefoxitin"}]}
+    {:database "DrugBank",
+     :id "DB00430",
+     :properties [{:key "GenericName", :value "Cefpiramide"}]}
+    {:database "DrugBank",
+     :id "DB11367",
+     :properties [{:key "GenericName", :value "Cefroxadine"}]}
+    {:database "DrugBank",
+     :id "DB00438",
+     :properties [{:key "GenericName", :value "Ceftazidime"}]}
+    {:database "DrugBank",
+     :id "DB01415",
+     :properties [{:key "GenericName", :value "Ceftibuten"}]}
+    {:database "DrugBank",
+     :id "DB01332",
+     :properties [{:key "GenericName", :value "Ceftizoxime"}]}
+    {:database "DrugBank",
+     :id "DB09050",
+     :properties [{:key "GenericName", :value "Ceftolozane"}]}
+    {:database "DrugBank",
+     :id "DB00689",
+     :properties [{:key "GenericName", :value "Cephaloglycin"}]}
+    {:database "DrugBank",
+     :id "DB01000",
+     :properties [{:key "GenericName", :value "Cyclacillin"}]}
+    {:database "DrugBank",
+     :id "DB06211",
+     :properties [{:key "GenericName", :value "Doripenem"}]}
+    {:database "DrugBank",
+     :id "DB00303",
+     :properties [{:key "GenericName", :value "Ertapenem"}]}
+    {:database "DrugBank",
+     :id "DB01598",
+     :properties [{:key "GenericName", :value "Imipenem"}]}
+    {:database "DrugBank",
+     :id "DB04570",
+     :properties [{:key "GenericName", :value "Latamoxef"}]}
+    {:database "DrugCentral",
+     :id "P02919",
+     :properties [{:key "Description", :value "-"}]}
+    {:database "KEGG",
+     :id "ecj:JW0145",
+     :properties [{:key "Description", :value "-"}]}
+    {:database "KEGG",
+     :id "eco:b0149",
+     :properties [{:key "Description", :value "-"}]}
+    {:database "KEGG",
+     :id "ecoc:C3026_00655",
+     :properties [{:key "Description", :value "-"}]}
+    {:database "BioCyc",
+     :id "EcoCyc:EG10605-MONOMER",
+     :properties [{:key "Description", :value "-"}]}
+    {:database "BioCyc",
+     :id "MetaCyc:EG10605-MONOMER",
+     :properties [{:key "Description", :value "-"}]}
+    {:database "UniPathway",
+     :id "UPA00219",
+     :properties [{:key "RectionId", :value "-"}]}
+    {:database "GO",
+     :id "GO:0016020",
+     :properties
+     [{:key "GoTerm", :value "C:membrane"}
+      {:key "GoEvidenceType", :value "HDA:UniProtKB"}],
+     :evidences
+     [{:evidenceCode "ECO:0007005", :source "PubMed", :id "16858726"}]}
+    {:database "GO",
+     :id "GO:0030288",
+     :properties
+     [{:key "GoTerm",
+       :value "C:outer membrane-bounded periplasmic space"}
+      {:key "GoEvidenceType", :value "IDA:EcoCyc"}],
+     :evidences
+     [{:evidenceCode "ECO:0000314", :source "PubMed", :id "3330753"}]}
+    {:database "GO",
+     :id "GO:0009274",
+     :properties
+     [{:key "GoTerm", :value "C:peptidoglycan-based cell wall"}
+      {:key "GoEvidenceType", :value "IEA:InterPro"}]}
+    {:database "GO",
+     :id "GO:0005886",
+     :properties
+     [{:key "GoTerm", :value "C:plasma membrane"}
+      {:key "GoEvidenceType", :value "IDA:EcoCyc"}],
+     :evidences
+     [{:evidenceCode "ECO:0000314", :source "PubMed", :id "3330753"}]}
+    {:database "GO",
+     :id "GO:0008658",
+     :properties
+     [{:key "GoTerm", :value "F:penicillin binding"}
+      {:key "GoEvidenceType", :value "IDA:EcoCyc"}],
+     :evidences
+     [{:evidenceCode "ECO:0000314", :source "PubMed", :id "10564478"}
+      {:evidenceCode "ECO:0000314", :source "PubMed", :id "345275"}]}
+    {:database "GO",
+     :id "GO:0008955",
+     :properties
+     [{:key "GoTerm",
+       :value "F:peptidoglycan glycosyltransferase activity"}
+      {:key "GoEvidenceType", :value "IDA:EcoCyc"}],
+     :evidences
+     [{:evidenceCode "ECO:0000314", :source "PubMed", :id "10564478"}
+      {:evidenceCode "ECO:0000314", :source "PubMed", :id "11716719"}
+      {:evidenceCode "ECO:0000314", :source "PubMed", :id "12369847"}
+      {:evidenceCode "ECO:0000314", :source "PubMed", :id "16154998"}
+      {:evidenceCode "ECO:0000314", :source "PubMed", :id "6389538"}]}
+    {:database "GO",
+     :id "GO:0009002",
+     :properties
+     [{:key "GoTerm",
+       :value "F:serine-type D-Ala-D-Ala carboxypeptidase activity"}
+      {:key "GoEvidenceType", :value "IDA:EcoCyc"}],
+     :evidences
+     [{:evidenceCode "ECO:0000314", :source "PubMed", :id "10564478"}
+      {:evidenceCode "ECO:0000314", :source "PubMed", :id "11716719"}
+      {:evidenceCode "ECO:0000314", :source "PubMed", :id "16154998"}
+      {:evidenceCode "ECO:0000314", :source "PubMed", :id "6389538"}]}
+    {:database "GO",
+     :id "GO:0071433",
+     :properties
+     [{:key "GoTerm", :value "P:cell wall repair"}
+      {:key "GoEvidenceType", :value "IDA:EcoCyc"}],
+     :evidences
+     [{:evidenceCode "ECO:0000314", :source "PubMed", :id "31904338"}]}
+    {:database "GO",
+     :id "GO:0009252",
+     :properties
+     [{:key "GoTerm", :value "P:peptidoglycan biosynthetic process"}
+      {:key "GoEvidenceType", :value "IDA:EcoCyc"}],
+     :evidences
+     [{:evidenceCode "ECO:0000314", :source "PubMed", :id "10564478"}
+      {:evidenceCode "ECO:0000314", :source "PubMed", :id "7001458"}]}
+    {:database "GO",
+     :id "GO:0051518",
+     :properties
+     [{:key "GoTerm",
+       :value "P:positive regulation of bipolar cell growth"}
+      {:key "GoEvidenceType", :value "IDA:EcoliWiki"}],
+     :evidences
+     [{:evidenceCode "ECO:0000314", :source "PubMed", :id "330236"}]}
+    {:database "GO",
+     :id "GO:0006508",
+     :properties
+     [{:key "GoTerm", :value "P:proteolysis"}
+      {:key "GoEvidenceType", :value "IEA:UniProtKB-KW"}]}
+    {:database "GO",
+     :id "GO:0008360",
+     :properties
+     [{:key "GoTerm", :value "P:regulation of cell shape"}
+      {:key "GoEvidenceType", :value "IEA:UniProtKB-KW"}]}
+    {:database "GO",
+     :id "GO:0046677",
+     :properties
+     [{:key "GoTerm", :value "P:response to antibiotic"}
+      {:key "GoEvidenceType", :value "IMP:EcoCyc"}],
+     :evidences
+     [{:evidenceCode "ECO:0000315", :source "PubMed", :id "345275"}]}
+    {:database "InterPro",
+     :id "IPR012338",
+     :properties
+     [{:key "EntryName", :value "Beta-lactam/transpept-like"}]}
+    {:database "InterPro",
+     :id "IPR001264",
+     :properties [{:key "EntryName", :value "Glyco_trans_51"}]}
+    {:database "InterPro",
+     :id "IPR050396",
+     :properties
+     [{:key "EntryName", :value "Glycosyltr_51/Transpeptidase"}]}
+    {:database "InterPro",
+     :id "IPR023346",
+     :properties [{:key "EntryName", :value "Lysozyme-like_dom_sf"}]}
+    {:database "InterPro",
+     :id "IPR032730",
+     :properties [{:key "EntryName", :value "PBP1b_TM"}]}
+    {:database "InterPro",
+     :id "IPR011813",
+     :properties [{:key "EntryName", :value "PBP_1b"}]}
+    {:database "InterPro",
+     :id "IPR036950",
+     :properties [{:key "EntryName", :value "PBP_transglycosylase"}]}
+    {:database "InterPro",
+     :id "IPR001460",
+     :properties [{:key "EntryName", :value "PCN-bd_Tpept"}]}
+    {:database "InterPro",
+     :id "IPR028166",
+     :properties [{:key "EntryName", :value "UB2H"}]}],
+   :id "P02919",
+   :sequence
+   {:value
+    "MAGNDREPIGRKGKPTRPVKQKVSRRRYEDDDDYDDYDDYEDEEPMPRKGKGKGKGRKPRGKRGWLWLLLKLAIVFAVLIAIYGVYLDQKIRSRIDGKVWQLPAAVYGRMVNLEPDMTISKNEMVKLLEATQYRQVSKMTRPGEFTVQANSIEMIRRPFDFPDSKEGQVRARLTFDGDHLATIVNMENNRQFGFFRLDPRLITMISSPNGEQRLFVPRSGFPDLLVDTLLATEDRHFYEHDGISLYSIGRAVLANLTAGRTVQGASTLTQQLVKNLFLSSERSYWRKANEAYMALIMDARYSKDRILELYMNEVYLGQSGDNEIRGFPLASLYYFGRPVEELSLDQQALLVGMVKGASIYNPWRNPKLALERRNLVLRLLQQQQIIDQELYDMLSARPLGVQPRGGVISPQPAFMQLVRQELQAKLGDKVKDLSGVKIFTTFDSVAQDAAEKAAVEGIPALKKQRKLSDLETAIVVVDRFSGEVRAMVGGSEPQFAGYNRAMQARRSIGSLAKPATYLTALSQPKIYRLNTWIADAPIALRQPNGQVWSPQNDDRRYSESGRVMLVDALTRSMNVPTVNLGMALGLPAVTETWIKLGVPKDQLHPVPAMLLGALNLTPIEVAQAFQTIASGGNRAPLSALRSVIAEDGKVLYQSFPQAERAVPAQAAYLTLWTMQQVVQRGTGRQLGAKYPNLHLAGKTGTTNNNVDTWFAGIDGSTVTITWVGRDNNQPTKLYGASGAMSIYQRYLANQTPTPLNLVPPEDIADMGVDYDGNFVCSGGMRILPVWTSDPQSLCQQSEMQQQPSGNPFDQSSQPQQQPQQQPAQQEQKDSDGVAGWIKDMFGSN",
+    :length 844,
+    :molWeight 94293,
+    :crc64 "CED0A19FAC73961E",
+    :md5 "254D97F5D497ED17E650772214FA6811"},
+   :proteinDescription
+   {:recommendedName
+    {:fullName {:value "Penicillin-binding protein 1B"},
+     :shortNames [{:value "PBP-1b"} {:value "PBP1b"}]},
+    :alternativeNames [{:fullName {:value "Murein polymerase"}}],
+    :includes
+    [{:recommendedName
+      {:fullName {:value "Penicillin-insensitive transglycosylase"},
+       :ecNumbers
+       [{:evidences
+         [{:evidenceCode "ECO:0000269",
+           :source "PubMed",
+           :id "19458048"}
+          {:evidenceCode "ECO:0000269",
+           :source "PubMed",
+           :id "6389538"}],
+         :value "2.4.99.28"}]},
+      :alternativeNames
+      [{:fullName {:value "Peptidoglycan TGase"}}
+       {:fullName {:value "Peptidoglycan glycosyltransferase"}}]}
+     {:recommendedName
+      {:fullName {:value "Penicillin-sensitive transpeptidase"},
+       :ecNumbers
+       [{:evidences
+         [{:evidenceCode "ECO:0000269",
+           :source "PubMed",
+           :id "6389538"}],
+         :value "3.4.16.4"}]},
+      :alternativeNames
+      [{:fullName {:value "DD-transpeptidase"}}]}]}}},
+ :selected-binding-sites {"83333" [510 510]},
+ :selected-structures
+ {"83333"
+  {:name "AlphaFold Structure",
+   :protein "P02919",
+   :source :afdb,
+   :model-created-date "2022-06-01",
+   :model-version 4}}, 
+ :charges? {"83333" true}}
